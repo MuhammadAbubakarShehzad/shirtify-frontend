@@ -1,0 +1,242 @@
+:root {
+    --primary-teal: #9ED9E0;
+    --bg-gray: #F8F9FA;
+    --text-dark: #333;
+    --border-color: #E0E0E0;
+    --font-main: 'Poppins', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+}
+
+body {
+    background-color: #f9f9f9;
+    color: var(--text-dark);
+}
+
+a { text-decoration: none; color: inherit; }
+ul { list-style: none; }
+
+/* Header Styling */
+/* Reset basic styles */
+ * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+}
+
+:root {
+    --primary-color: #8FD3D6; /* Light Teal */
+    --primary-dark: #6eb7ba;
+    --text-dark: #333333;
+    --text-light: #666666;
+    --bg-gradient: linear-gradient(135deg, #d0f4f7 0%, #fefdf5 100%);
+    --white: #ffffff;
+    --font-main: 'Poppins', sans-serif;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    background-color:#ffffff;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    letter-spacing: 1px;
+}
+
+nav ul {
+    display: flex;
+    gap: 30px;
+    list-style-type: none;
+}
+
+nav a {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    transition: color 0.3s;
+    text-decoration: none;
+}
+
+nav a:hover { color: var(--text-dark); }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.search-box {
+    background: #f0f0f0;
+    border-radius: 5px;
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+}
+
+.search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    width: 150px;
+}
+
+.search-box i { color: #888; font-size: 14px; }
+
+.icons i {
+    cursor: pointer;
+    font-size: 18px;
+    margin-left: 15px;
+    cursor: pointer;
+    color: #333;
+}
+/* Main Content */
+main {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+h1 { font-size: 42px; margin-bottom: 10px;margin-top: 60px; }
+.subtitle { color: #666; margin-bottom: 40px; }
+
+.container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Chat Assistant Styles */
+.chat-container {
+    width: 450px;
+    height: 550px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.chat-header {
+    background-color: var(--primary-teal);
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    color: white;
+    gap: 10px;
+}
+
+.chat-box {
+    flex-grow: 1;
+    padding: 20px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.bot-message {
+    background: #F1F3F4;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    max-width: 80%;
+    text-align: left;
+    line-height: 1.4;
+}
+
+.chat-input-area {
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input-area input {
+    flex-grow: 1;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 10px;
+    outline: none;
+}
+
+#sendBtn {
+    background: var(--primary-teal);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* Upload Styles */
+.upload-container {
+    width: 450px;
+    padding: 30px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.drop-zone {
+    flex-grow: 1;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.upload-icon { font-size: 40px; color: #555; margin-bottom: 20px; }
+
+/* Buttons */
+button { cursor: pointer; transition: 0.3s; }
+
+.btn-light {
+    background: var(--primary-teal);
+    border: none;
+    padding: 10px 25px;
+    border-radius: 20px;
+    color: white;
+}
+
+.btn-outline {
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.btn-primary {
+    background: var(--primary-teal);
+    border: none;
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.btn-primary:hover { opacity: 0.8; }

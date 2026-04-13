@@ -1,0 +1,187 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+}
+
+:root {
+    --primary-color: #8FD3D6; /* Light Teal */
+    --primary-dark: #6eb7ba;
+    --text-dark: #333333;
+    --text-light: #666666;
+    --bg-gradient: linear-gradient(135deg, #d0f4f7 0%, #fefdf5 100%);
+    --white: #ffffff;
+    --font-main: 'Poppins', sans-serif;
+}
+
+body {
+    padding-top: 90px;
+}
+
+.icons i {
+    cursor: pointer;
+    font-size: 18px;
+    margin-left: 15px;
+    cursor: pointer;
+    color: #333;
+}
+        /* Custom smooth scrolling and hidden scrollbar for cleaner UI */
+        body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Modal Transition Styles */
+        #product-modal { transition: opacity 0.3s ease, visibility 0.3s ease; }
+        #modal-content { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease; }
+        
+        /* Fade states */
+        .modal-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .modal-visible { opacity: 1; visibility: visible; pointer-events: auto; }
+        .scale-in { transform: scale(1); opacity: 1; }
+        .scale-out { transform: scale(0.96); opacity: 0; }
+        .add-btn{
+            background-color: #8FD3D6;
+        }
+    /* Footer Styles */
+.shirtify-footer {
+    background-color: #ffffff;
+    padding: 80px 0 40px 0;
+    border-top: 1px solid #f1f5f9;
+    font-family: 'Poppins', sans-serif;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 60px;
+}
+
+/* Brand Style */
+.footer-logo {
+    color: #94D5E0; /* Your exact brand color */
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.footer-tagline {
+    color: #64748b;
+    line-height: 1.6;
+    font-size: 15px;
+    max-width: 260px;
+}
+
+/* List Styles */
+.footer-heading {
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 24px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links li {
+    margin-bottom: 12px;
+}
+
+.footer-links a {
+    color: #64748b;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+    color: #94D5E0;
+}
+
+/* Social Icons */
+.social-icons {
+    display: flex;
+    gap: 12px;
+}
+
+.social-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94d5e0; /* Aqua color for icons */
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.social-btn:hover {
+    border-color: #94D5E0;
+    background-color: #f0f9fa;
+    transform: translateY(-3px);
+}
+
+.social-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Footer Bottom Bar */
+.footer-bottom {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.copyright {
+    color: #94a3b8;
+    font-size: 13px;
+}
+
+.payment-methods {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    opacity: 0.5;
+}
+
+.payment-methods img {
+    height: 20px;
+    width: auto;
+}
+
+/* Responsive for Mobile */
+@media (max-width: 768px) {
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .footer-bottom {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+}
+.contactus{
+    color: #8FD3D6;
+}
+.social-btn-img {
+    width: 60%;  /* Set to 60-70% so there is padding around the icon */
+    height: 60%;
+    object-fit: contain; /* Keeps the icon proportions perfect */
+    
+}

@@ -1,0 +1,492 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shirtify Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="shopscreen.css">
+</head>
+
+<body class="bg-white text-slate-800 font-sans text-base">
+
+    <!-- Navbar -->
+    <div id="header-placeholder"></div>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-12">
+        <h1 class="text-4xl font-semibold tracking-tight text-slate-900 mb-10">Shop Collection</h1>
+
+        <div class="flex flex-col lg:flex-row gap-12">
+
+            <!-- Filters Sidebar -->
+            <aside class="w-full lg:w-64 flex-shrink-0 space-y-10">
+                <div class="bg-slate-50 p-6 rounded-2xl">
+                    <h3 class="text-xl font-semibold tracking-tight mb-6">Filters</h3>
+
+                    <!-- Size Filter -->
+                    <div class="mb-8">
+                        <label class="block text-slate-500 font-medium mb-3">Size</label>
+                        <div class="relative group">
+                            <select
+                                class="w-full appearance-none bg-slate-200 text-slate-700 rounded-lg px-4 py-3 font-medium outline-none focus:ring-2 focus:ring-sky-200 cursor-pointer">
+                                <option>All Sizes</option>
+                                <option>Small</option>
+                                <option>Medium</option>
+                                <option>Large</option>
+                                <option>X-Large</option>
+                            </select>
+                            <i data-lucide="chevron-down"
+                                class="absolute right-3 top-3.5 text-slate-500 w-5 h-5 pointer-events-none group-hover:text-slate-700"></i>
+                        </div>
+                    </div>
+
+                    <!-- Color Filter -->
+                    <div class="mb-8">
+                        <label class="block text-slate-500 font-medium mb-3">Color</label>
+                        <div class="grid grid-cols-4 gap-3">
+                            <button
+                                class="w-8 h-8 rounded-full bg-red-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button
+                                class="w-8 h-8 rounded-full bg-yellow-400 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button
+                                class="w-8 h-8 rounded-full bg-black ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button
+                                class="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button
+                                class="w-8 h-8 rounded-full bg-green-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button
+                                class="w-8 h-8 rounded-full bg-orange-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                        </div>
+                    </div>
+
+                    <!-- Price Filter -->
+                    <div class="mb-8">
+                        <label class="block text-slate-500 font-medium mb-3">price Filter</label>
+                        <div class="relative group">
+                            <select
+                                class="w-full appearance-none bg-slate-200 text-slate-700 rounded-lg px-4 py-3 font-medium outline-none focus:ring-2 focus:ring-sky-200 cursor-pointer">
+                                <option>1000-1500</option>
+                                <option>1500-2000</option>
+                                <option>2000-3000</option>
+                                <option>3000-3500</option>
+                            </select>
+                            <i data-lucide="chevron-down"
+                                class="absolute right-3 top-3.5 text-slate-500 w-5 h-5 pointer-events-none group-hover:text-slate-700"></i>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Product Grid -->
+            <div class="flex-1">
+                <div class="flex justify-end mb-6">
+                    <button
+                        class="bg-sky-300/20 text-sky-600 px-6 py-2 rounded-lg font-medium hover:bg-sky-300/30 transition-colors text-base">
+                        Featured
+                    </button>
+                </div>
+
+                <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+                    <!-- Product cards are dynamically loaded from API -->
+                    <div class="group product-card" data-id="1" data-name="Classic Cotton t-shirt" data-price="2500"
+                        data-desc="Crafted from 100% organic cotton, this classic red tee offers breathable comfort and a relaxed fit perfect for everyday wear. Features double-stitched hems for durability."
+                        data-img="cotton t-shirt.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="cotton t-shirt.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">Classic Cotton Tee</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-white border border-slate-200"></div>
+                            <div class="w-4 h-4 rounded-full bg-green-500"></div>
+                            <div class="w-4 h-4 rounded-full bg-blue-500"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class=" font-medium text-lg">Rs 2500</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Product 2 -->
+                    <div class="group product-card" data-id="2" data-name="Classic Cotton t-shirt" data-price="2500"
+                        data-desc="A minimalist design celebrating the city of lights. This white oversized tee features a high-density print and dropped shoulders for a streetwear aesthetic."
+                        data-img="cotton 2.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="cotton 2.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">classic cotton Tee</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-white border border-slate-200"></div>
+                            <div class="w-4 h-4 rounded-full bg-sky-500"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class=" font-medium text-lg">Rs 2500</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Product 3 -->
+                    <div class="group product-card" data-id="3" data-name="classic cotton t-shirt" data-price="2500"
+                        data-desc="Deep navy blue premium blend cotton with a subtle logo chest print. Enzyme washed for extreme softness and zero shrinkage."
+                        data-img="cotton 3.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="cotton 3.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">classic cotton tee</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-teal-500"></div>
+                            <div class="w-4 h-4 rounded-full bg-blue-700"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-lg">Rs 2500</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Product 4 -->
+                    <div class="group product-card" data-id="4" data-name="Vintage Graphic Shirt" data-price="2900"
+                        data-desc="Retro-inspired graphic print on an off-white base. The fabric is slightly heavier for a structured vintage feel."
+                        data-img="vintage t-shirt.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="vintage t-shirt.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">Vintage Graphic Shirt</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-white border border-slate-200"></div>
+                            <div class="w-4 h-4 rounded-full bg-blue-600"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class=" font-medium text-lg">Rs 2900</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Product 5 -->
+                    <div class="group product-card" data-id="5" data-name="vintage graphic t-shirt" data-price="2900"
+                        data-desc="Bold flame graphics wrapping around the hem. Made for those who want to stand out. Soft-touch printing technique."
+                        data-img="v2.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="v2.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">vintage graphic Tee</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-orange-500"></div>
+                            <div class="w-4 h-4 rounded-full bg-red-600"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-lg">Rs 2900</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Product 6 -->
+                    <div class="group product-card" data-id="5" data-name="vintage graphic t-shirt" data-price="2900"
+                        data-desc="Bold flame graphics wrapping around the hem. Made for those who want to stand out. Soft-touch printing technique."
+                        data-img="v3.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="v3.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">vintage graphic Tee</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-orange-500"></div>
+                            <div class="w-4 h-4 rounded-full bg-red-600"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class=" font-medium text-lg">Rs 2900</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Product 7 -->
+                    <div class="group product-card" data-id="6" data-name="Premium Blend Shirt" data-price="3500"
+                        data-desc="Our signature premium blend. Heavyweight cotton with a boxy fit. Features puff print typography on the back."
+                        data-img="premium blend t-shirt.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="premium blend t-shirt.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">Premium Blend Shirt</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-white border border-slate-200"></div>
+                            <div class="w-4 h-4 rounded-full bg-emerald-500"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class=" font-medium text-lg">Rs 3500</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Product 8 -->
+                    <div class="group product-card" data-id="6" data-name="Premium Blend Shirt" data-price="3500"
+                        data-desc="Our signature premium blend. Heavyweight cotton with a boxy fit. Features puff print typography on the back."
+                        data-img="p2.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="p2.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">Premium Blend Shirt</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-white border border-slate-200"></div>
+                            <div class="w-4 h-4 rounded-full bg-emerald-500"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class=" font-medium text-lg">Rs 3500</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div><!-- Product 9 -->
+                    <div class="group product-card" data-id="6" data-name="Premium Blend Shirt" data-price="3500"
+                        data-desc="Our signature premium blend. Heavyweight cotton with a boxy fit. Features puff print typography on the back."
+                        data-img="p3.jpg">
+                        <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
+                            <img src="p3.jpg" alt="T-Shirt"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        </div>
+                        <h3 class="text-xl font-medium text-slate-900 mb-2">Premium Blend Shirt</h3>
+                        <div class="flex gap-2 mb-4">
+                            <div class="w-4 h-4 rounded-full bg-black"></div>
+                            <div class="w-4 h-4 rounded-full bg-white border border-slate-200"></div>
+                            <div class="w-4 h-4 rounded-full bg-emerald-500"></div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class=" font-medium text-lg">Rs 3500</span>
+                            <button
+                                class="add-btn flex items-center gap-2 bg[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+                                <span class="font-medium text-sm">Add</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Product Description / Add to Cart Modal -->
+
+    <div id="product-modal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 modal-hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeModal()"></div>
+
+        <!-- Modal Content Container -->s
+        <div id="modal-content"
+            class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden scale-out">
+            <button onclick="closeModal()"
+                class="absolute top-4 right-4 z-10 p-2 bg-white/80 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="flex flex-col md:flex-row h-full max-h-[90vh]">
+                <!-- Modal Left: Image -->
+                <div class="w-full md:w-1/2 bg-slate-100 h-64 md:h-auto relative">
+                    <img id="modal-img" src="" alt="Product Detail" class="absolute inset-0 w-full h-full object-cover">
+                </div>
+
+                <!-- Modal Right: Details -->
+                <div class="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-between bg-white overflow-y-auto">
+
+                    <!-- View State -->
+                    <div id="modal-view-state" class="flex flex-col h-full">
+                        <div>
+                            <div class="flex items-start justify-between mb-2">
+                                <h2 id="modal-title" class="text-3xl font-semibold tracking-tight text-slate-900"></h2>
+                                <span id="modal-price"
+                                    class="text-xl font-medium text-sky-500 bg-sky-50 px-3 py-1 rounded-lg"></span>
+                            </div>
+
+                            <p id="modal-desc" class="text-slate-500 leading-relaxed text-lg mb-8"></p>
+
+                            <div class="mb-8">
+                                <label class="block text-slate-900 font-medium mb-3">Select Size</label>
+                                <div class="flex gap-3">
+                                    <button
+                                        class="size-opt w-12 h-12 rounded-lg border border-slate-200 text-slate-600 font-medium hover:border-sky-400 hover:text-sky-500 focus:ring-2 focus:ring-sky-100 focus:bg-sky-50 focus:border-sky-400 transition-all active-size"
+                                        data-size="S">S</button>
+                                    <button
+                                        class="size-opt w-12 h-12 rounded-lg border border-slate-200 text-slate-600 font-medium hover:border-sky-400 hover:text-sky-500 focus:ring-2 focus:ring-sky-100 focus:bg-sky-50 focus:border-sky-400 transition-all"
+                                        data-size="M">M</button>
+                                    <button
+                                        class="size-opt w-12 h-12 rounded-lg border border-slate-200 text-slate-600 font-medium hover:border-sky-400 hover:text-sky-500 focus:ring-2 focus:ring-sky-100 focus:bg-sky-50 focus:border-sky-400 transition-all"
+                                        data-size="L">L</button>
+                                    <button
+                                        class="size-opt w-12 h-12 rounded-lg border border-slate-200 text-slate-600 font-medium hover:border-sky-400 hover:text-sky-500 focus:ring-2 focus:ring-sky-100 focus:bg-sky-50 focus:border-sky-400 transition-all"
+                                        data-size="XL">XL</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto pt-6 border-t border-slate-100">
+                            <button onclick="addToCartConfirm()"
+                                class="w-full bg-slate-900 hover:bg-slate-800 text-white text-lg font-medium py-4 rounded-xl shadow-lg shadow-slate-200 transition-all flex items-center justify-center gap-3 active:scale-[0.98]">
+                                <span>Add to Cart</span>
+                                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Success State (Hidden by default) -->
+                    <div id="modal-success-state"
+                        class="hidden flex-col h-full justify-center items-center text-center animate-fade-in">
+                        <div
+                            class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+                            <i data-lucide="check" class="w-10 h-10"></i>
+                        </div>
+                        <h3 class="text-2xl font-semibold text-slate-900 mb-2">Added to Cart!</h3>
+                        <p class="text-slate-500 text-lg mb-8 max-w-xs mx-auto">
+                            <span id="success-product-name" class="font-medium text-slate-800"></span> has been
+                            successfully added.
+                        </p>
+
+                        <div class="flex flex-col w-full gap-3">
+                            <button onclick="closeModal()"
+                                class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-medium hover:bg-slate-800 transition-colors">
+                                Continue Shopping
+                            </button>
+                            <button onclick="window.location.href='../addtocart/addtocart.html'"
+                                class="w-full bg-white border border-slate-200 text-slate-700 py-3.5 rounded-xl font-medium hover:bg-slate-50 transition-colors">
+                                View Cart
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="shirtify-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+
+                <div class="footer-col brand-col">
+                    <h2 class="footer-logo">SHIRTIFY</h2>
+                    <p class="footer-tagline">
+                        Curating timeless style for the modern wardrobe.
+                    </p>
+                </div>
+
+                <div class="footer-col">
+                    <h3 class="footer-heading">Shop</h3>
+                    <ul class="footer-links">
+                        <li><a href="../shopscreen/shopscreen.html">T-shirts</a></li>
+                        <li><a href="../shopscreen/shopscreen.html">Hoodies</a></li>
+                        <li><a href="../shopscreen/shopscreen.html">Accessories</a></li>
+                        <li><a href="../shopscreen/shopscreen.html">New Arrivals</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h3 class="footer-heading">Support</h3>
+                    <ul class="footer-links">
+                        <li>
+                            <details>
+                                <summary class="contactus" class="cursor-pointer text:bg-[#94D5E0] hover:underline">Faq
+                                </summary>
+
+                                <div class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                    <p class="text-sm text-slate-600"><strong>Email:</strong>shirtify@gmail.com</p>
+                                    <p class="text-sm text-slate-600"><strong>Contact:</strong>+92012-3456789</p>
+                                    <p class="text-sm text-slate-600"><strong>instagram:</strong>shirtify</p>
+                                </div>
+                            </details>
+                        </li>
+                        <li><a href="../pco/pco.html">Shipping & Delivery</a></li>
+                        <li><a href="#">Returns & Exchanges</a></li>
+                        <li>
+                            <details>
+                                <summary class="contactus" class="cursor-pointer text:bg-[#94D5E0] hover:underline">
+                                    contact us</summary>
+
+                                <div class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                    <p class="text-sm text-slate-600"><strong>Email:</strong>shirtify@gmail.com</p>
+                                    <p class="text-sm text-slate-600"><strong>Contact:</strong>+92012-3456789</p>
+                                    <p class="text-sm text-slate-600"><strong>instagram:</strong>shirtify</p>
+                                </div>
+                            </details>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h3 class="footer-heading">Follow Us</h3>
+                    <div class="social-icons">
+                        <a href="#" class="social-btn"><img class="social-btn-img" src="download.jpeg"
+                                alt="instagram"></a>
+                        <a href="#" class="social-btn"><img class="social-btn-img" src="facebook.png"
+                                alt="facebook"></a>
+                        <a href="#" class="social-btn"><img class="social-btn-img" src="twitter.png" alt="twitter"></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p class="copyright">© 2026 Shirtify. All rights reserved.</p>
+
+                <div class="payment-methods">
+                    <img src="easypaisa.png" alt="easypaisa">
+                    <img src="jazzcash.png" alt="jazzcash">
+                    <img src="nayapay.jpeg" alt="Nayapay">
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="shopscreen.js"></script>
+    <script>
+        // header-loader.js
+        function loadHeader() {
+            fetch('../header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error loading header:', error));
+        }
+
+        // Run the function when the page loads
+        window.onload = loadHeader;
+    </script>
+</body>
+
+</html>

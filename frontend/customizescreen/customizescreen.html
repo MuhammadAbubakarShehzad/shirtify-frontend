@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shirtify Design Studio</title>
+    <link rel="stylesheet" href="customizescreen.css">
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+</head>
+<body>
+ <header>
+        <div class="logo">SHIRTIFY</div>
+        <nav>
+            <ul>
+                <li><a href="../homescreen/homescreen.html">Home</a></li>
+                <li><a href="../shopscreen/shopscreen.html">Shop</a></li>
+                <li><a href="../customizescreen/customizescreen.html">Design Studio</a></li>
+                <li><a href="../try-on-screen/try-on-screen.html">Try On</a></li>
+                <li><a href="../aboutscreen/about.html">About</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search products">
+            </div>
+            <div class="icons">
+                <i class="fas fa-shopping-cart" onclick="window.location.href='../addTocart/addtocart.html'" type="button"></i>
+                <i class="fas fa-box" onclick="window.location.href='../orderinfo/orderinfo.html'" type="button"></i>
+                <i class="fas fa-sign-out-alt" onclick="window.location.href='../login/login.html'"></i>
+            </div>
+        </div>
+    </header>
+
+    <!-- Stepper Section -->
+    <main class="studio-container">
+      <div id="customize-stepper">
+        <h2>Customize Your Shirt</h2>
+        <div class="step step-1">
+          <label for="catalog-product">1. Select Shirt Style/Color:</label>
+                    <select id="catalog-product">
+                        <option value="" selected disabled>Loading shirts...</option>
+                    </select>
+        </div>
+        <div class="step step-2" style="display:none; margin-top:16px;">
+          <label for="catalog-size">2. Select Size:</label>
+          <select id="catalog-size">
+            <option value="" selected disabled>Select size</option>
+            <option value="S">Small (S)</option>
+            <option value="M">Medium (M)</option>
+            <option value="L">Large (L)</option>
+            <option value="XL">Extra Large (XL)</option>
+          </select>
+        </div>
+        <div class="step step-3" style="margin-top:16px;">
+          <button id="start-customizing-btn" disabled>Start Customizing</button>
+        </div>
+      </div>
+
+      <!-- Design Studio (hidden initially) -->
+      <div id="design-studio" style="display:none;">
+        <div class="studio-header">
+            <h1>Design Studio</h1>
+            <div class="action-buttons">
+                <button class="btn-save" onclick="saveDesign()">Save</button>
+                <button class="btn-add" onclick="addCustomToCart()">Add to Cart</button>
+            </div>
+        </div>
+
+        <div class="top-controls">
+            <div class="input-group">
+                <label>Design Name</label>
+                <input type="text" id="design-name" placeholder="Enter your design name">
+            </div>
+            <div class="input-group">
+                <label>Shirt Name</label>
+                <input type="text" id="product-selected-display" readonly>
+            </div>
+            <div class="input-group">
+                <label>Size</label>
+                <input type="text" id="size-selected-display" readonly>
+            </div>
+        </div>
+
+        <div class="editor-layout">
+            <div class="canvas-section">
+                <div class="toolbar">
+                    <button onclick="addText()" title="Add Text">T</button>
+                    <button onclick="addRect()" title="Add Rectangle">■</button>
+                    <button onclick="addCircle()" title="Add Circle">●</button>
+                    <button onclick="triggerUpload()" title="Upload Image">🖼️</button>
+                    <div class="separator"></div>
+                    <button onclick="undo()" title="Undo">↩</button>
+                    <button onclick="redo()" title="Redo">↪</button>
+                    <button onclick="deleteObject()" title="Delete Selection">🗑️</button>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="main-canvas" width="600" height="500"></canvas>
+                </div>
+            </div>
+            <aside class="properties-sidebar">
+                <h3>Properties</h3>
+                <div class="prop-group">
+                    <label>Font Size</label>
+                    <input type="number" id="font-size-input" value="24">
+                </div>
+                <div class="prop-group">
+                    <label>Color (Fill / Text)</label>
+                    <div class="color-picker-row">
+                        <input type="color" id="fill-color" value="#10B981">
+                        <input type="text" id="color-hex" value="#10B981">
+                    </div>
+                </div>
+                <div class="prop-group">
+                    <label>Opacity</label>
+                    <input type="range" id="opacity" min="0" max="1" step="0.1" value="1">
+                </div>
+                <div class="grid-props">
+                    <div class="prop-group">
+                        <label>X Pos</label>
+                        <input type="number" id="pos-x">
+                    </div>
+                    <div class="prop-group">
+                        <label>Y Pos</label>
+                        <input type="number" id="pos-y">
+                    </div>
+                    <div class="prop-group">
+                        <label>Width</label>
+                        <input type="number" id="obj-width">
+                    </div>
+                    <div class="prop-group">
+                        <label>Height</label>
+                        <input type="number" id="obj-height">
+                    </div>
+                </div>
+            </aside>
+        </div>
+      </div>
+        </main>
+        <script>
+            window.addEventListener('load', () => {
+                const productSelect = document.getElementById('catalog-product');
+                productSelect.innerHTML = '<option value="" selected disabled>Loading shirts...</option>';
+                fetch('http://localhost:5000/api/products')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.length) {
+                            productSelect.innerHTML = '<option value="" selected disabled>No shirts found</option>';
+                            return;
+                        }
+                        productSelect.innerHTML = '<option value="" selected disabled>Select a shirt</option>';
+                        data.forEach(prod => {
+                            const opt = document.createElement('option');
+                            opt.value = prod._id;
+                            opt.textContent = prod.title;
+                            productSelect.appendChild(opt);
+                        });
+                    })
+                    .catch(err => {
+                        productSelect.innerHTML = '<option value="" selected disabled>Error loading products</option>';
+                        console.error('Product fetch error:', err);
+                    });
+            });
+        </script>
+
+    <input type="file" id="image-upload" hidden accept="image/*">
+
+        <script src="customizescreen.js"></script>
+        <script>
+            // Stepper logic
+            const productSelect = document.getElementById('catalog-product');
+            const sizeSelect = document.getElementById('catalog-size');
+            const step2 = document.querySelector('.step-2');
+            const startBtn = document.getElementById('start-customizing-btn');
+            let selectedProduct = '';
+            let selectedSize = '';
+
+            productSelect.addEventListener('change', function() {
+                selectedProduct = this.value;
+                if (selectedProduct) {
+                    step2.style.display = 'block';
+                } else {
+                    step2.style.display = 'none';
+                    sizeSelect.value = '';
+                }
+                checkStepperReady();
+            });
+
+            sizeSelect.addEventListener('change', function() {
+                selectedSize = this.value;
+                checkStepperReady();
+            });
+
+            function checkStepperReady() {
+                if (selectedProduct && selectedSize) {
+                    startBtn.disabled = false;
+                } else {
+                    startBtn.disabled = true;
+                }
+            }
+
+
+            startBtn.addEventListener('click', function() {
+                // Hide stepper, show studio
+                document.getElementById('customize-stepper').style.display = 'none';
+                document.getElementById('design-studio').style.display = 'block';
+                // Fill product/size display
+                document.getElementById('product-selected-display').value = productSelect.options[productSelect.selectedIndex].text;
+                document.getElementById('size-selected-display').value = sizeSelect.value;
+
+                // Initialize Fabric.js canvas and restore toolbar functionality
+                if (!window.fabricCanvas) {
+                    window.fabricCanvas = new fabric.Canvas('main-canvas');
+                } else {
+                    window.fabricCanvas.clear();
+                }
+                // Add shirt image as a movable object in the foreground
+                fetch(`http://localhost:5000/api/products/${selectedProduct}`)
+                    .then(res => res.json())
+                    .then(product => {
+                        if (product.imageUrl) {
+                            fabric.Image.fromURL(product.imageUrl, function(img) {
+                                img.set({
+                                    left: 50,
+                                    top: 50,
+                                    selectable: true,
+                                    hasControls: true,
+                                    hasBorders: true
+                                });
+                                img.scaleToWidth(window.fabricCanvas.width * 0.8);
+                                window.fabricCanvas.add(img);
+                                window.fabricCanvas.setActiveObject(img);
+                                window.fabricCanvas.renderAll();
+                            }, { crossOrigin: 'anonymous' });
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Product image fetch error:', err);
+                    });
+                // Toolbar functions
+                window.addText = function() {
+                    const text = new fabric.IText('Enter text here', {
+                        left: 150,
+                        top: 80,
+                        fontSize: 24,
+                        fill: '#000000',
+                        fontFamily: 'Arial, sans-serif',
+                        selectable: true,
+                        editable: true,
+                        hasControls: true,
+                        hasBorders: true
+                    });
+                    window.fabricCanvas.add(text);
+                    window.fabricCanvas.setActiveObject(text);
+                    window.fabricCanvas.renderAll();
+                };
+                window.addRect = function() {
+                    const rect = new fabric.Rect({
+                        left: 150,
+                        top: 80,
+                        width: 150,
+                        height: 100,
+                        fill: '#10B981',
+                        stroke: '#059669',
+                        strokeWidth: 2,
+                        selectable: true
+                    });
+                    window.fabricCanvas.add(rect);
+                    window.fabricCanvas.setActiveObject(rect);
+                    window.fabricCanvas.renderAll();
+                };
+                window.addCircle = function() {
+                    const circle = new fabric.Circle({
+                        left: 200,
+                        top: 80,
+                        radius: 50,
+                        fill: '#10B981',
+                        stroke: '#059669',
+                        strokeWidth: 2,
+                        selectable: true
+                    });
+                    window.fabricCanvas.add(circle);
+                    window.fabricCanvas.setActiveObject(circle);
+                    window.fabricCanvas.renderAll();
+                };
+                window.triggerUpload = function() {
+                    document.getElementById('image-upload').click();
+                };
+                window.undo = function() {
+                    // Simple undo: remove last object
+                    const objs = window.fabricCanvas.getObjects();
+                    if (objs.length > 0) {
+                        window.fabricCanvas.remove(objs[objs.length - 1]);
+                        window.fabricCanvas.renderAll();
+                    }
+                };
+                window.redo = function() {
+                    // No-op for now
+                };
+                window.deleteObject = function() {
+                    const active = window.fabricCanvas.getActiveObject();
+                    if (active) {
+                        window.fabricCanvas.remove(active);
+                        window.fabricCanvas.renderAll();
+                    }
+                };
+                document.getElementById('image-upload').onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        fabric.Image.fromURL(event.target.result, (img) => {
+                            img.scaleToWidth(200);
+                            window.fabricCanvas.add(img);
+                            window.fabricCanvas.setActiveObject(img);
+                            window.fabricCanvas.renderAll();
+                        }, {}, { crossOrigin: 'anonymous' });
+                    };
+                    reader.readAsDataURL(file);
+                };
+            });
+
+            // header-loader.js
+            function loadHeader() {
+                fetch('../header.html')
+                    .then(response => response.text())
+                    .then(data => {
+                        const headerPlaceholder = document.getElementById('header-placeholder');
+                        if (headerPlaceholder) headerPlaceholder.innerHTML = data;
+                    })
+                    .catch(error => console.error('Error loading header:', error));
+            }
+            window.onload = loadHeader;
+        </script>
+</body>
+</html>

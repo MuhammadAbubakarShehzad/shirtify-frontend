@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shirtify - Login</title>
+    <link rel="stylesheet" href="login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="header-section">
+            <div class="logo-area">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <h1>SHIRTIFY</h1>
+            </div>
+            <p>Design, customize, and shop your perfect tee</p>
+        </div>
+
+        <div class="form-content">
+            <div class="tab-container">
+                <button class="tab active" id="loginTab">Login</button>
+                <button class="tab" id="signUpTab">Sign Up</button>
+            </div>
+
+            <form id="authForm">
+                <div class="input-group signup-only" style="display:none;">
+                    <label>Full Name</label>
+                    <input type="text" id="fullName" placeholder="Your name">
+                </div>
+
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" placeholder="your@email.com" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" placeholder="........." required>
+                </div>
+
+                <div class="input-group signup-only" style="display:none;">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm password">
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-container">
+                        <input type="checkbox" checked>
+                        <span class="checkmark"></span>
+                        Remember me
+                    </label>
+                    <a href="../forgot/forgot.html" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="submit-btn">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>

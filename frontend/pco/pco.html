@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Information - Shirtify</title>
+    <link rel="stylesheet" href="proceedcheckout.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+ <header>
+        <div class="logo">SHIRTIFY</div>
+        <nav>
+            <ul>
+                <li><a href="../homescreen/homescreen.html">Home</a></li>
+                <li><a href="../shopscreen/shopscreen.html">Shop</a></li>
+                <li><a href="../customizescreen/customizescreen.html">Design Studio</a></li>
+                <li><a href="../try-on-screen/try-on-screen.html">Try On</a></li>
+                <li><a href="../aboutscreen/about.html">About</a></li>
+            </ul>
+        </nav>
+        <div class="header-actions">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search products">
+            </div>
+            <div class="icons">
+                <i class="fas fa-shopping-cart" onclick="window.location.href='../addTocart/addtocart.html'" type="button"></i>
+                <i class="fas fa-box" onclick="window.location.href='../orderinfo/orderinfo.html'" type="button"></i>
+                <i class="fas fa-sign-out-alt" onclick="window.location.href='../login/login.html'"></i>
+            </div>
+        </div>
+    </header>
+    <main class="checkout-container">
+        <div class="progress-bar">
+            <div class="step active">
+                <div class="step-icon">🚚</div>
+                <span>Shipping</span>
+            </div>
+            <div class="step" onclick="window.location.href='../payment-info/payment-info.html'">
+                <div class="step-icon">💳</div>
+                <span>Payment</span>
+            </div>
+        </div>
+
+        <div class="checkout-grid">
+            <section class="form-section">
+                <h2>Shipping Information</h2>
+                <form id="shippingForm">
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Full Name *</label>
+                            <input type="text" placeholder="Name" required>
+                        </div>
+                        <div class="input-group">
+                            <label>Email*</label>
+                            <input type="email" placeholder="123@gmail.com" required>
+                        </div>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label>Phone</label>
+                        <input type="tel" placeholder="+92123-45678910">
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label>Address</label>
+                        <input type="text" placeholder="H# 1213, Rawalpindi" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>City</label>
+                            <input type="text" placeholder="Rawalpindi">
+                        </div>
+                        <div class="input-group">
+                            <label>State</label>
+                            <input type="text" placeholder="Punjab">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>ZIP Code</label>
+                            <input type="text" placeholder="46000">
+                        </div>
+                        <div class="input-group">
+                            <label>Country</label>
+                            <input type="text" placeholder="Pakistan">
+                        </div>
+                    </div>
+
+                    <button onclick="window.location.href='../payment-info/payment-info.html'" type="button" class="btn-continue">Continue To Payment</button>
+                </form>
+            </section>
+
+            <aside class="summary-section">
+                <div class="summary-card">
+                    <div id="checkout-cart-items"></div>
+                    <hr>
+                    <div class="row"><span>Subtotal</span><span id="subtotal">Rs 0.00</span></div>
+                    <div class="row"><span>Shipping</span><span id="shipping">Rs 100.00</span></div>
+                    <div class="row"><span>Tax</span><span id="tax">Rs 0.00</span></div>
+                    <hr>
+                    <div class="total-row">
+                        <span>Total</span>
+                        <span id="final-total">Rs 0.00</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script src="proceedcheckout.js"></script>
+    <script>
+        // header-loader.js
+        function loadHeader() {
+            fetch('../header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error loading header:', error));
+        }
+
+        // Run the function when the page loads
+        window.onload = loadHeader;
+    </script>
+</body>
+</html>

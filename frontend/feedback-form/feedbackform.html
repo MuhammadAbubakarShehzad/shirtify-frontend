@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Form</title>
+    <link rel="stylesheet" href="feedbackform.css">
+</head>
+<body>
+
+    <div class="card">
+        <div class="header">
+            <span class="icon">✉️</span>
+            <h1>Submit Your Feedback</h1>
+        </div>
+
+        <form id="feedbackForm">
+            <div class="row">
+                <div class="purpose-group">
+                    <label>Purpose</label>
+                    <div class="radio-options">
+                        <label><input type="radio" name="purpose" value="issue"> Report an Issue</label>
+                        <label><input type="radio" name="purpose" value="feedback"> General Feedback</label>
+                    </div>
+                </div>
+                <div class="rating-group">
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                </div>
+            </div>
+
+            <label>Rating</label>
+            <input type="text" placeholder="Subject" required>
+            <input type="text" placeholder="Subject" required>
+            <input type="text" placeholder="Full Name" required>
+            <input type="email" placeholder="E-mail" required>
+
+            <label>Message</label>
+            <textarea placeholder="Tell Us about your experience" rows="3"></textarea>
+
+            <div class="button-group">
+                <button type="reset" class="btn-clear">Clear</button>
+                <button type="submit" class="btn-submit">Submit</button>
+            </div>
+        </form>
+
+        <div id="successModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Thank you!</h2>
+                <p>Your Feedback has Submitted successfully</p>
+                <button onclick="window.location.href='../orderconformation/orderconfirmation.html'" id="closeModal" class="btn-submit">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="feedbackform.js"></script>
+</body>
+</html>

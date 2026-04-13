@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - Shirtify</title>
+    <link rel="stylesheet" href="orderinfo.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="orders-container">
+        <div class="page-header">
+            <div class="title-group">
+                <span class="box-icon">📦</span>
+                <h1>My Orders</h1>
+            </div>
+            <button class="btn-outline" onclick="location.href='../shopscreen/shopscreen.html'">
+                <span class="icon">🛒</span> Continue Shopping
+            </button>
+        </div>
+
+        <div class="orders-list" id="orders-list">
+            <!-- Orders will be rendered here dynamically -->
+        </div>
+    </main>
+
+    <script src="orderinfo.js"></script>
+    <script>
+        // header-loader.js
+        function loadHeader() {
+            fetch('../header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error loading header:', error));
+        }
+
+        // Run the function when the page loads
+        window.onload = loadHeader;
+    </script>
+</body>
+</html>

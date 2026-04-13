@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shirtify - AI Virtual Try-On</title>
+    <link rel="stylesheet" href="try-on-screen.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div id="header-placeholder"></div>
+
+    <main>
+        <h1>AI Virtual Try-On</h1>
+        <p class="subtitle">See how your custom design looks on you before ordering</p>
+
+        <div class="container">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <i class="fa fa-handshake"></i>
+                    <span>AI Assistant<br><small>Online</small></span>
+                </div>
+                <div class="chat-box" id="chatBox">
+                    <div class="message bot-message">
+                        Hi! I'm your AI shopping assistant. Upload your photo and tell me what design you'd like to
+                        try on!
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" placeholder="Ask About Design or Try-On">
+                    <button id="sendBtn"><i class="fa fa-paper-plane"></i></button>
+                </div>
+            </div>
+
+            <div class="upload-container">
+                <div class="drop-zone" id="dropZone">
+                    <i class="fa fa-upload upload-icon"></i>
+                    <h3>Upload Your Photo</h3>
+                    <button class="btn-light"> <i class="fa fa-upload"></i> Choose Photo</button>
+                    <input type="file" id="fileInput" hidden>
+                </div>
+                     <button class="btn-outline" id="selectshirt">Select T-Shirt Design <i class="fa fa-upload"></i></button>
+                     <input type="file" id="fileInput" hidden>
+                <button class="btn-primary" id="generateBtn">Generate Try-On</button>
+            </div>
+        </div>
+    </main>
+
+
+    <script src="try-on-screen.js"></script>
+    <script>
+        // header-loader.js
+        function loadHeader() {
+            fetch('../header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error loading header:', error));
+        }
+
+        // Run the function when the page loads
+        window.onload = loadHeader;
+    </script>
+</body>
+
+</html>

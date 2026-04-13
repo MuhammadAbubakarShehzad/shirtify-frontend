@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homescreen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="homescreen.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- PRODUCT MODAL -->
+    <div id="product-modal" class="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 modal-hidden hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onclick="closeModal()"></div>
+        <!-- Modal Content -->
+        <div id="modal-content"
+            class="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden scale-95 transition-all">
+            <button onclick="closeModal()"
+                class="absolute top-4 right-4 z-10 p-2 bg-white/80 rounded-full hover:bg-slate-100">
+                ✕
+            </button>
+            <div class="flex flex-col md:flex-row max-h-[90vh]">
+                <!-- Image -->
+                <div class="w-full md:w-1/2 bg-slate-100 relative">
+                    <img id="modal-img" class="w-full h-full object-cover" />
+                </div>
+                <!-- Details -->
+                <div class="w-full md:w-1/2 p-8 flex flex-col">
+                    <h2 id="modal-title" class="text-3xl font-semibold mb-2"></h2>
+                    <span id="modal-price" class="text-xl font-medium text-sky-500 mb-4"></span>
+                    <p id="modal-desc" class="text-slate-500 mb-6"></p>
+                    <!-- Sizes -->
+                    <div class="mb-6">
+                        <p class="font-medium mb-2">Select Size</p>
+                        <div class="flex gap-2">
+                            <button class="size-opt active-size" data-size="S">S</button>
+                            <button class="size-opt" data-size="M">M</button>
+                            <button class="size-opt" data-size="L">L</button>
+                            <button class="size-opt" data-size="XL">XL</button>
+                        </div>
+                    </div>
+                    <button onclick="addToCartConfirm()"
+                        class="mt-auto bg-slate-900 text-white py-4 rounded-xl hover:bg-slate-800">
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="header-placeholder"></div>
+    <section class="hero">
+        <h1>Design Your <br><span>Perfect T-Shirt</span></h1>
+        <p>Create unique, personalized t-shirts with our intuitive design studio. Try them on virtually with AI before
+            you buy!</p>
+        <div class="hero-buttons">
+            <button class="btn btn-primary" onclick="window.location.href='../customizescreen/customizescreen.html'"
+                type="button">Customize Your Tee</button>
+            <button class="btn btn-secondary" onclick="window.location.href='../shopscreen/shopscreen.html'"
+                type="button">Browse Collection</button>
+        </div>
+    </section>
+    <section class="features">
+        <div id="home-product-grid" class="product-grid">
+            <!-- products loaded dynamically from backend -->
+        </div>
+        <div class="view-all-container">
+            <button class="btn-view-all" onclick="window.location.href='../shopscreen/shopscreen.html'"
+                type="button">View All Product</button>
+        </div>
+    </section>
+    <footer class="shirtify-footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-col brand-col">
+                    <h2 class="footer-logo">SHIRTIFY</h2>
+                    <p class="footer-tagline">
+                        Curating timeless style for the modern wardrobe.
+                    </p>
+                </div>
+                <div class="footer-col">
+                    <h3 class="footer-heading">Shop</h3>
+                    <ul class="footer-links">
+                        <li><a href="../shopscreen/shopscreen.html">T-shirts</a></li>
+                        <li><a href="../shopscreen/shopscreen.html">Hoodies</a></li>
+                        <li><a href="../shopscreen/shopscreen.html">Accessories</a></li>
+                        <li><a href="../shopscreen/shopscreen.html">New Arrivals</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3 class="footer-heading">Support</h3>
+                    <ul class="footer-links">
+                        <li>
+                            <details>
+                                <summary class="contactus" class="cursor-pointer text:bg-[#94D5E0] hover:underline">Faq
+                                </summary>
+                                <div class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                    <p class="text-sm text-slate-600"><strong>Email:</strong>shirtify@gmail.com</p>
+                                    <p class="text-sm text-slate-600"><strong>Contact:</strong>+92012-3456789</p>
+                                    <p class="text-sm text-slate-600"><strong>instagram:</strong>shirtify</p>
+                                </div>
+                            </details>
+                        </li>
+                        <li><a href="../pco/pco.html">Shipping & Delivery</a></li>
+                        <li><a href="#">Returns & Exchanges</a></li>
+                        <li>
+                            <details>
+                                <summary class="contactus" class="cursor-pointer text:bg-[#94D5E0] hover:underline">
+                                    contact us</summary>
+
+                                <div class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                                    <p class="text-sm text-slate-600"><strong>Email:</strong>shirtify@gmail.com</p>
+                                    <p class="text-sm text-slate-600"><strong>Contact:</strong>+92012-3456789</p>
+                                    <p class="text-sm text-slate-600"><strong>instagram:</strong>shirtify</p>
+                                </div>
+                            </details>
+                        </li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h3 class="footer-heading">Follow Us</h3>
+                    <div class="social-icons">
+                        <a href="#" class="social-btn"><img class="social-btn-img" src="download.jpeg"
+                                alt="instagram"></a>
+                        <a href="#" class="social-btn"><img class="social-btn-img" src="facebook.png"
+                                alt="facebook"></a>
+                        <a href="#" class="social-btn"><img class="social-btn-img" src="twitter.png" alt="twitter"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p class="copyright">© 2026 Shirtify. All rights reserved.</p>
+
+                <div class="payment-methods">
+                    <img src="easypaisa.png" alt="easypaisa">
+                    <img src="jazzcash.png" alt="jazzcash">
+                    <img src="nayapay.jpeg" alt="Nayapay">
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="homescreen.js"></script>
+    <script>
+        // header-loader.js
+        function loadHeader() {
+            fetch('../header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error loading header:', error));
+        }
+        // Run the function when the page loads
+        window.onload = loadHeader;
+    </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - Shirtify</title>
+    <link rel="stylesheet" href="payment-info.css">
+</head>
+<body>
+<div id="header-placeholder"></div>
+    <main class="checkout-container">
+        <div class="steps-header">
+            <div class="step" onclick="window.location.href='../pco/pco.html'" ><span class="step-icon">🚚</span> Shipping</div>
+            <div class="step active"><span class="step-icon">💳</span> Payment</div>
+        </div>
+
+        <div class="checkout-grid">
+            <div class="payment-section">
+                <!-- Payment Method Selection -->
+<div class="payment-methods">
+    <label>
+        <input type="radio" name="payment" checked onclick="showForm('bank')">
+        Bank
+    </label>
+
+    <label>
+        <input type="radio" name="payment" onclick="showForm('easypaisa')">
+        EasyPaisa
+    </label>
+
+    <label>
+        <input type="radio" name="payment" onclick="showForm('jazzcash')">
+        JazzCash
+    </label>
+</div>
+
+<!-- Bank Payment Form -->
+<div id="bankForm" class="payment-form">
+    <h3>Bank Payment</h3>
+
+    <label>Account / Card Number</label>
+    <input type="text" placeholder="**** **** **** 1234">
+
+    <label>Name on Card</label>
+    <input type="text" placeholder="Ali Haider">
+
+    <div class="row">
+        <div>
+            <label>Expiry Date</label>
+            <input type="month">
+        </div>
+        <div>
+            <label>CVV</label>
+            <input type="password" placeholder="***">
+        </div>
+    </div>
+</div>
+
+<!-- EasyPaisa Form -->
+<div id="easypaisaForm" class="payment-form" style="display:none;">
+    <h3>EasyPaisa Payment</h3>
+
+    <label>EasyPaisa Mobile Number</label>
+    <input type="text" placeholder="03XXXXXXXXX">
+
+    <label>Account Holder Name</label>
+    <input type="text" placeholder="Ali Haider">
+</div>
+
+<!-- JazzCash Form -->
+<div id="jazzcashForm" class="payment-form" style="display:none;">
+    <h3>JazzCash Payment</h3>
+
+    <label>JazzCash Mobile Number</label>
+    <input type="text" placeholder="03XXXXXXXXX">
+
+    <label>CNIC (Last 6 Digits)</label>
+    <input type="text" placeholder="123456">
+              </div>
+
+                <div class="payment-card">
+                    <h2>Payment Information</h2>
+                        <div class="secure-notice">
+                            <span class="shield">🛡️</span> Your Payment Information is Secured and Encrypted
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" class="btn-back" onclick="window.location.href='../pco/pco.html'">Back</button>
+                            <button id="payButton" type="button" class="btn-pay">Pay Rs 0.00</button>
+                        </div>
+                </div>
+            </div>
+
+            <aside class="summary-section">
+                <div class="summary-card">
+                    <div id="payment-cart-items"></div>
+
+                    <hr>
+                    <div class="cost-row"><span>Subtotal</span><span id="subtotal">Rs 0.00</span></div>
+                    <div class="cost-row"><span>Shipping</span><span id="shipping">Rs 100.00</span></div>
+                    <div class="cost-row"><span>Tax</span><span id="tax">Rs 0.00</span></div>
+                    <hr>
+                    <div class="total-row">
+                        <span>Total</span>
+                        <span id="total-price">Rs 0.00</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script src="payment-info.js"></script>
+    <script>
+        // header-loader.js
+        function loadHeader() {
+            fetch('../header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error loading header:', error));
+        }
+
+        // Run the function when the page loads
+        window.onload = loadHeader;
+    </script>
+</body>
+</html>

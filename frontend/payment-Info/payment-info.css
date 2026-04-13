@@ -1,0 +1,190 @@
+:root {
+    --primary-teal: #8FD3D6;
+    --text-muted: #888;
+    --bg-light: #f8f9fa;
+    --border: #eeeeee;
+}
+
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #fff; }
+
+.navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 5% ; border-bottom: 1px solid var(--border); }
+.logo { color: var(--primary-teal); font-weight: bold; font-size: 1.4rem; }
+
+.checkout-container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+
+/* Progress Steps */
+.steps-header { display: flex; justify-content: center; gap: 40px; margin-bottom: 30px; }
+.step { color: #ccc; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.step.active { color: var(--primary-teal); border-bottom: 2px solid var(--primary-teal); padding-bottom: 5px; }
+
+.checkout-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; }
+
+/* Payment Form */
+.method-selector { display: flex; gap: 10px; margin-bottom: 20px; }
+.chip { border: 1px solid var(--border); padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
+.chip:has(input:checked) { background: #f0f0f0; }
+
+.payment-card { border: 1px solid var(--border); border-radius: 15px; padding: 30px; }
+label { display: block; font-weight: 600; margin: 15px 0 8px; font-size: 0.9rem; }
+input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-light); box-sizing: border-box; }
+
+.form-row { display: flex; gap: 20px; }
+.input-group { flex: 1; }
+
+.secure-notice { background: #f4fff9; border: 1px solid #dff0e8; color: #2ecc71; padding: 12px; border-radius: 10px; margin: 25px 0; font-size: 0.85rem; }
+
+.action-buttons { display: flex; gap: 20px; }
+.btn-back { flex: 1; padding: 14px; background: white; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+.btn-pay { flex: 1.5; padding: 14px; background: var(--primary-teal); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+/* Summary */
+.summary-card { border: 1px solid var(--border); border-radius: 15px; padding: 25px; }
+.product-item { display: flex; gap: 15px; margin-bottom: 15px; }
+.prod-img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; }
+.prod-details h4 { margin: 0; font-size: 0.95rem; }
+.prod-details p { margin: 2px 0; color: var(--text-muted); font-size: 0.8rem; }
+.price { 
+    color: var(--primary-teal); 
+    font-weight: 600; 
+    font-size: 0.9rem; 
+}
+
+.cost-row {
+     display: flex; 
+    justify-content: space-between; 
+    margin: 8px 0; 
+    font-size: 0.9rem; 
+    color: #444; 
+}
+.total-row { display: flex; 
+    justify-content: space-between;
+    font-weight: bold;
+    margin-top: 10px; }
+.total-price { 
+    color: var(--primary-teal); 
+    font-size: 1.2rem; }
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-main);
+}
+
+:root {
+    --primary-color: #8FD3D6; /* Light Teal */
+    --primary-dark: #6eb7ba;
+    --text-dark: #333333;
+    --text-light: #666666;
+    --bg-gradient: linear-gradient(135deg, #d0f4f7 0%, #fefdf5 100%);
+    --white: #ffffff;
+    --font-main: 'Poppins', sans-serif;
+}
+
+header {
+    position: sticky;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    background-color:#ffffff; 
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-dark);
+    letter-spacing: 1px;
+}
+
+nav ul {
+    display: flex;
+    gap: 30px;
+    list-style-type: none;
+}
+
+nav a {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    transition: color 0.3s;
+    text-decoration: none;
+}
+
+nav a:hover { color: var(--text-dark); }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.search-box {
+    background: #f0f0f0;
+    border-radius: 5px;
+    padding: 8px 15px;
+    display: flex;
+    align-items: center;
+}
+
+.search-box input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    width: 150px;
+}
+
+.search-box i { color: #888; font-size: 14px; }
+
+.icons i {
+    cursor: pointer;
+    font-size: 18px;
+    margin-left: 15px;
+    cursor: pointer;
+    color: #333;
+}
+.payment-methods {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.payment-methods label {
+    padding: 12px 20px;
+    border: 1px solid #ddd;
+    border-radius: 14px;
+    cursor: pointer;
+    background: #f9f9f9;
+}
+
+.payment-form {
+    background: #fff;
+    padding: 24px;
+    border-radius: 18px;
+    border: 1px solid #eee;
+}
+
+.payment-form input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 16px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}
+
+.row {
+    display: flex;
+    gap: 16px;
+}
+
+.row div {
+    flex: 1;
+}
+

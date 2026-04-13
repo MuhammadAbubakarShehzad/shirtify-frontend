@@ -1,0 +1,146 @@
+const API_BASE = 'http://localhost:5000/api';
+const shippingFee = 100;
+let currentCart = null;
+
+const getToken = () => localStorage.getItem('shirtifyToken');
+
+const fetchCart = async () => {
+    const token = getToken();
+    if (!token) throw new Error('Login required to view cart');
+
+    const res = await fetch(`${API_BASE}/cart`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to fetch cart');
+    }
+
+    return res.json();
+};
+
+const updateCartToServer = async (items) => {
+    const token = getToken();
+    if (!token) throw new Error('Login required to update cart');
+
+    const res = await fetch(`${API_BASE}/cart`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ items })
+    });
+
+    if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to update cart');
+    }
+
+    return res.json();
+};
+
+const deleteCartItem = async (productId) => {
+    const token = getToken();
+    if (!token) throw new Error('Login required to remove item');
+
+    const res = await fetch(`${API_BASE}/cart/${productId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to remove item');
+    }
+
+    return res.json();
+};
+
+function renderCart() {
+    const cartList = document.getElementById('cart-list');
+
+    if (!currentCart || !currentCart.items || currentCart.items.length === 0) {
+        cartList.innerHTML = '<p class="empty-cart">Your cart is empty.</p>';
+        document.getElementById('subtotal').innerText = 'RS 0.00';
+        document.getElementById('grand-total').innerText = `RS ${shippingFee.toFixed(2)}`;
+        return;
+    }
+
+    cartList.innerHTML = currentCart.items.map(item => {
+        const product = item.product || {};
+        const title = product.title || 'Product';
+        const price = product.price || 0;
+        const img = product.imageUrl || 'https://via.placeholder.com/150';
+        return `
+            <div class="cart-item" data-id="${product._id}">
+                <img src="${img}" alt="${title}">
+                <div class="item-details">
+                    <h4>${title}</h4>
+                    <p>RS ${price.toFixed(2)}</p>
+                </div>
+                <div class="quantity-controls">
+                    <button class="qty-btn" onclick="updateQty('${product._id}', 1)">+</button>
+                    <span>${item.quantity}</span>
+                    <button class="qty-btn" onclick="updateQty('${product._id}', -1)">-</button>
+                </div>
+                <button class="remove-btn" onclick="removeItem('${product._id}')">Remove</button>
+            </div>
+        `;
+    }).join('');
+
+    updateTotals();
+}
+
+function updateTotals() {
+    const subtotal = currentCart.items.reduce((acc, item) => {
+        const price = item.product?.price || 0;
+        return acc + price * item.quantity;
+    }, 0);
+    const total = subtotal + shippingFee;
+
+    document.getElementById('subtotal').innerText = `RS ${subtotal.toFixed(2)}`;
+    document.getElementById('grand-total').innerText = `RS ${total.toFixed(2)}`;
+}
+
+window.updateQty = async (productId, change) => {
+    if (!currentCart || !currentCart.items) return;
+
+    const index = currentCart.items.findIndex(item => item.product?._id === productId);
+    if (index < 0) return;
+
+    currentCart.items[index].quantity += change;
+    if (currentCart.items[index].quantity < 1) currentCart.items[index].quantity = 1;
+
+    const updateItems = currentCart.items.map(item => ({ product: item.product._id, quantity: item.quantity }));
+    await updateCartToServer(updateItems);
+
+    currentCart = await fetchCart();
+    renderCart();
+};
+
+window.removeItem = async (productId) => {
+    try {
+        await deleteCartItem(productId);
+        currentCart = await fetchCart();
+        renderCart();
+    } catch (err) {
+        console.error(err);
+        alert(err.message || 'Could not remove item');
+    }
+};
+
+const loadCart = async () => {
+    try {
+        currentCart = await fetchCart();
+        renderCart();
+    } catch (err) {
+        const cartList = document.getElementById('cart-list');
+        cartList.innerHTML = `<p class="empty-cart">${err.message}</p>`;
+        document.getElementById('subtotal').innerText = 'RS 0.00';
+        document.getElementById('grand-total').innerText = `RS ${shippingFee.toFixed(2)}`;
+    }
+};
+
+loadCart();

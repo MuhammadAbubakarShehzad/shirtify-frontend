@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shirtify - Shop Collection</title>
+    <style>
+        /* CSS STYLES */
+        :root {
+            --primary-blue: #a3dae0;
+            --text-dark: #333;
+            --bg-light: #f4f7f8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .logo { color: var(--primary-blue); font-weight: bold; font-size: 24px; }
+        .nav-links a { text-decoration: none; color: #666; margin: 0 15px; font-size: 14px; }
+
+        /* Main Layout */
+        .container {
+            display: flex;
+            padding: 40px 5%;
+            gap: 30px;
+        }
+
+        /* Sidebar */
+        .filters {
+            width: 220px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            height: fit-content;
+        }
+
+        .color-dot {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        /* Product Grid */
+        .shop-section { flex: 1; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: left;
+            transition: 0.3s;
+        }
+
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+        .card img {
+            width: 100%;
+            border-radius: 10px;
+            cursor: pointer; /* Indicates it's clickable */
+            background-color: #eee;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .add-btn {
+            background-color: var(--primary-blue);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* MODAL STYLES (The Description Popup) */
+        .modal {
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; top: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 20px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-body img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">SHIRTIFY</div>
+        <div class="nav-links">
+            <a href="#">Home</a><a href="#">Shop</a><a href="#">Design Studio</a><a href="#">About</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <aside class="filters">
+            <h3>Filters</h3>
+            <p>Size</p>
+            <select style="width:100%; padding:8px; border-radius:5px; border:1px solid #ddd;">
+                <option>All Sizes</option>
+            </select>
+            <p>Color</p>
+            <span class="color-dot" style="background:red"></span>
+            <span class="color-dot" style="background:yellow"></span>
+            <span class="color-dot" style="background:black"></span>
+            <span class="color-dot" style="background:blue"></span>
+            <p>Price: Rs 1000 - Rs 5000</p>
+        </aside>
+
+        <section class="shop-section">
+            <h1>Shop Collection</h1>
+            <div class="grid">
+                
+                <div class="card">
+                    <img src="https://placehold.co/400x500/e74c3c/white?text=Classic+Red" 
+                         onclick="showDetails('Classic Cotton Tee', 'Rs 2500', 'Made from 100% organic cotton. This red tee offers a slim fit and breathable fabric ideal for summer.', this.src)">
+                    <h4>Classic Cotton Tee</h4>
+                    <div class="price-row">
+                        <span>Rs 2500</span>
+                        <button class="add-btn">Add</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img src="https://placehold.co/400x500/f4f4f4/333?text=Vintage+Graphic" 
+                         onclick="showDetails('Vintage Graphic Shirt', 'Rs 2900', 'Features a high-definition vintage street-style print. Oversized fit for maximum comfort.', this.src)">
+                    <h4>Vintage Graphic Shirt</h4>
+                    <div class="price-row">
+                        <span>Rs 2900</span>
+                        <button class="add-btn">Add</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img src="https://placehold.co/400x500/2c3e50/white?text=Premium+Blend" 
+                         onclick="showDetails('Premium Blend Shirt', 'Rs 3500', 'A heavy-weight luxury blend of cotton and polyester. Minimalist design with a premium feel.', this.src)">
+                    <h4>Premium Blend Shirt</h4>
+                    <div class="price-row">
+                        <span>Rs 3500</span>
+                        <button class="add-btn">Add</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <div id="descModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div class="modal-body">
+                <img id="modalImg" src="" alt="Product Image">
+                <h2 id="modalTitle">Product Name</h2>
+                <h3 id="modalPrice" style="color:var(--primary-blue)">Price</h3>
+                <p id="modalText">Description goes here...</p>
+                <button class="add-btn" style="width: 100%; padding: 12px;">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* JAVASCRIPT LOGIC */
+        function showDetails(name, price, description, imgSrc) {
+            // Fill the modal with info
+            document.getElementById('modalTitle').innerText = name;
+            document.getElementById('modalPrice').innerText = price;
+            document.getElementById('modalText').innerText = description;
+            document.getElementById('modalImg').src = imgSrc;
+
+            // Show the modal
+            document.getElementById('descModal').style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById('descModal').style.display = "none";
+        }
+
+        // Close if user clicks outside the white box
+        window.onclick = function(event) {
+            let modal = document.getElementById('descModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

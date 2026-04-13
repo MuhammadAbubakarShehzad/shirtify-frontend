@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - Shirtify</title>
+    <link rel="stylesheet" href="orderconfirmation.css">
+</head>
+<body>
+     <div id="header-placeholder"></div>
+    <main class="confirmation-container">
+        <section class="success-header">
+            <div class="check-icon">✓</div>
+            <h1>Order Confirmed!</h1>
+            <p>Thank you for your purchase. Your order has been received.</p>
+            <p class="order-id">Order ID: <span class="teal-text" id="order-id"></span></p>
+        </section>
+
+        <div class="order-details-grid">
+            <div class="product-list-card" id="product-list"></div>
+            <div class="info-column">
+                <div class="info-card">
+                    <h4>📍 Shipping Address</h4>
+                    <p class="address-text" id="shipping-address"></p>
+                </div>
+                <div class="info-card">
+                    <h4>📍 Delivery Status</h4>
+                    <ul class="status-tracker">
+                        <li class="active">Order Confirmed</li>
+                        <li>Processing</li>
+                        <li>Shipped</li>
+                        <li>Delivered</li>
+                    </ul>
+                </div>
+                <div class="action-buttons">
+                    <button onclick="window.location.href='../orderinfo/orderinfo.html'" type="button" class="btn-outline">View All Orders</button>
+                    <button onclick="window.location.href='../shopscreen/shopscreen.html'" type="button" class="btn-filled">Continue Shopping</button>
+                </div>
+            </div>
+        </div>
+        <div class="form">
+            <button onclick="showForm()">Open Form</button>
+
+<form id="myForm" style="display:none; margin-top:20px;">
+     <div class="card">
+        <div class="header">
+            <span class="icon">✉️</span>
+            <h1>Submit Your Feedback</h1>
+        </div>
+
+        <form id="feedbackForm">
+            <div class="row">
+                <div class="purpose-group">
+                    <label>Purpose</label>
+                    <div class="radio-options">
+                        <label><input type="radio" name="purpose" value="issue"> Report an Issue</label>
+                        <label><input type="radio" name="purpose" value="feedback"> General Feedback</label>
+                    </div>
+                </div>
+                <div class="rating-group">
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                    <span class="star">☆</span>
+                </div>
+            </div>
+            <div class="form-input">
+            <label>Rating</label>
+            <input type="text" placeholder="Subject" required>
+            <input type="text" placeholder="Subject" required>
+            <input type="text" placeholder="Full Name" required>
+            <input type="email" placeholder="E-mail" required>
+
+            <label>Message</label>
+            <textarea placeholder="Tell Us about your experience" rows="3"></textarea>
+            </div>
+            <div class="button-group">
+                <button type="reset" class="btn-clear">Clear</button>
+                <button type="submit" class="btn-submit">Submit</button>
+            </div>
+        </form>
+
+        <div id="successModal" class="modal hidden">
+            <div class="modal-content">
+                <h2>Thank you!</h2>
+                <p>Your Feedback has Submitted successfully</p>
+                <button onclick="window.location.href='../orderconformation/orderconfirmation.html'" id="closeModal" class="btn-submit">Close</button>
+            </div>
+        </div>
+    </div>
+</form>
+
+</div>
+
+    </main>
+
+    <script src="orderconfirmation.js"></script>
+    <script>
+        // Fix confirmation container not hidden behind header
+        document.addEventListener('DOMContentLoaded', function() {
+            const main = document.querySelector('.confirmation-container');
+            if (main) main.style.marginTop = '120px';
+        });
+
+        // Create order in backend and display details
+        document.addEventListener('DOMContentLoaded', async function() {
+            document.getElementById('order-id').textContent = '';
+            document.getElementById('shipping-address').textContent = '';
+            const token = localStorage.getItem('shirtifyToken');
+            if (!token) {
+                document.getElementById('product-list').innerHTML = '<p>Please log in to confirm your order.</p>';
+                return;
+            }
+            try {
+                // You may want to collect shipping/payment info from user before this step
+                const shippingAddress = localStorage.getItem('shirtifyShippingAddress') || '';
+                const paymentMethod = localStorage.getItem('shirtifyPaymentMethod') || 'cod';
+                const res = await fetch('http://localhost:5000/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ shippingAddress, paymentMethod })
+                });
+                if (!res.ok) throw new Error('Unable to create order');
+                const order = await res.json();
+                document.getElementById('order-id').textContent = order._id.slice(-8).toUpperCase();
+                document.getElementById('shipping-address').textContent = order.shippingAddress || 'N/A';
+                if (order.items && order.items.length > 0) {
+                    document.getElementById('product-list').innerHTML = order.items.map(item => {
+                        const product = item.product || {};
+                        const name = product.title || product.name || 'Product';
+                        const price = item.price || 0;
+                        const qty = item.quantity;
+                        const img = (product.image || product.imageUrl) || 'https://via.placeholder.com/80';
+                        const lineTotal = price * qty;
+                        return `
+                            <div class="product-item">
+                                <div class="product-img-container">
+                                    <img src="${img}" alt="${name}" class="product-image">
+                                </div>
+                                <div class="product-info">
+                                    <h3>${name}</h3>
+                                    <p>Qty: ${qty}</p>
+                                    <p class="price">Rs ${lineTotal.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    document.getElementById('product-list').innerHTML = '<p>No order details found.</p>';
+                }
+            } catch (err) {
+                document.getElementById('product-list').innerHTML = '<p>Could not create order.</p>';
+                console.error(err);
+            }
+        });
+    </script>
+    <script>
+        // header-loader.js
+        function loadHeader() {
+            fetch('../header.html')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('header-placeholder').innerHTML = data;
+                })
+                .catch(error => console.error('Error loading header:', error));
+        }
+
+        // Run the function when the page loads
+        window.onload = loadHeader;
+    </script>
+</body>
+</html>

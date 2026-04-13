@@ -1,0 +1,134 @@
+:root {
+    --light-teal: #a3d9e2;
+    --dark-teal: #96d2db;
+    --text-black: #000000;
+    --text-gray: #707070;
+    --border-color: #e0e0e0;
+    --bg-gradient: linear-gradient(135deg, #d3f3f1 0%, #e2f1e6 100%);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-gradient);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.card {
+    background: white;
+    width: 380px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+/* Header Section styling */
+.header-section {
+    background-color: var(--light-teal);
+    padding: 40px 20px;
+    text-align: center;
+    color: white;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.brand h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+}
+
+.bag-icon {
+    font-size: 1.8rem;
+    border: 2px solid white;
+    padding: 2px 6px;
+    border-radius: 8px;
+}
+
+.header-section p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* Form Section styling */
+.form-content {
+    padding: 40px 30px;
+    text-align: center;
+}
+
+h2 {
+    margin: 0 0 40px 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    color: var(--text-gray);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+input[type="email"] {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    color: var(--text-gray);
+}
+
+/* Buttons */
+.btn-primary {
+    width: 100%;
+    background-color: var(--dark-teal);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 15px;
+    transition: background 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #85c1ca;
+}
+
+.btn-outline {
+    width: 100%;
+    background-color: white;
+    color: var(--text-black);
+    border: 1px solid var(--border-color);
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-outline:hover {
+    background-color: #f9f9f9;
+}
+.logo-area i { font-size: 30px; }
