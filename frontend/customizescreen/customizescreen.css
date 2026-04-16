@@ -1,4 +1,226 @@
+/* Canva-like Shape Sidebar Styles */
+.shape-toolbar-sidebar {
+    position: fixed;
+    top: 80px;
+    right: 0;
+    width: 220px;
+    background: #fff;
+    border-radius: 12px 0 0 12px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.13);
+    z-index: 1000;
+    padding: 18px 12px 12px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: opacity 0.2s, right 0.2s;
+}
+.shape-toolbar-sidebar .toolbar-header {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #10B981;
+}
+.shape-toolbar-sidebar .shapes-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.shape-toolbar-sidebar .shape-btn {
+    background: #f8f8f8;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 22px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, border 0.2s;
+}
+.shape-toolbar-sidebar .shape-btn:hover {
+    background: #10B981;
+    color: #fff;
+    border: 1.5px solid #10B981;
+}
+.toolbar button#show-shape-toolbar {
+    margin-left: 8px;
+}
+@media (max-width: 900px) {
+    .shape-toolbar-sidebar {
+        width: 98vw;
+        left: 0;
+        right: 0;
+        border-radius: 0;
+        top: 60px;
+    }
+}
+/* Canva-like Text Toolbar in Toolbar Area */
+.text-toolbar-container {
+    position: relative;
+    display: inline-block;
+}
+.canva-text-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    padding: 10px 12px;
+    position: absolute;
+    top: 40px;
+    left: 0;
+    z-index: 100;
+    min-width: 320px;
+    max-width: 90vw;
+    transition: opacity 0.2s, box-shadow 0.2s;
+}
+.canva-text-toolbar select, .canva-text-toolbar input[type="number"], .canva-text-toolbar input[type="color"] {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 14px;
+    background: #fafafa;
+    transition: border 0.2s;
+}
+.canva-text-toolbar input[type="range"] {
+    width: 60px;
+}
+.canva-text-toolbar button {
+    background: none;
+    border: none;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    font-size: 16px;
+    color: #333;
+}
+.canva-text-toolbar button:focus, .canva-text-toolbar button:hover {
+    background: #f0f0f0;
+    color: #10B981;
+}
+.canva-text-toolbar button.active {
+    background: #10B981;
+    color: #fff;
+}
+.canva-text-toolbar i {
+    pointer-events: none;
+}
+@media (max-width: 700px) {
+    .canva-text-toolbar {
+        min-width: 180px;
+        font-size: 12px;
+        padding: 8px;
+    }
+}
+/* --- Shapes Right Panel Styles --- */
+#shapes-panel {
+    position: fixed;
+    top: 0;
+    right: -320px;
+    width: 300px;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -2px 0 12px rgba(0,0,0,0.08);
+    z-index: 2000;
+    transition: right 0.3s cubic-bezier(.4,0,.2,1);
+    display: flex;
+    flex-direction: column;
+    border-top-left-radius: 16px;
+    border-bottom-left-radius: 16px;
+}
+#shapes-panel.open {
+    right: 0;
+}
+.shapes-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 20px 10px 20px;
+    border-bottom: 1px solid #eee;
+    font-size: 18px;
+    font-weight: 600;
+}
+#close-shapes-panel {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    padding: 0 4px;
+    line-height: 1;
+}
+.shapes-panel-content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.shape-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 18px;
+    border: none;
+    background: none;
+    border-radius: 8px;
+    transition: background 0.2s;
+    width: 100%;
+}
+.shape-option:hover {
+    background: #f0f0f0;
+}
 :root {
+
+/* Modern right-side shapes panel */
+.shapes-panel {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    padding: 18px 20px 20px 20px;
+    margin-bottom: 24px;
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+.shapes-panel h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #222;
+}
+.shapes-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.shape-btn {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: #f6f6f6;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.shape-btn:hover {
+    background: #10B981;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.10);
+}
     --accent: #9ed9e6;
     --dark-accent: #10B981;
     --bg-light: #f8f9fa;

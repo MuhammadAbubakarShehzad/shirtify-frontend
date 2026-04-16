@@ -60,37 +60,64 @@ const deleteCartItem = async (productId) => {
 
 function renderCart() {
     const cartList = document.getElementById('cart-list');
+    let html = '';
 
-    if (!currentCart || !currentCart.items || currentCart.items.length === 0) {
-        cartList.innerHTML = '<p class="empty-cart">Your cart is empty.</p>';
-        document.getElementById('subtotal').innerText = 'RS 0.00';
-        document.getElementById('grand-total').innerText = `RS ${shippingFee.toFixed(2)}`;
-        return;
+    // Render server cart items
+    if (currentCart && currentCart.items && currentCart.items.length > 0) {
+        html += currentCart.items.map(item => {
+            const product = item.product || {};
+            const title = product.title || 'Product';
+            const price = product.price || 0;
+            const img = product.imageUrl || 'https://via.placeholder.com/150';
+            return `
+                <div class="cart-item" data-id="${product._id}">
+                    <img src="${img}" alt="${title}">
+                    <div class="item-details">
+                        <h4>${title}</h4>
+                        <p>RS ${price.toFixed(2)}</p>
+                    </div>
+                    <div class="quantity-controls">
+                        <button class="qty-btn" onclick="updateQty('${product._id}', 1)">+</button>
+                        <span>${item.quantity}</span>
+                        <button class="qty-btn" onclick="updateQty('${product._id}', -1)">-</button>
+                    </div>
+                    <button class="remove-btn" onclick="removeItem('${product._id}')">Remove</button>
+                </div>
+            `;
+        }).join('');
     }
 
-    cartList.innerHTML = currentCart.items.map(item => {
-        const product = item.product || {};
-        const title = product.title || 'Product';
-        const price = product.price || 0;
-        const img = product.imageUrl || 'https://via.placeholder.com/150';
-        return `
-            <div class="cart-item" data-id="${product._id}">
-                <img src="${img}" alt="${title}">
-                <div class="item-details">
-                    <h4>${title}</h4>
-                    <p>RS ${price.toFixed(2)}</p>
+    // Render custom designs from localStorage
+    const customCart = JSON.parse(localStorage.getItem('customCart') || '[]');
+    if (customCart.length > 0) {
+        html += customCart.map((item, idx) => {
+            return `
+                <div class="cart-item custom-design" data-custom-idx="${idx}">
+                    <img src="${item.image}" alt="Custom Design">
+                    <div class="item-details">
+                        <h4>${item.name || 'Custom Design'}</h4>
+                        <p>Shirt: ${item.shirt || ''}</p>
+                        <p>Size: ${item.size || ''}</p>
+                        <p>RS ${item.price ? item.price.toFixed(2) : '0.00'}</p>
+                    </div>
+                    <button class="remove-btn" onclick="removeCustomItem(${idx})">Remove</button>
                 </div>
-                <div class="quantity-controls">
-                    <button class="qty-btn" onclick="updateQty('${product._id}', 1)">+</button>
-                    <span>${item.quantity}</span>
-                    <button class="qty-btn" onclick="updateQty('${product._id}', -1)">-</button>
-                </div>
-                <button class="remove-btn" onclick="removeItem('${product._id}')">Remove</button>
-            </div>
-        `;
-    }).join('');
+            `;
+        }).join('');
+    }
 
+    if (!html) {
+        html = '<p class="empty-cart">Your cart is empty.</p>';
+    }
+    cartList.innerHTML = html;
     updateTotals();
+}
+// Remove custom design from localStorage cart
+window.removeCustomItem = function(idx) {
+    let customCart = JSON.parse(localStorage.getItem('customCart') || '[]');
+    customCart.splice(idx, 1);
+    localStorage.setItem('customCart', JSON.stringify(customCart));
+    renderCart();
 }
 
 function updateTotals() {

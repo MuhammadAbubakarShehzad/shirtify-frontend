@@ -4,11 +4,21 @@ const Customization = require('../models/Customization');
 const createCustomization = async (req, res) => {
   try {
     const { original_product_id, size, design_data, base_image } = req.body;
+    let parsedDesignData = {};
+    if (typeof design_data === 'string') {
+      try {
+        parsedDesignData = JSON.parse(design_data);
+      } catch (e) {
+        return res.status(400).json({ message: 'Invalid design_data JSON' });
+      }
+    } else if (typeof design_data === 'object' && design_data !== null) {
+      parsedDesignData = design_data;
+    }
     const customization = await Customization.create({
       user: req.user?._id,
       original_product_id,
       size,
-      design_data: design_data || {},
+      design_data: parsedDesignData,
       base_image: base_image || ''
     });
     res.status(201).json(customization);

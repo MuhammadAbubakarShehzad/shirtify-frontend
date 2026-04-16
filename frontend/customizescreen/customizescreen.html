@@ -87,9 +87,56 @@
         <div class="editor-layout">
             <div class="canvas-section">
                 <div class="toolbar">
-                    <button onclick="addText()" title="Add Text">T</button>
-                    <button onclick="addRect()" title="Add Rectangle">■</button>
-                    <button onclick="addCircle()" title="Add Circle">●</button>
+                                        <div class="text-toolbar-container">
+                                            <button onclick="addText()" title="Add Text" id="show-text-toolbar"><i class="fas fa-font"></i></button>
+                                            <button id="show-shape-toolbar" title="Add Shape"><i class="fas fa-shapes"></i></button>
+                                            <button id="pen-tool-btn" title="Pen Tool"><i class="fas fa-pen"></i></button>
+                                            <div id="canva-text-toolbar" class="canva-text-toolbar" style="display:none;">
+                                                <select id="font-family">
+                                                    <option value="Arial">Arial</option>
+                                                    <option value="Poppins">Poppins</option>
+                                                    <option value="Roboto">Roboto</option>
+                                                    <option value="Times New Roman">Times New Roman</option>
+                                                    <option value="Montserrat">Montserrat</option>
+                                                    <option value="Lato">Lato</option>
+                                                </select>
+                                                <input id="font-size" type="number" min="8" max="200" value="24" style="width:50px;">
+                                                <button id="font-size-decrease" title="Decrease Font Size"><i class="fas fa-minus"></i></button>
+                                                <button id="font-size-increase" title="Increase Font Size"><i class="fas fa-plus"></i></button>
+                                                <button id="font-weight-light" title="Light"><i class="fas fa-font"></i></button>
+                                                <button id="font-weight-regular" title="Regular"><i class="fas fa-font"></i></button>
+                                                <button id="font-weight-bold" title="Bold"><i class="fas fa-bold"></i></button>
+                                                <button id="text-bold" title="Bold"><i class="fas fa-bold"></i></button>
+                                                <button id="text-italic" title="Italic"><i class="fas fa-italic"></i></button>
+                                                <button id="text-underline" title="Underline"><i class="fas fa-underline"></i></button>
+                                                <button id="text-strikethrough" title="Strikethrough"><i class="fas fa-strikethrough"></i></button>
+                                                <input id="text-color" type="color" title="Text Color">
+                                                <input id="highlight-color" type="color" title="Highlight Color">
+                                                <button id="align-left" title="Align Left"><i class="fas fa-align-left"></i></button>
+                                                <button id="align-center" title="Align Center"><i class="fas fa-align-center"></i></button>
+                                                <button id="align-right" title="Align Right"><i class="fas fa-align-right"></i></button>
+                                                <button id="align-justify" title="Justify"><i class="fas fa-align-justify"></i></button>
+                                                <input id="line-height" type="number" min="0.5" max="3" step="0.1" value="1.2" title="Line Height" style="width:50px;">
+                                                <input id="letter-spacing" type="number" min="-5" max="20" step="0.1" value="0" title="Letter Spacing" style="width:50px;">
+                                                <select id="text-transform" title="Text Transform">
+                                                    <option value="none">None</option>
+                                                    <option value="uppercase">UPPERCASE</option>
+                                                    <option value="lowercase">lowercase</option>
+                                                    <option value="capitalize">Capitalize</option>
+                                                </select>
+                                                <button id="bullet-list" title="Bullet List"><i class="fas fa-list-ul"></i></button>
+                                                <button id="numbered-list" title="Numbered List"><i class="fas fa-list-ol"></i></button>
+                                                <button id="text-shadow" title="Text Shadow"><i class="fas fa-low-vision"></i></button>
+                                                <button id="text-outline" title="Text Outline"><i class="fas fa-border-style"></i></button>
+                                                <input id="text-opacity" type="range" min="0" max="1" step="0.05" value="1" title="Opacity">
+                                                <button id="add-link" title="Add Hyperlink"><i class="fas fa-link"></i></button>
+                                                <button id="duplicate-text" title="Duplicate"><i class="fas fa-clone"></i></button>
+                                                <button id="delete-text" title="Delete"><i class="fas fa-trash"></i></button>
+                                                <button id="bring-forward" title="Bring Forward"><i class="fas fa-arrow-up"></i></button>
+                                                <button id="send-backward" title="Send Backward"><i class="fas fa-arrow-down"></i></button>
+                                            </div>
+                                        </div>
+                    <!-- Shapes panel will be on the right side -->
                     <button onclick="triggerUpload()" title="Upload Image">🖼️</button>
                     <div class="separator"></div>
                     <button onclick="undo()" title="Undo">↩</button>
@@ -100,80 +147,170 @@
                     <canvas id="main-canvas" width="600" height="500"></canvas>
                 </div>
             </div>
-            <aside class="properties-sidebar">
-                <h3>Properties</h3>
+            <!-- Floating Shape Properties Sidebar -->
+            <div id="shape-properties-sidebar" class="shape-properties-sidebar" style="display:none;">
+                <div id="pen-properties" style="display:none;">
+                    <h3>Pen Properties</h3>
+                    <div class="prop-group">
+                        <label for="pen-color">Pen Color</label>
+                        <input type="color" id="pen-color" value="#222222">
+                    </div>
+                    <div class="prop-group">
+                        <label for="pen-width">Pen Width</label>
+                        <input type="range" id="pen-width" min="1" max="30" value="3">
+                    </div>
+                </div>
+                <h3>Shape Properties</h3>
                 <div class="prop-group">
-                    <label>Font Size</label>
-                    <input type="number" id="font-size-input" value="24">
+                    <label for="shape-fill-color">Fill Color</label>
+                    <input type="color" id="shape-fill-color" value="#10B981">
                 </div>
                 <div class="prop-group">
-                    <label>Color (Fill / Text)</label>
-                    <div class="color-picker-row">
-                        <input type="color" id="fill-color" value="#10B981">
-                        <input type="text" id="color-hex" value="#10B981">
+                    <label for="shape-width">Width</label>
+                    <input type="number" id="shape-width" min="1" value="100">
+                </div>
+                <div class="prop-group">
+                    <label for="shape-height">Height</label>
+                    <input type="number" id="shape-height" min="1" value="100">
+                </div>
+                <hr>
+                <div class="prop-group">
+                    <label><input type="checkbox" id="shape-shadow-enable"> Shadow</label>
+                    <div id="shape-shadow-controls" style="display:none; margin-top:6px;">
+                        <label>Color <input type="color" id="shape-shadow-color" value="#000000"></label>
+                        <label>Blur <input type="number" id="shape-shadow-blur" min="0" max="50" value="5"></label>
+                        <label>Offset X <input type="number" id="shape-shadow-offset-x" min="-50" max="50" value="5"></label>
+                        <label>Offset Y <input type="number" id="shape-shadow-offset-y" min="-50" max="50" value="5"></label>
                     </div>
                 </div>
                 <div class="prop-group">
-                    <label>Opacity</label>
-                    <input type="range" id="opacity" min="0" max="1" step="0.1" value="1">
+                    <label for="shape-blend-mode">Blend Mode</label>
+                    <select id="shape-blend-mode">
+                        <option value="normal">Normal</option>
+                        <option value="multiply">Multiply</option>
+                        <option value="screen">Screen</option>
+                        <option value="overlay">Overlay</option>
+                        <option value="darken">Darken</option>
+                        <option value="lighten">Lighten</option>
+                        <option value="color-dodge">Color Dodge</option>
+                        <option value="color-burn">Color Burn</option>
+                        <option value="hard-light">Hard Light</option>
+                        <option value="soft-light">Soft Light</option>
+                        <option value="difference">Difference</option>
+                        <option value="exclusion">Exclusion</option>
+                        <option value="hue">Hue</option>
+                        <option value="saturation">Saturation</option>
+                        <option value="color">Color</option>
+                        <option value="luminosity">Luminosity</option>
+                    </select>
                 </div>
-                <div class="grid-props">
-                    <div class="prop-group">
-                        <label>X Pos</label>
-                        <input type="number" id="pos-x">
-                    </div>
-                    <div class="prop-group">
-                        <label>Y Pos</label>
-                        <input type="number" id="pos-y">
-                    </div>
-                    <div class="prop-group">
-                        <label>Width</label>
-                        <input type="number" id="obj-width">
-                    </div>
-                    <div class="prop-group">
-                        <label>Height</label>
-                        <input type="number" id="obj-height">
+                <div class="prop-group">
+                    <label><input type="checkbox" id="shape-gradient-enable"> Gradient Fill</label>
+                    <div id="shape-gradient-controls" style="display:none; margin-top:6px;">
+                        <label>Start <input type="color" id="shape-gradient-start" value="#10B981"></label>
+                        <label>End <input type="color" id="shape-gradient-end" value="#34D399"></label>
+                        <label>Angle <input type="range" id="shape-gradient-angle" min="0" max="360" value="0"></label>
                     </div>
                 </div>
-            </aside>
+                <button id="close-shape-sidebar" style="margin-top:12px;">Close</button>
+            </div>
+                <style>
+                .shape-properties-sidebar {
+                    position: fixed;
+                    top: 80px;
+                    right: 32px;
+                    width: 320px;
+                    background: #fff;
+                    border-radius: 10px;
+                    box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+                    padding: 18px 18px 12px 18px;
+                    z-index: 1002;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                .shape-properties-sidebar h3 {
+                    margin: 0 0 8px 0;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                }
+                .shape-properties-sidebar .prop-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+                .shape-properties-sidebar label {
+                    font-size: 0.95rem;
+                    color: #333;
+                }
+                .shape-properties-sidebar input[type="number"] {
+                    width: 100%;
+                    padding: 4px 6px;
+                    border-radius: 4px;
+                    border: 1px solid #ddd;
+                }
+                .shape-properties-sidebar input[type="color"] {
+                    width: 36px;
+                    height: 28px;
+                    border: none;
+                    background: none;
+                }
+                #close-shape-sidebar {
+                    align-self: flex-end;
+                    background: #eee;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 4px 12px;
+                    cursor: pointer;
+                }
+                </style>
         </div>
-      </div>
+            </div>
+
+
         </main>
-        <script>
-            window.addEventListener('load', () => {
-                const productSelect = document.getElementById('catalog-product');
-                productSelect.innerHTML = '<option value="" selected disabled>Loading shirts...</option>';
-                fetch('http://localhost:5000/api/products')
-                    .then(res => res.json())
-                    .then(data => {
-                        if (!data.length) {
-                            productSelect.innerHTML = '<option value="" selected disabled>No shirts found</option>';
-                            return;
-                        }
-                        productSelect.innerHTML = '<option value="" selected disabled>Select a shirt</option>';
-                        data.forEach(prod => {
-                            const opt = document.createElement('option');
-                            opt.value = prod._id;
-                            opt.textContent = prod.title;
-                            productSelect.appendChild(opt);
-                        });
-                    })
-                    .catch(err => {
-                        productSelect.innerHTML = '<option value="" selected disabled>Error loading products</option>';
-                        console.error('Product fetch error:', err);
-                    });
-            });
-        </script>
+                <!-- Canva-like Shape Sidebar (hidden by default, shown when shape icon is clicked) -->
+                <div id="shape-toolbar-sidebar" class="shape-toolbar-sidebar" style="display:none;">
+                    <div class="toolbar-header">Shapes</div>
+                    <div class="shapes-list">
+                        <button class="shape-btn" data-shape="Rectangle" title="Rectangle"><span>▭</span></button>
+                        <button class="shape-btn" data-shape="Circle" title="Circle"><span>●</span></button>
+                        <button class="shape-btn" data-shape="Triangle" title="Triangle"><span>▲</span></button>
+                        <button class="shape-btn" data-shape="Line" title="Line"><span>／</span></button>
+                        <button class="shape-btn" data-shape="Arrow" title="Arrow"><span>➔</span></button>
+                        <button class="shape-btn" data-shape="Polygon" title="Polygon"><span>⬟</span></button>
+                        <button class="shape-btn" data-shape="Star" title="Star"><span>★</span></button>
+                        <button class="shape-btn" data-shape="Heart" title="Heart"><span>♥</span></button>
+                        <button class="shape-btn" data-shape="Speech Bubble" title="Speech Bubble"><span>💬</span></button>
+                    </div>
+                </div>
 
     <input type="file" id="image-upload" hidden accept="image/*">
 
         <script src="customizescreen.js"></script>
         <script>
+            // Shapes dropdown logic
+            window.addEventListener('DOMContentLoaded', function() {
+                const dropdown = document.getElementById('shapes-dropdown');
+                if (dropdown) {
+                    dropdown.addEventListener('change', function() {
+                        const val = this.value;
+                        if (!val) return;
+                        if (window.addShapeByName) {
+                            window.addShapeByName(val);
+                        }
+                        this.value = '';
+                    });
+                }
+            });
+
             // Stepper logic
-            const productSelect = document.getElementById('catalog-product');
+            // const productSelect = document.getElementById('catalog-product'); // Removed duplicate declaration
             const sizeSelect = document.getElementById('catalog-size');
             const step2 = document.querySelector('.step-2');
-            const startBtn = document.getElementById('start-customizing-btn');
+            // const startBtn = document.getElementById('start-customizing-btn'); // Removed duplicate declaration
             let selectedProduct = '';
             let selectedSize = '';
 
@@ -210,35 +347,13 @@
                 document.getElementById('product-selected-display').value = productSelect.options[productSelect.selectedIndex].text;
                 document.getElementById('size-selected-display').value = sizeSelect.value;
 
-                // Initialize Fabric.js canvas and restore toolbar functionality
+                // Initialize Fabric.js canvas
                 if (!window.fabricCanvas) {
                     window.fabricCanvas = new fabric.Canvas('main-canvas');
-                } else {
-                    window.fabricCanvas.clear();
                 }
-                // Add shirt image as a movable object in the foreground
-                fetch(`http://localhost:5000/api/products/${selectedProduct}`)
-                    .then(res => res.json())
-                    .then(product => {
-                        if (product.imageUrl) {
-                            fabric.Image.fromURL(product.imageUrl, function(img) {
-                                img.set({
-                                    left: 50,
-                                    top: 50,
-                                    selectable: true,
-                                    hasControls: true,
-                                    hasBorders: true
-                                });
-                                img.scaleToWidth(window.fabricCanvas.width * 0.8);
-                                window.fabricCanvas.add(img);
-                                window.fabricCanvas.setActiveObject(img);
-                                window.fabricCanvas.renderAll();
-                            }, { crossOrigin: 'anonymous' });
-                        }
-                    })
-                    .catch(err => {
-                        console.error('Product image fetch error:', err);
-                    });
+
+
+
                 // Toolbar functions
                 window.addText = function() {
                     const text = new fabric.IText('Enter text here', {

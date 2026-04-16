@@ -17,6 +17,7 @@ app.use(morgan('dev'));
 
 connectDB();
 
+
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/customizations', require('./routes/customizationRoutes'));
@@ -24,6 +25,7 @@ app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
+app.use('/api/mockshirts', require('./routes/mockShirtRoutes'));
 
 const { protect } = require('./middleware/auth');
 app.get('/api/auth/me', protect, (req, res) => {
