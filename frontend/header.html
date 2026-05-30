@@ -3,35 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>header</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../header.css">
+    <title>Shirtify Header</title>
+    <link rel="stylesheet" href="header.css">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
- <header>
-        <div class="logo">SHIRTIFY</div>
-        <nav>
-            <ul>
-                <li><a href="../homescreen/homescreen.html">Home</a></li>
-                <li><a href="../shopscreen/shopscreen.html">Shop</a></li>
-                <li><a href="../customizescreen/customizescreen.html">Design Studio</a></li>
-                <li><a href="../try-on-screen/try-on-screen.html">Try On</a></li>
-                <li><a href="../aboutscreen/about.html">About</a></li>
-            </ul>
-        </nav>
-        <div class="header-actions">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search products">
-            </div>
-            <div class="icons">
-                <i class="fas fa-shopping-cart" onclick="window.location.href='../addTocart/addtocart.html'" type="button"></i>
-                <i class="fas fa-box" onclick="window.location.href='../orderinfo/orderinfo.html'" type="button"></i>
-                <i class="fas fa-sign-out-alt" onclick="window.location.href='../login/login.html'"></i>
-            </div>
-        </div>
-    </header>
 <body>
-    
+
+<header class="header">
+    <div class="logo">
+        SHIRTIFY
+    </div>
+
+    <nav class="navbar">
+        <a href="../homescreen/homescreen.html">Home</a>
+        <a href="../shopscreen/shopscreen.html">Shop</a>
+        <a href="../customizescreen/customizescreen.html">Design Studio</a>
+        <a href="../ffyp/try-on-screen.html">Try On</a>
+        <a href="../aboutscreen/about.html">About</a>
+    </nav>
+
+    <div class="header-right">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search products">
+        </div>
+
+        <div class="icons">
+            <i class="fa-solid fa-cart-shopping" onclick="window.location.href='../addtocart/addtocart.html'" title="Cart"></i>
+            <i class="fa-solid fa-box" onclick="window.location.href='../orderinfo/orderinfo.html'" title="Orders"></i>
+            <i class="fa-solid fa-arrow-right-from-bracket" onclick="window.location.href='../login/login.html'" title="Login"></i>
+        </div>
+    </div>
+</header>
+
 </body>
 </html>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Homescreen</title>
+    <link rel="stylesheet" href="../header.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -93,31 +94,10 @@
                 <div class="footer-col">
                     <h3 class="footer-heading">Support</h3>
                     <ul class="footer-links">
-                        <li>
-                            <details>
-                                <summary class="contactus" class="cursor-pointer text:bg-[#94D5E0] hover:underline">Faq
-                                </summary>
-                                <div class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                    <p class="text-sm text-slate-600"><strong>Email:</strong>shirtify@gmail.com</p>
-                                    <p class="text-sm text-slate-600"><strong>Contact:</strong>+92012-3456789</p>
-                                    <p class="text-sm text-slate-600"><strong>instagram:</strong>shirtify</p>
-                                </div>
-                            </details>
-                        </li>
+                        <li><a href="../faqscreen/faqscreen.html">Faq</a></li>
                         <li><a href="../pco/pco.html">Shipping & Delivery</a></li>
-                        <li><a href="#">Returns & Exchanges</a></li>
-                        <li>
-                            <details>
-                                <summary class="contactus" class="cursor-pointer text:bg-[#94D5E0] hover:underline">
-                                    contact us</summary>
-
-                                <div class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                    <p class="text-sm text-slate-600"><strong>Email:</strong>shirtify@gmail.com</p>
-                                    <p class="text-sm text-slate-600"><strong>Contact:</strong>+92012-3456789</p>
-                                    <p class="text-sm text-slate-600"><strong>instagram:</strong>shirtify</p>
-                                </div>
-                            </details>
-                        </li>
+                        <li><a href="../returnandexchange/returnandexchange.html">Returns & Exchanges</a></li>
+                        <li><a class="contactus" href="../contactus/contactus.html">contact us</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
@@ -143,18 +123,6 @@
         </div>
     </footer>
     <script src="homescreen.js"></script>
-    <script>
-        // header-loader.js
-        function loadHeader() {
-            fetch('../header.html')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('header-placeholder').innerHTML = data;
-                })
-                .catch(error => console.error('Error loading header:', error));
-        }
-        // Run the function when the page loads
-        window.onload = loadHeader;
-    </script>
+    <script src="../header-loader.js"></script>
 </body>
 </html>

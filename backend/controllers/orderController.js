@@ -18,6 +18,30 @@ const createOrder = async (req, res) => {
 
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
+  for (const item of cart.items) {
+    const product = item.product;
+    const quantity = item.quantity;
+
+    if (!product) {
+      return res.status(400).json({ message: 'One or more products in your cart no longer exist' });
+    }
+
+    if (product.stock <= 0) {
+      return res.status(400).json({ message: `${product.title || product.name || 'This product'} is out of stock` });
+    }
+
+    if (product.stock < quantity) {
+      return res.status(400).json({ message: `Only ${product.stock} item(s) left in stock for ${product.title || product.name || 'this product'}` });
+    }
+  }
+
+  for (const item of cart.items) {
+    const product = item.product;
+    product.stock -= item.quantity;
+    product.sales = (product.sales || 0) + item.quantity;
+    await product.save();
+  }
+
   const order = await Order.create({
     user: req.user._id,
     items,
@@ -44,4 +68,61 @@ const getOrderById = async (req, res) => {
   res.json(order);
 };
 
-module.exports = { createOrder, getOrders, getOrderById };
+// Get all orders (admin only)
+const getAllOrders = async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 }).populate('items.product').populate('user', 'email name');
+    
+    const totalOrders = orders.length;
+    const totalAmount = orders.reduce((sum, order) => sum + order.total, 0);
+    const orderStats = {
+      pending: orders.filter(o => o.status === 'pending').length,
+      processing: orders.filter(o => o.status === 'processing').length,
+      shipped: orders.filter(o => o.status === 'shipped').length,
+      delivered: orders.filter(o => o.status === 'delivered').length,
+      cancelled: orders.filter(o => o.status === 'cancelled').length
+    };
+    
+    return res.json({
+      success: true,
+      totalOrders,
+      totalAmount,
+      orderStats,
+      orders
+    });
+  } catch (error) {
+    console.error('Error fetching all orders:', error);
+    return res.status(500).json({ message: 'Error fetching orders' });
+  }
+};
+
+// Get order statistics (admin only)
+const getOrderStats = async (req, res) => {
+  try {
+    const orders = await Order.find();
+    
+    const totalOrders = orders.length;
+    const totalAmount = orders.reduce((sum, order) => sum + order.total, 0);
+    const avgOrderValue = totalOrders > 0 ? totalAmount / totalOrders : 0;
+    
+    const orderStats = {
+      total: totalOrders,
+      totalAmount,
+      avgOrderValue,
+      byStatus: {
+        pending: orders.filter(o => o.status === 'pending').length,
+        processing: orders.filter(o => o.status === 'processing').length,
+        shipped: orders.filter(o => o.status === 'shipped').length,
+        delivered: orders.filter(o => o.status === 'delivered').length,
+        cancelled: orders.filter(o => o.status === 'cancelled').length
+      }
+    };
+    
+    return res.json({ success: true, data: orderStats });
+  } catch (error) {
+    console.error('Error fetching order stats:', error);
+    return res.status(500).json({ message: 'Error fetching order statistics' });
+  }
+};
+
+module.exports = { createOrder, getOrders, getOrderById, getAllOrders, getOrderStats };

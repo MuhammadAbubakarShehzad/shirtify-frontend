@@ -4,41 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shipping Information - Shirtify</title>
+    <link rel="stylesheet" href="../header.css">
     <link rel="stylesheet" href="proceedcheckout.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
- <header>
-        <div class="logo">SHIRTIFY</div>
-        <nav>
-            <ul>
-                <li><a href="../homescreen/homescreen.html">Home</a></li>
-                <li><a href="../shopscreen/shopscreen.html">Shop</a></li>
-                <li><a href="../customizescreen/customizescreen.html">Design Studio</a></li>
-                <li><a href="../try-on-screen/try-on-screen.html">Try On</a></li>
-                <li><a href="../aboutscreen/about.html">About</a></li>
-            </ul>
-        </nav>
-        <div class="header-actions">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search products">
-            </div>
-            <div class="icons">
-                <i class="fas fa-shopping-cart" onclick="window.location.href='../addTocart/addtocart.html'" type="button"></i>
-                <i class="fas fa-box" onclick="window.location.href='../orderinfo/orderinfo.html'" type="button"></i>
-                <i class="fas fa-sign-out-alt" onclick="window.location.href='../login/login.html'"></i>
-            </div>
-        </div>
-    </header>
+    <div id="header-placeholder"></div>
     <main class="checkout-container">
         <div class="progress-bar">
             <div class="step active">
                 <div class="step-icon">🚚</div>
                 <span>Shipping</span>
             </div>
-            <div class="step" onclick="window.location.href='../payment-info/payment-info.html'">
+            <div class="step" onclick="window.location.href='../payment-Info/payment-info.html'">
                 <div class="step-icon">💳</div>
                 <span>Payment</span>
             </div>
@@ -91,7 +70,7 @@
                         </div>
                     </div>
 
-                    <button onclick="window.location.href='../payment-info/payment-info.html'" type="button" class="btn-continue">Continue To Payment</button>
+                    <button onclick="window.location.href='../payment-Info/payment-info.html'" type="button" class="btn-continue">Continue To Payment</button>
                 </form>
             </section>
 
@@ -113,19 +92,6 @@
     </main>
 
     <script src="proceedcheckout.js"></script>
-    <script>
-        // header-loader.js
-        function loadHeader() {
-            fetch('../header.html')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('header-placeholder').innerHTML = data;
-                })
-                .catch(error => console.error('Error loading header:', error));
-        }
-
-        // Run the function when the page loads
-        window.onload = loadHeader;
-    </script>
+    <script src="../header-loader.js"></script>
 </body>
 </html>

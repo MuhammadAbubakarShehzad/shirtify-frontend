@@ -1,60 +1,123 @@
-const API_BASE = 'http://localhost:5000/api';
+const SAME_ORIGIN_API_BASE = (window.location.protocol.startsWith('http') && window.location.host)
+    ? `${window.location.protocol}//${window.location.host}/api`
+    : null;
+const LOCAL_API_BASE = 'http://localhost:5000/api';
+
+const API_BASE_CANDIDATES = Array.from(new Set(
+    ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port && window.location.port !== '5000')
+        ? [LOCAL_API_BASE, SAME_ORIGIN_API_BASE]
+        : [SAME_ORIGIN_API_BASE, LOCAL_API_BASE]
+)).filter(Boolean);
+
+let resolvedApiBase = null;
+
+async function apiFetch(path, options = {}) {
+    const bases = resolvedApiBase
+        ? [resolvedApiBase, ...API_BASE_CANDIDATES.filter(base => base !== resolvedApiBase)]
+        : API_BASE_CANDIDATES;
+
+    let lastError = null;
+
+    for (const base of bases) {
+        try {
+            const res = await fetch(`${base}${path}`, options);
+            if (res.ok) {
+                resolvedApiBase = base;
+                return res;
+            }
+
+            // If same-origin API is missing (e.g. frontend on :5500), try the next candidate.
+            if (res.status === 404) {
+                lastError = new Error(`API endpoint not found at ${base}${path}`);
+                continue;
+            }
+
+            return res;
+        } catch (err) {
+            lastError = err;
+        }
+    }
+
+    throw lastError || new Error('Unable to reach API');
+}
 let currentProduct = null;
+let selectedColor = null;
+let selectedSize = null;
+let selectedPrice = null;
 
 function createProductCard(product) {
+    const productTitle = product.title || product.name || 'Untitled Product';
+    const productImage = product.imageUrl || product.image || 'https://via.placeholder.com/400x500?text=No+Image';
+    const productPrice = product.price ?? 0;
+    const productStock = Number(product.stock ?? 0);
+    const isOutOfStock = productStock <= 0;
+
     const card = document.createElement('div');
     card.className = 'group product-card';
     card.dataset.id = product._id;
-    card.dataset.name = product.title;
-    card.dataset.price = product.price;
+    card.dataset.name = productTitle;
+    card.dataset.price = productPrice;
     card.dataset.desc = product.description || '';
-    card.dataset.img = product.imageUrl || 'https://via.placeholder.com/400x500?text=No+Image';
+    card.dataset.img = productImage;
 
-    const imageUrl = product.imageUrl && product.imageUrl.trim() ? product.imageUrl : 'https://via.placeholder.com/400x500?text=No+Image';
+    const imageUrl = productImage && String(productImage).trim() ? productImage : 'https://via.placeholder.com/400x500?text=No+Image';
 
     card.innerHTML = `
         <div class="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden mb-5 relative">
-            <img src="${imageUrl}" alt="${product.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            <img src="${imageUrl}" alt="${productTitle}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            ${isOutOfStock ? '<span class="absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-semibold bg-red-500 text-white">Out of stock</span>' : ''}
         </div>
-        <h3 class="text-xl font-medium text-slate-900 mb-2">${product.title}</h3>
+        <h3 class="text-xl font-medium text-slate-900 mb-2">${productTitle}</h3>
         <div class="flex gap-2 mb-4">
             <div class="w-4 h-4 rounded-full bg-slate-900"></div>
             <div class="w-4 h-4 rounded-full bg-slate-500"></div>
             <div class="w-4 h-4 rounded-full bg-slate-300"></div>
         </div>
         <div class="flex items-center justify-between">
-            <span class="font-medium text-lg">Rs ${product.price}</span>
-            <button class="add-btn flex items-center gap-2 bg-[#94D5E0] hover:bg-[#7DDDEE] text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md">
+            <span class="font-medium text-lg">Rs ${productPrice}</span>
+            <button class="add-btn flex items-center gap-2 ${isOutOfStock ? 'bg-slate-300 cursor-not-allowed' : 'bg-[#94D5E0] hover:bg-[#7DDDEE]'} text-white px-4 py-1.5 rounded-full transition-all shadow-sm hover:shadow-md" ${isOutOfStock ? 'disabled' : ''}>
                 <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                <span class="font-medium text-sm">Add</span>
+                <span class="font-medium text-sm">${isOutOfStock ? 'Sold out' : 'Add'}</span>
             </button>
         </div>
     `;
 
     const addBtn = card.querySelector('.add-btn');
-    addBtn.addEventListener('click', () => openProductModal(product));
+    addBtn.addEventListener('click', () => {
+        if (!isOutOfStock) openProductModal(product);
+    });
 
     return card;
 }
 
-async function loadProducts() {
+async function loadProducts(color = null, size = null, price = null) {
     const productGrid = document.getElementById('product-grid');
     if (!productGrid) return;
 
     productGrid.innerHTML = '<p class="col-span-full text-center py-10 text-slate-500">Loading products...</p>';
 
     try {
-        const res = await fetch(`${API_BASE}/products`);
+        let path = '/products';
+        const params = [];
+        if (color) params.push(`colour=${encodeURIComponent(color)}`);
+        if (size) params.push(`size=${encodeURIComponent(size)}`);
+        if (price && /^\d+-\d+$/.test(price)) {
+            const [min, max] = price.split('-');
+            params.push(`minPrice=${min}`);
+            params.push(`maxPrice=${max}`);
+        }
+        if (params.length) path += `?${params.join('&')}`;
+        const res = await apiFetch(path);
         if (!res.ok) throw new Error('Failed to load products');
 
-        const products = await res.json();
+        const payload = await res.json();
+        const products = Array.isArray(payload) ? payload : (Array.isArray(payload.data) ? payload.data : []);
         if (!Array.isArray(products) || products.length === 0) {
             productGrid.innerHTML = '<p class="col-span-full text-center py-10 text-slate-500">No products available.</p>';
             return;
         }
 
         productGrid.innerHTML = '';
-
         products.forEach(product => {
             productGrid.appendChild(createProductCard(product));
         });
@@ -69,16 +132,36 @@ async function loadProducts() {
 function openProductModal(product) {
     currentProduct = product;
 
+    const productTitle = product.title || product.name || 'Untitled Product';
+    const productImage = product.imageUrl || product.image || 'https://via.placeholder.com/400x500?text=No+Image';
+    const productPrice = product.price ?? 0;
+    const productStock = Number(product.stock ?? 0);
+    const isOutOfStock = productStock <= 0;
+
     const modal = document.getElementById('product-modal');
     const modalContent = document.getElementById('modal-content');
     const viewState = document.getElementById('modal-view-state');
     const successState = document.getElementById('modal-success-state');
 
-    document.getElementById('modal-img').src = product.imageUrl || 'https://via.placeholder.com/400x500?text=No+Image';
-    document.getElementById('modal-title').textContent = product.title;
-    document.getElementById('modal-price').textContent = `Rs ${product.price}`;
+    document.getElementById('modal-img').src = productImage;
+    document.getElementById('modal-title').textContent = productTitle;
+    document.getElementById('modal-price').textContent = `Rs ${productPrice}`;
     document.getElementById('modal-desc').textContent = product.description || 'No description available';
-    document.getElementById('success-product-name').textContent = product.title;
+    document.getElementById('success-product-name').textContent = productTitle;
+    const stockLine = document.getElementById('product-stock-line');
+    if (stockLine) {
+        stockLine.textContent = isOutOfStock ? 'Out of stock' : '';
+        stockLine.className = `mt-2 text-sm ${isOutOfStock ? 'text-red-500' : 'hidden'}`;
+    }
+
+    const confirmButton = document.getElementById('confirm-add-to-cart');
+    if (confirmButton) {
+        confirmButton.disabled = isOutOfStock;
+        const confirmLabel = confirmButton.querySelector('span');
+        if (confirmLabel) {
+            confirmLabel.textContent = isOutOfStock ? 'Sold out' : 'Add to Cart';
+        }
+    }
 
     viewState.classList.remove('hidden');
     successState.classList.add('hidden');
@@ -122,7 +205,7 @@ async function addToCart(productId, quantity = 1) {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/cart`, {
+        const res = await apiFetch('/cart', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -151,6 +234,10 @@ async function addToCartConfirm() {
     try {
         if (!currentProduct) throw new Error('No product selected');
 
+        if (Number(currentProduct.stock ?? 0) <= 0) {
+            throw new Error('This product is out of stock');
+        }
+
         await addToCart(currentProduct._id, 1);
 
         viewState.style.opacity = '0';
@@ -169,6 +256,7 @@ async function addToCartConfirm() {
         }, 200);
     } catch (err) {
         console.error(err);
+        alert(err.message || 'Could not add to cart');
     }
 }
 
@@ -182,44 +270,48 @@ function setupSizeButtons() {
     });
 }
 
-function setupColorFilter() {
-    const colorButtons = document.querySelectorAll('.mb-8 .grid button');
-    const selectedColors = new Set();
-
-    colorButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const colorClass = btn.className.match(/bg-\w+-\d+/)?.[0];
-            if (!colorClass) return;
-
-            btn.classList.toggle('ring-slate-400');
-
-            if (btn.classList.contains('ring-slate-400')) {
-                selectedColors.add(colorClass);
-            } else {
-                selectedColors.delete(colorClass);
-            }
-
-            filterProductsByColor(selectedColors);
+function setupSizeFilter() {
+    const sizeSelect = document.getElementById('size-filter');
+    if (sizeSelect) {
+        sizeSelect.addEventListener('change', async (e) => {
+            const selectedValue = e.target.value;
+            selectedSize = selectedValue === 'All Sizes' ? null : selectedValue;
+            await loadProducts(selectedColor, selectedSize, selectedPrice);
         });
-    });
+    }
 }
 
-function filterProductsByColor(selectedColors) {
-    const productCards = document.querySelectorAll('.product-card');
-
-    productCards.forEach(card => {
-        if (selectedColors.size === 0) {
-            card.style.display = '';
-            return;
-        }
-
-        const dots = card.querySelectorAll('.flex.gap-2 > div');
-        const hasMatch = Array.from(dots).some(dot => {
-            const dotClass = Array.from(dot.classList).find(c => c.startsWith('bg-'));
-            return dotClass && selectedColors.has(dotClass);
+function setupPriceFilter() {
+    const priceSelect = document.getElementById('price-filter');
+    if (priceSelect) {
+        priceSelect.addEventListener('change', async (e) => {
+            const val = e.target.value;
+            if (val === 'all') {
+                selectedPrice = null;
+            } else if (/^\d+-\d+$/.test(val)) {
+                selectedPrice = val;
+            } else {
+                selectedPrice = null;
+            }
+            await loadProducts(selectedColor, selectedSize, selectedPrice);
         });
+    }
+}
 
-        card.style.display = hasMatch ? '' : 'none';
+function setupColorFilter() {
+    const colorButtons = document.querySelectorAll('.mb-8 .grid button');
+    colorButtons.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            colorButtons.forEach(b => b.classList.remove('ring-slate-400'));
+            btn.classList.add('ring-slate-400');
+            let color = btn.getAttribute('data-color');
+            if (!color) {
+                const colorClass = btn.className.match(/bg-(\w+)-\d+/);
+                color = colorClass ? colorClass[1] : '';
+            }
+            selectedColor = color;
+            await loadProducts(selectedColor, selectedSize, selectedPrice);
+        });
     });
 }
 
@@ -232,7 +324,8 @@ function initFooter() {
 // Start
 document.addEventListener('DOMContentLoaded', async () => {
     initFooter();
-    setupSizeButtons();
+    setupSizeFilter();
     setupColorFilter();
+    setupPriceFilter();
     await loadProducts();
 });

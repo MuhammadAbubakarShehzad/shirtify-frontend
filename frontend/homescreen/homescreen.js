@@ -1,4 +1,45 @@
-const API_BASE = 'http://localhost:5000/api';
+const SAME_ORIGIN_API_BASE = (window.location.protocol.startsWith('http') && window.location.host)
+  ? `${window.location.protocol}//${window.location.host}/api`
+  : null;
+const LOCAL_API_BASE = 'http://localhost:5000/api';
+
+const API_BASE_CANDIDATES = Array.from(new Set(
+  ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port && window.location.port !== '5000')
+    ? [LOCAL_API_BASE, SAME_ORIGIN_API_BASE]
+    : [SAME_ORIGIN_API_BASE, LOCAL_API_BASE]
+)).filter(Boolean);
+
+let resolvedApiBase = null;
+
+async function apiFetch(path, options = {}) {
+  const bases = resolvedApiBase
+    ? [resolvedApiBase, ...API_BASE_CANDIDATES.filter(base => base !== resolvedApiBase)]
+    : API_BASE_CANDIDATES;
+
+  let lastError = null;
+
+  for (const base of bases) {
+    try {
+      const res = await fetch(`${base}${path}`, options);
+      if (res.ok) {
+        resolvedApiBase = base;
+        return res;
+      }
+
+      // If same-origin API is missing (e.g. frontend on :5500), try the next candidate.
+      if (res.status === 404) {
+        lastError = new Error(`API endpoint not found at ${base}${path}`);
+        continue;
+      }
+
+      return res;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('Unable to reach API');
+}
 let selectedProduct = null;
 const modal = document.getElementById('product-modal');
 
@@ -9,26 +50,30 @@ function initFooter() {
 }
 
 function createProductCard(product) {
+  const productTitle = product.title || product.name || 'Untitled Product';
+  const productImage = product.imageUrl || product.image || 'https://via.placeholder.com/350x420?text=No+Image';
+  const productPrice = product.price ?? 0;
+
   const card = document.createElement('div');
   card.className = 'group product-card';
   card.dataset.id = product._id;
-  card.dataset.name = product.title;
-  card.dataset.price = product.price;
+  card.dataset.name = productTitle;
+  card.dataset.price = productPrice;
   card.dataset.desc = product.description || '';
-  card.dataset.img = product.imageUrl || 'https://via.placeholder.com/350x420?text=No+Image';
+  card.dataset.img = productImage;
 
   card.innerHTML = `
     <div class="product-img-container">
-      <img src="${card.dataset.img}" alt="${product.title}" />
+      <img src="${card.dataset.img}" alt="${productTitle}" />
     </div>
-    <h4 class="product-title">${product.title}</h4>
+    <h4 class="product-title">${productTitle}</h4>
     <div class="swatches">
       <div class="swatch bg-black"></div>
       <div class="swatch bg-white"></div>
       <div class="swatch bg-blue"></div>
     </div>
     <div class="product-footer">
-      <span class="price">Rs ${product.price}</span>
+      <span class="price">Rs ${productPrice}</span>
       <button class="add-btn" type="button">
         <i class="fas fa-shopping-cart"></i> Add
       </button>
@@ -47,10 +92,11 @@ async function loadHomeProducts() {
   grid.innerHTML = '<p class="text-center w-full py-10">Loading products...</p>';
 
   try {
-    const res = await fetch(`${API_BASE}/products`);
+    const res = await apiFetch('/products');
     if (!res.ok) throw new Error('Products fetch failed');
 
-    const products = await res.json();
+    const payload = await res.json();
+    const products = Array.isArray(payload) ? payload : (Array.isArray(payload.data) ? payload.data : []);
     const topThree = products.slice(0, 3);
 
     grid.innerHTML = '';
@@ -70,11 +116,15 @@ async function loadHomeProducts() {
 }
 
 function openProductModal(product) {
+  const productTitle = product.title || product.name || 'Untitled Product';
+  const productImage = product.imageUrl || product.image || 'https://via.placeholder.com/350x420?text=No+Image';
+  const productPrice = product.price ?? 0;
+
   selectedProduct = product;
-  document.getElementById('modal-title').innerText = product.title;
-  document.getElementById('modal-price').innerText = 'Rs ' + product.price;
+  document.getElementById('modal-title').innerText = productTitle;
+  document.getElementById('modal-price').innerText = 'Rs ' + productPrice;
   document.getElementById('modal-desc').innerText = product.description || 'No description';
-  document.getElementById('modal-img').src = product.imageUrl || 'https://via.placeholder.com/350x420?text=No+Image';
+  document.getElementById('modal-img').src = productImage;
 
   document.querySelectorAll('.size-opt').forEach(btn => btn.classList.remove('active-size'));
   const defaultButton = document.querySelector('.size-opt[data-size="S"]');
@@ -106,7 +156,7 @@ async function addToCart(productId, quantity = 1) {
     return;
   }
 
-  const res = await fetch(`${API_BASE}/cart`, {
+  const res = await apiFetch('/cart', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -131,7 +181,8 @@ async function addToCartConfirm() {
 
   try {
     await addToCart(selectedProduct._id, 1);
-    alert(`${selectedProduct.title} (${selectedProduct.size || 'S'}) added to cart`);
+    const productTitle = selectedProduct.title || selectedProduct.name || 'Product';
+    alert(`${productTitle} (${selectedProduct.size || 'S'}) added to cart`);
     closeModal();
   } catch (err) {
     console.error(err);

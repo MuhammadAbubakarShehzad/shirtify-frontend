@@ -9,7 +9,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.querySelector('#authForm input[type="password"]:not(#confirmPassword)');
     const loginCard = document.querySelector('.login-card');
 
-    const API_BASE = 'http://localhost:5000/api';
+    const API_BASE = (() => {
+        const params = new URLSearchParams(window.location.search);
+        const urlApiBase = params.get('apiBase');
+        if (urlApiBase) {
+            localStorage.setItem('shirtifyApiBase', urlApiBase);
+        }
+
+        const savedApiBase = localStorage.getItem('shirtifyApiBase');
+        if (savedApiBase) {
+            return savedApiBase;
+        }
+
+        const host = window.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1') {
+            return 'http://localhost:5000/api';
+        }
+
+        return `${window.location.origin}/api`;
+    })();
 
     // Simple Tab Switching Logic
     loginTab.addEventListener('click', () => {

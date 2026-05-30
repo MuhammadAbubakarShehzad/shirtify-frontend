@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SHIRTIFY | Shopping Cart</title>
+    <link rel="stylesheet" href="../header.css">
     <link rel="stylesheet" href="addtocart.css">
 </head>
 <body>
@@ -45,19 +46,6 @@
     </main>
 
     <script src="addtocart.js"></script>
-    <script>
-        // header-loader.js
-        function loadHeader() {
-            fetch('../header.html')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('header-placeholder').innerHTML = data;
-                })
-                .catch(error => console.error('Error loading header:', error));
-        }
-
-        // Run the function when the page loads
-        window.onload = loadHeader;
-    </script>
+    <script src="../header-loader.js"></script>
 </body>
 </html>

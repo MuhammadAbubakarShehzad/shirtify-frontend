@@ -39,6 +39,22 @@ function deactivatePenMode() {
     document.getElementById('shape-fill-color').parentElement.parentElement.style.display = '';
 }
 
+function clearCustomizationSelection() {
+    if (!window.fabricCanvas) return;
+
+    const active = window.fabricCanvas.getActiveObject();
+    if (active && active.isEditing && typeof active.exitEditing === 'function') {
+        active.exitEditing();
+    }
+
+    if (isPenMode) {
+        deactivatePenMode();
+    }
+
+    window.fabricCanvas.discardActiveObject();
+    window.fabricCanvas.requestRenderAll();
+}
+
 window.addEventListener('DOMContentLoaded', function() {
     // Pen tool button
     const penBtn = document.getElementById('pen-tool-btn');
@@ -212,10 +228,19 @@ window.addEventListener('DOMContentLoaded', function() {
         updateProperties(); // <-- Hide shape sidebar
     });
 
-    // Hide toolbar if clicking outside canvas/toolbar
+    // Clear the current selection when clicking outside the canvas/workspace controls
     document.addEventListener('mousedown', function(e) {
-        if (!window.fabricCanvas.upperCanvasEl.contains(e.target) && !toolbar.contains(e.target)) {
-            hideToolbar();
+        const mainToolbar = document.querySelector('.toolbar');
+        const shapeSidebar = document.getElementById('shape-properties-sidebar');
+        const shapeToolbar = document.getElementById('shape-toolbar-sidebar');
+        const textToolbar = document.getElementById('canva-text-toolbar');
+        const isInsideCanvas = window.fabricCanvas.upperCanvasEl.contains(e.target);
+        const isInsideMainToolbar = mainToolbar && mainToolbar.contains(e.target);
+        const isInsideToolbar = toolbar.contains(e.target) || (textToolbar && textToolbar.contains(e.target));
+        const isInsideShapeControls = (shapeSidebar && shapeSidebar.contains(e.target)) || (shapeToolbar && shapeToolbar.contains(e.target));
+
+        if (!isInsideCanvas && !isInsideMainToolbar && !isInsideToolbar && !isInsideShapeControls) {
+            clearCustomizationSelection();
         }
     });
 
@@ -550,31 +575,359 @@ const productSelect = document.getElementById('catalog-product');
 const startBtn = document.getElementById('start-customizing-btn');
 const DEFAULT_PLACEHOLDER = '../assets/no-image.png';
 
-// UI for rotate and color
-window.addEventListener('DOMContentLoaded', function() {
-    const studioHeader = document.querySelector('.studio-header .action-buttons');
-    if (studioHeader) {
-        // Add Rotate button if not present
-        if (!document.getElementById('rotate-view-btn')) {
-            const rotateBtn = document.createElement('button');
-            rotateBtn.id = 'rotate-view-btn';
-            rotateBtn.className = 'btn-rotate';
-            rotateBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Rotate';
-            rotateBtn.style.marginRight = '8px';
-            studioHeader.insertBefore(rotateBtn, studioHeader.firstChild);
+function resolveAssetUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+
+    const value = url.trim();
+    if (!value) return '';
+
+    // Convert absolute URLs that point to frontend assets into local relative paths.
+    const frontendAssetMatch = value.match(/\/frontend\/assets\/([^/?#]+)$/i);
+    if (frontendAssetMatch) {
+        return `../assets/${frontendAssetMatch[1]}`;
+    }
+
+    const assetMatch = value.match(/\/assets\/([^/?#]+)$/i);
+    if (assetMatch) {
+        return `../assets/${assetMatch[1]}`;
+    }
+
+    return value;
+}
+
+function normalizeMockShirt(shirt) {
+    if (!shirt || typeof shirt !== 'object') return shirt;
+
+    const normalizedImages = Array.isArray(shirt.images)
+        ? shirt.images.map(resolveAssetUrl).filter(Boolean)
+        : [];
+
+    return {
+        ...shirt,
+        imageUrl: resolveAssetUrl(shirt.imageUrl),
+        images: normalizedImages
+    };
+}
+
+const SAME_ORIGIN_API_BASE = (window.location.protocol.startsWith('http') && window.location.host)
+    ? `${window.location.protocol}//${window.location.host}/api`
+    : null;
+const LOCAL_API_BASE = 'http://localhost:5000/api';
+
+const API_BASE_CANDIDATES = Array.from(new Set(
+    ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port && window.location.port !== '5000')
+        ? [LOCAL_API_BASE, SAME_ORIGIN_API_BASE]
+        : [SAME_ORIGIN_API_BASE, LOCAL_API_BASE]
+)).filter(Boolean);
+
+let resolvedApiBase = null;
+window.printArea = null;
+
+function getDefaultPrintArea() {
+    if (!window.fabricCanvas) {
+        return { left: 150, top: 120, width: 300, height: 260 };
+    }
+    const cw = window.fabricCanvas.getWidth();
+    const ch = window.fabricCanvas.getHeight();
+    return {
+        left: cw * 0.26,
+        top: ch * 0.23,
+        width: cw * 0.48,
+        height: ch * 0.52
+    };
+}
+
+function keepObjectInsidePrintArea(obj) {
+    if (!obj || obj._shirtObject || !window.printArea) return;
+    obj.setCoords();
+    const bounds = obj.getBoundingRect(true, true);
+    let dx = 0;
+    let dy = 0;
+    const maxX = window.printArea.left + window.printArea.width;
+    const maxY = window.printArea.top + window.printArea.height;
+
+    if (bounds.left < window.printArea.left) dx = window.printArea.left - bounds.left;
+    if (bounds.top < window.printArea.top) dy = window.printArea.top - bounds.top;
+    if (bounds.left + bounds.width > maxX) dx = maxX - (bounds.left + bounds.width);
+    if (bounds.top + bounds.height > maxY) dy = maxY - (bounds.top + bounds.height);
+
+    if (dx || dy) {
+        obj.left += dx;
+        obj.top += dy;
+        obj.setCoords();
+    }
+}
+
+function applyPrintStyle(obj) {
+    if (!obj) return;
+    const area = window.printArea || getDefaultPrintArea();
+    const clipRect = new fabric.Rect({
+        left: area.left,
+        top: area.top,
+        width: area.width,
+        height: area.height,
+        originX: 'left',
+        originY: 'top',
+        absolutePositioned: true,
+        rx: 16,
+        ry: 16
+    });
+
+    obj.set({
+        clipPath: clipRect,
+        // Render artwork with true colors; fabric realism is handled by light overlays.
+        globalCompositeOperation: 'source-over',
+        opacity: 0.96,
+        shadow: new fabric.Shadow({
+            color: 'rgba(0,0,0,0.08)',
+            blur: 2,
+            offsetX: 0,
+            offsetY: 1
+        })
+    });
+}
+
+function createPrintAgingOverlay(area) {
+    const overlay = new fabric.Rect({
+        left: area.left,
+        top: area.top,
+        width: area.width,
+        height: area.height,
+        originX: 'left',
+        originY: 'top',
+        selectable: false,
+        evented: false,
+        rx: 16,
+        ry: 16,
+        fill: new fabric.Gradient({
+            type: 'linear',
+            gradientUnits: 'pixels',
+            coords: {
+                x1: area.left,
+                y1: area.top,
+                x2: area.left,
+                y2: area.top + area.height
+            },
+            colorStops: [
+                { offset: 0, color: 'rgba(255,255,255,0.16)' },
+                { offset: 0.45, color: 'rgba(255,255,255,0.04)' },
+                { offset: 1, color: 'rgba(0,0,0,0.07)' }
+            ]
+        }),
+        globalCompositeOperation: 'soft-light',
+        visible: false,
+        _shirtObject: true,
+        _printAgingOverlay: true
+    });
+    return overlay;
+}
+
+function bringShirtOverlayToFront() {
+    if (!window.fabricCanvas) return;
+    const hasDesign = window.fabricCanvas.getObjects().some(obj => !obj._shirtObject);
+    const aging = window.fabricCanvas.getObjects().find(obj => obj._printAgingOverlay);
+    if (aging) {
+        aging.visible = hasDesign;
+        if (hasDesign) window.fabricCanvas.bringToFront(aging);
+    }
+    const overlay = window.fabricCanvas.getObjects().find(obj => obj._shirtOverlay);
+    if (overlay) {
+        overlay.visible = hasDesign;
+        if (hasDesign) window.fabricCanvas.bringToFront(overlay);
+    }
+}
+
+function makeImageBackgroundTransparent(imageElement) {
+    try {
+        const w = imageElement.naturalWidth || imageElement.width;
+        const h = imageElement.naturalHeight || imageElement.height;
+        if (!w || !h) return null;
+
+        const off = document.createElement('canvas');
+        off.width = w;
+        off.height = h;
+        const ctx = off.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(imageElement, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const px = imgData.data;
+
+        // Estimate dominant background color from corners.
+        const cornerSamples = [
+            [0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1],
+            [Math.floor(w * 0.05), Math.floor(h * 0.05)],
+            [Math.floor(w * 0.95), Math.floor(h * 0.05)],
+            [Math.floor(w * 0.05), Math.floor(h * 0.95)],
+            [Math.floor(w * 0.95), Math.floor(h * 0.95)]
+        ];
+
+        let br = 0, bg = 0, bb = 0, count = 0;
+        for (const [x, y] of cornerSamples) {
+            const i = (y * w + x) * 4;
+            br += px[i];
+            bg += px[i + 1];
+            bb += px[i + 2];
+            count++;
         }
-        // Add Color Picker if not present
-        if (!document.getElementById('shirt-color-picker')) {
-            const colorInput = document.createElement('input');
-            colorInput.type = 'color';
-            colorInput.id = 'shirt-color-picker';
-            colorInput.value = baseColor;
-            colorInput.title = 'Shirt Base Color';
-            colorInput.style.marginRight = '8px';
-            studioHeader.insertBefore(colorInput, studioHeader.firstChild);
+        br /= count;
+        bg /= count;
+        bb /= count;
+
+        const threshold = 70;
+        for (let i = 0; i < px.length; i += 4) {
+            const dr = px[i] - br;
+            const dg = px[i + 1] - bg;
+            const db = px[i + 2] - bb;
+            const dist = Math.sqrt(dr * dr + dg * dg + db * db);
+
+            if (dist < threshold) {
+                // Soft fade near background color, hard remove near exact background.
+                const fade = Math.max(0, Math.min(1, dist / threshold));
+                px[i + 3] = Math.round(px[i + 3] * fade * 0.35);
+            }
+        }
+
+        // Feather outer border slightly to avoid sticker-like hard edges.
+        const feather = Math.max(2, Math.round(Math.min(w, h) * 0.015));
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const edgeDist = Math.min(x, y, w - 1 - x, h - 1 - y);
+                if (edgeDist < feather) {
+                    const i = (y * w + x) * 4;
+                    const a = edgeDist / feather;
+                    px[i + 3] = Math.round(px[i + 3] * a);
+                }
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        return off.toDataURL('image/png');
+    } catch (err) {
+        console.warn('Background cleanup skipped:', err);
+        return null;
+    }
+}
+
+function softenImageCornersDataURL(imageElement) {
+    try {
+        const w = imageElement.naturalWidth || imageElement.width;
+        const h = imageElement.naturalHeight || imageElement.height;
+        if (!w || !h) return null;
+
+        const off = document.createElement('canvas');
+        off.width = w;
+        off.height = h;
+        const ctx = off.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(imageElement, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const px = imgData.data;
+
+        // Feather all sides, with stronger effect near corners.
+        const edgeFeather = Math.max(8, Math.round(Math.min(w, h) * 0.08));
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const i = (y * w + x) * 4;
+                const dLeft = x;
+                const dTop = y;
+                const dRight = w - 1 - x;
+                const dBottom = h - 1 - y;
+                const edgeDist = Math.min(dLeft, dTop, dRight, dBottom);
+
+                if (edgeDist < edgeFeather) {
+                    const t = edgeDist / edgeFeather;
+                    // Quadratic easing for softer falloff.
+                    const alphaFactor = t * t;
+                    px[i + 3] = Math.round(px[i + 3] * alphaFactor);
+                }
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        return off.toDataURL('image/png');
+    } catch (err) {
+        console.warn('Corner softening skipped:', err);
+        return null;
+    }
+}
+
+function recolorDesignImageFromOriginal(activeImage, hexColor, strength) {
+    if (!activeImage || activeImage.type !== 'image') return;
+    const srcEl = activeImage._originalElement || activeImage._element;
+    if (!srcEl) return;
+
+    const w = srcEl.naturalWidth || srcEl.width;
+    const h = srcEl.naturalHeight || srcEl.height;
+    if (!w || !h) return;
+
+    const off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    const ctx = off.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(srcEl, 0, 0, w, h);
+
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const px = imgData.data;
+    const tr = parseInt(hexColor.slice(1, 3), 16);
+    const tg = parseInt(hexColor.slice(3, 5), 16);
+    const tb = parseInt(hexColor.slice(5, 7), 16);
+    const s = Math.max(0, Math.min(1, strength));
+
+    for (let i = 0; i < px.length; i += 4) {
+        const r = px[i];
+        const g = px[i + 1];
+        const b = px[i + 2];
+        const a = px[i + 3];
+        if (a === 0) continue;
+
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        const mask = 1 - luminance; // recolor dark lines strongly, preserve whites
+        const amount = s * mask;
+
+        px[i] = Math.round(r * (1 - amount) + tr * amount);
+        px[i + 1] = Math.round(g * (1 - amount) + tg * amount);
+        px[i + 2] = Math.round(b * (1 - amount) + tb * amount);
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+    const recoloredDataUrl = off.toDataURL('image/png');
+    activeImage.setSrc(recoloredDataUrl, () => {
+        activeImage.dirty = true;
+        activeImage.canvas && activeImage.canvas.requestRenderAll();
+    }, { crossOrigin: 'anonymous' });
+}
+
+async function apiFetch(path, options = {}) {
+    const bases = resolvedApiBase
+        ? [resolvedApiBase, ...API_BASE_CANDIDATES.filter(base => base !== resolvedApiBase)]
+        : API_BASE_CANDIDATES;
+
+    let lastError = null;
+
+    for (const base of bases) {
+        try {
+            const res = await fetch(`${base}${path}`, options);
+            if (res.ok) {
+                resolvedApiBase = base;
+                return res;
+            }
+
+            if (res.status === 404) {
+                lastError = new Error(`API endpoint not found at ${base}${path}`);
+                continue;
+            }
+
+            return res;
+        } catch (err) {
+            lastError = err;
         }
     }
-    // Event listeners
+
+    throw lastError || new Error('Unable to reach API');
+}
+
+// Toolbar bindings for rotate and shirt color
+window.addEventListener('DOMContentLoaded', function() {
     const rotateBtn = document.getElementById('rotate-view-btn');
     if (rotateBtn) {
         rotateBtn.addEventListener('click', function() {
@@ -582,9 +935,26 @@ window.addEventListener('DOMContentLoaded', function() {
         });
     }
     const colorInput = document.getElementById('shirt-color-picker');
-    if (colorInput) {
+    if (colorInput && !colorInput.dataset.bound) {
+        colorInput.dataset.bound = '1';
+        colorInput.value = baseColor;
         colorInput.addEventListener('input', function(e) {
             baseColor = e.target.value;
+            const c = window.fabricCanvas || canvas;
+            if (!c) return;
+            const shirtGroup = c.getObjects().find(obj => obj._shirtObject && obj.type === 'group');
+            if (shirtGroup) {
+                const tintImg = shirtGroup.item(1);
+                const blendFilter = tintImg && Array.isArray(tintImg.filters)
+                    ? tintImg.filters.find(f => f && f.type === 'BlendColor')
+                    : null;
+                if (blendFilter) {
+                    blendFilter.color = baseColor;
+                    tintImg.applyFilters();
+                    c.requestRenderAll();
+                    return;
+                }
+            }
             renderShirtView();
         });
     }
@@ -594,10 +964,13 @@ window.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('DOMContentLoaded', () => {
     try {
         productSelect.innerHTML = '<option value="" selected disabled>Loading shirts...</option>';
-        fetch('http://localhost:5000/api/mockshirts')
+        apiFetch('/mockshirts')
             .then(res => res.json())
-            .then(data => {
-                window.mockShirts = data;
+            .then(payload => {
+                const list = Array.isArray(payload)
+                    ? payload
+                    : (Array.isArray(payload.data) ? payload.data : []);
+                window.mockShirts = list.map(normalizeMockShirt);
                 if (!window.mockShirts.length) {
                     productSelect.innerHTML = '<option value="" selected disabled>No shirts found</option>';
                     return;
@@ -606,7 +979,9 @@ window.addEventListener('DOMContentLoaded', () => {
                 window.mockShirts.forEach(shirt => {
                     const opt = document.createElement('option');
                     opt.value = shirt._id;
-                    opt.textContent = `${shirt.name} (${shirt.type}) - Rs ${shirt.price}`;
+                    const shirtName = shirt.name || shirt.title || 'Shirt';
+                    const shirtType = shirt.type || shirt.category || 'Custom';
+                    opt.textContent = `${shirtName} (${shirtType}) - Rs ${shirt.price}`;
                     productSelect.appendChild(opt);
                 });
             })
@@ -630,15 +1005,16 @@ productSelect.addEventListener('change', function() {
 
 startBtn.addEventListener('click', () => {
     if (!selectedMockShirtId) return;
-    fetch(`http://localhost:5000/api/mockshirts/${selectedMockShirtId}`)
+    apiFetch(`/mockshirts/${selectedMockShirtId}`)
         .then(res => res.json())
-        .then(mockShirt => {
+        .then(payload => {
+            const mockShirt = normalizeMockShirt(payload && payload.data ? payload.data : payload);
             // Expect mockShirt.images: [front, back, left, right]
             window.shirtImages = Array.isArray(mockShirt.images) ? mockShirt.images : [mockShirt.imageUrl || DEFAULT_PLACEHOLDER];
             window.currentView = 0;
             baseColor = '#ffffff';
             showDesignStudio(mockShirt);
-            setTimeout(() => renderShirtView(), 100); // Wait for canvas
+            renderShirtView();
         })
         .catch(err => {
             alert('Error loading shirt details.');
@@ -659,6 +1035,15 @@ function showDesignStudio(mockShirt) {
             height: 500,
             preserveObjectStacking: true
         });
+        window.fabricCanvas.on('object:moving', function(e) {
+            keepObjectInsidePrintArea(e.target);
+        });
+        window.fabricCanvas.on('object:scaling', function(e) {
+            keepObjectInsidePrintArea(e.target);
+        });
+        window.fabricCanvas.on('object:rotating', function(e) {
+            keepObjectInsidePrintArea(e.target);
+        });
         document.getElementById('image-upload').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -666,9 +1051,20 @@ function showDesignStudio(mockShirt) {
             reader.onload = (event) => {
                 fabric.Image.fromURL(event.target.result, (img) => {
                     if (img) {
-                        img.scaleToWidth(200);
+                        const area = window.printArea || getDefaultPrintArea();
+                        const maxW = area.width * 0.85;
+                        const maxH = area.height * 0.85;
+                        const scale = Math.min(maxW / img.width, maxH / img.height);
+                        img.scale(scale);
+                        img.set({
+                            left: area.left + (area.width - img.getScaledWidth()) / 2,
+                            top: area.top + (area.height - img.getScaledHeight()) / 2
+                        });
+                        applyPrintStyle(img);
+                        keepObjectInsidePrintArea(img);
                         window.fabricCanvas.add(img);
                         window.fabricCanvas.setActiveObject(img);
+                        bringShirtOverlayToFront();
                         window.fabricCanvas.renderAll();
                         saveHistory();
                     } else {
@@ -685,6 +1081,7 @@ function showDesignStudio(mockShirt) {
 // --- Shirt View/Color Logic ---
 function renderShirtView() {
     if (!window.fabricCanvas) return;
+    window.printArea = getDefaultPrintArea();
     // Clear canvas
     window.fabricCanvas.clear();
     // Load current shirt image as a selectable object (like a shape)
@@ -703,61 +1100,125 @@ function renderShirtView() {
             _shirtObject: true,
             globalCompositeOperation: 'source-over'
         });
-        // Add color overlay as a rect with multiply blend mode, grouped with shirt image
-        const colorRect = new fabric.Rect({
-            left: 0,
-            top: 0,
-            width: window.fabricCanvas.width,
-            height: window.fabricCanvas.height,
-            fill: baseColor,
-            selectable: false,
-            evented: false,
-            globalCompositeOperation: 'multiply',
-            _shirtObject: true
-        });
-        // Group shirt image and color overlay so color can be changed like a shape
-        const shirtGroup = new fabric.Group([img, colorRect], {
-            left: 0,
-            top: 0,
-            selectable: true,
-            evented: true,
-            hasControls: true,
-            hasBorders: true,
-            _shirtObject: true
-        });
-        window.fabricCanvas.add(shirtGroup);
-        window.fabricCanvas.sendToBack(shirtGroup);
-        // Restore user design for this view (if any)
-        const state = window.designStates[window.currentView];
-        if (state) {
-            try {
-                const userObjects = JSON.parse(state);
-                fabric.util.enlivenObjects(userObjects, function(enlivenedObjects) {
-                    enlivenedObjects.forEach(obj => window.fabricCanvas.add(obj));
-                    window.fabricCanvas.sendToBack(shirtGroup);
-                    window.fabricCanvas.renderAll();
+        // Build shirt-only color tint layer (no full-canvas rectangle).
+        img.clone(function(tintImg) {
+            tintImg.set({
+                left: img.left,
+                top: img.top,
+                scaleX: img.scaleX,
+                scaleY: img.scaleY,
+                selectable: false,
+                evented: false,
+                _shirtObject: true,
+                _shirtTint: true
+            });
+
+            const BlendColor = fabric?.Image?.filters?.BlendColor;
+            if (BlendColor) {
+                tintImg.filters = [
+                    new BlendColor({
+                        color: baseColor,
+                        mode: 'tint',
+                        alpha: 0.65
+                    })
+                ];
+                tintImg.applyFilters();
+            } else {
+                tintImg.opacity = 0;
+            }
+
+            // Group base shirt + tint image so only shirt pixels are colored.
+            const shirtGroup = new fabric.Group([img, tintImg], {
+                left: 0,
+                top: 0,
+                selectable: true,
+                evented: true,
+                hasControls: true,
+                hasBorders: true,
+                _shirtObject: true
+            });
+            window.fabricCanvas.add(shirtGroup);
+            window.fabricCanvas.sendToBack(shirtGroup);
+
+            const printAgingOverlay = createPrintAgingOverlay(window.printArea);
+            window.fabricCanvas.add(printAgingOverlay);
+
+        // Top shading layer makes print feel embedded into fabric.
+            img.clone(function(overlayImg) {
+                const area = window.printArea || getDefaultPrintArea();
+                const overlayClip = new fabric.Rect({
+                    left: area.left,
+                    top: area.top,
+                    width: area.width,
+                    height: area.height,
+                    originX: 'left',
+                    originY: 'top',
+                    absolutePositioned: true,
+                    rx: 16,
+                    ry: 16
                 });
-            } catch (e) {
+                overlayImg.set({
+                    left: img.left,
+                    top: img.top,
+                    scaleX: img.scaleX,
+                    scaleY: img.scaleY,
+                    selectable: false,
+                    evented: false,
+                    hasControls: false,
+                    hasBorders: false,
+                    opacity: 0.12,
+                    globalCompositeOperation: 'multiply',
+                    clipPath: overlayClip,
+                    _shirtObject: true,
+                    _shirtOverlay: true
+                });
+                window.fabricCanvas.add(overlayImg);
+                bringShirtOverlayToFront();
+                window.fabricCanvas.requestRenderAll();
+            });
+            // Restore user design for this view (if any)
+            const state = window.designStates[window.currentView];
+            if (state) {
+                try {
+                    const userObjects = JSON.parse(state);
+                    fabric.util.enlivenObjects(userObjects, function(enlivenedObjects) {
+                        enlivenedObjects.forEach(obj => window.fabricCanvas.add(obj));
+                        window.fabricCanvas.sendToBack(shirtGroup);
+                        bringShirtOverlayToFront();
+                        window.fabricCanvas.renderAll();
+                    });
+                } catch (e) {
+                    bringShirtOverlayToFront();
+                    window.fabricCanvas.renderAll();
+                }
+            } else {
+                bringShirtOverlayToFront();
                 window.fabricCanvas.renderAll();
             }
-        } else {
-            window.fabricCanvas.renderAll();
-        }
+        });
     }, { crossOrigin: 'anonymous' });
 }
 
 // Update shirt color from color picker
 const colorInput = document.getElementById('shirt-color-picker');
-if (colorInput) {
+if (colorInput && !colorInput.dataset.bound) {
+    colorInput.dataset.bound = '1';
     colorInput.addEventListener('input', function(e) {
         baseColor = e.target.value;
-        // If shirt group exists, update its color overlay directly
+        // If shirt group exists, update shirt-only tint layer directly
         const shirtGroup = window.fabricCanvas.getObjects().find(obj => obj._shirtObject);
         if (shirtGroup && shirtGroup.type === 'group') {
-            // The color overlay is the second object in the group
-            const colorRect = shirtGroup.item(1);
-            colorRect.set('fill', baseColor);
-            window.fabricCanvas.renderAll();
+            const tintImg = shirtGroup.item(1);
+            const blendFilter = tintImg && Array.isArray(tintImg.filters)
+                ? tintImg.filters.find(f => f && f.type === 'BlendColor')
+                : null;
+            if (blendFilter) {
+                blendFilter.color = baseColor;
+                tintImg.applyFilters();
+                window.fabricCanvas.requestRenderAll();
+            } else {
+                renderShirtView();
+            }
         } else {
             renderShirtView();
         }
@@ -766,7 +1227,7 @@ if (colorInput) {
 // Update customization document in DB after design actions
 function updateCustomizationDoc() {
     if (!customizationId && canvas) return;
-    fetch(`http://localhost:5000/api/customizations/${customizationId}`, {
+    apiFetch(`/customizations/${customizationId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -956,18 +1417,43 @@ function updateDimensions() {
 
 // Floating Shape Properties Sidebar logic
 function updateProperties() {
-    if (!canvas) return;
+    const c = window.fabricCanvas || canvas;
+    if (!c) return;
     const sidebar = document.getElementById('shape-properties-sidebar');
     const penProps = document.getElementById('pen-properties');
+    const designTintGroup = document.getElementById('design-tint-group');
     if (!sidebar) return;
-    const active = canvas.getActiveObject();
+    const active = c.getActiveObject();
+    const isShape = !!(active && (active.type === 'rect' || active.type === 'circle' || active.type === 'triangle' || active.type === 'polygon' || active.type === 'line' || active.type === 'ellipse'));
+    const isDesignImage = !!(active && active.type === 'image' && !active._shirtObject);
+    const shapeGroups = [
+        document.getElementById('shape-fill-color')?.closest('.prop-group'),
+        document.getElementById('shape-width')?.closest('.prop-group'),
+        document.getElementById('shape-height')?.closest('.prop-group'),
+        document.getElementById('shape-shadow-enable')?.closest('.prop-group'),
+        document.getElementById('shape-blend-mode')?.closest('.prop-group'),
+        document.getElementById('shape-gradient-enable')?.closest('.prop-group')
+    ].filter(Boolean);
     // Show pen properties if pen mode is active
     if (isPenMode) {
         sidebar.style.display = 'flex';
         penProps.style.display = 'block';
-    } else if (active && (active.type === 'rect' || active.type === 'circle' || active.type === 'triangle' || active.type === 'polygon' || active.type === 'line' || active.type === 'ellipse')) {
+        shapeGroups.forEach(group => { group.style.display = 'none'; });
+        if (designTintGroup) designTintGroup.style.display = 'none';
+    } else if (isShape || isDesignImage) {
         sidebar.style.display = 'flex';
         penProps.style.display = 'none';
+        shapeGroups.forEach(group => { group.style.display = isShape ? '' : 'none'; });
+        if (designTintGroup) designTintGroup.style.display = isDesignImage ? '' : 'none';
+        if (isDesignImage) {
+            const tintColorInput = document.getElementById('design-tint-color');
+            const tintStrengthInput = document.getElementById('design-tint-strength');
+            const blend = Array.isArray(active.filters)
+                ? active.filters.find(f => f && f.type === 'BlendColor')
+                : null;
+            if (tintColorInput) tintColorInput.value = blend?.color || '#ffffff';
+            if (tintStrengthInput) tintStrengthInput.value = typeof blend?.alpha === 'number' ? blend.alpha : 0;
+        }
     } else {
         sidebar.style.display = 'none';
         penProps.style.display = 'none';
@@ -978,6 +1464,28 @@ function updateProperties() {
 window.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('shape-properties-sidebar');
     if (!sidebar) return;
+    const tintColorInput = document.getElementById('design-tint-color');
+    const tintStrengthInput = document.getElementById('design-tint-strength');
+
+    function applyImageTintFromControls() {
+        const c = window.fabricCanvas || canvas;
+        if (!c) return;
+        const active = c.getActiveObject();
+        if (!active || active.type !== 'image' || active._shirtObject) return;
+        const color = tintColorInput ? tintColorInput.value : '#ffffff';
+        const alpha = tintStrengthInput ? parseFloat(tintStrengthInput.value) : 0;
+        recolorDesignImageFromOriginal(active, color, alpha);
+    }
+
+    if (tintColorInput) {
+        tintColorInput.addEventListener('input', applyImageTintFromControls);
+        tintColorInput.addEventListener('change', applyImageTintFromControls);
+    }
+    if (tintStrengthInput) {
+        tintStrengthInput.addEventListener('input', applyImageTintFromControls);
+        tintStrengthInput.addEventListener('change', applyImageTintFromControls);
+    }
+
     document.getElementById('shape-fill-color').addEventListener('input', function() {
         if (!canvas) return;
         const active = canvas.getActiveObject();
@@ -1116,6 +1624,18 @@ function undo() {
     });
 }
 
+// --- Toggle Design Panel Visibility ---
+function toggleDesignPanel() {
+    const panel = document.getElementById('design-recommendations');
+    if (panel) {
+        if (panel.style.display === 'none' || !panel.style.display) {
+            panel.style.display = 'block';
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+}
+
 function redo() {
     if (!canvas || historyIndex >= historyStack.length - 1) return;
     
@@ -1177,7 +1697,7 @@ function saveDesign() {
         alert('You must be logged in to save your design to your account.');
         return;
     }
-    fetch('http://localhost:5000/api/customizations', {
+    apiFetch('/customizations', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1207,6 +1727,7 @@ function saveDesign() {
 // Expose saveDesign and addCustomToCart globally for HTML onclick
 window.saveDesign = saveDesign;
 window.addCustomToCart = addCustomToCart;
+window.toggleDesignPanel = toggleDesignPanel;
 function addCustomToCart() {
     console.log('addCustomToCart called');
     const canvasInstance = window.canvas || window.fabricCanvas;
@@ -1238,3 +1759,344 @@ function addCustomToCart() {
     localStorage.setItem('customCart', JSON.stringify(cart));
     alert('Custom design added to cart!');
 }
+
+// --- Design Inspiration / Unsplash Integration ---
+
+/**
+ * Fetch design inspirations from reliable image service
+ * @param {string} query - Search query (e.g., "anime hoodie")
+ * @param {number} count - Number of images to fetch (default: 6)
+ * @returns {Promise<Array>} Array of design objects with image URLs
+ */
+async function fetchUnsplashDesigns(query = 'design', count = 6) {
+    const safeQuery = (query || 'design').trim();
+    const printableKeywords = /(logo|vector|illustration|icon|emblem|sticker|graphic|png|svg|art)/i;
+    const likelyPhotoKeywords = /(photo|photograph|landscape|city|nature|portrait|wallpaper|building|sea|mountain)/i;
+
+    function getBestImageUrl(item) {
+        return item?.url || item?.thumbnail || item?.detail_url || '';
+    }
+
+    function isPngLike(url = '', title = '') {
+        const u = (url || '').toLowerCase();
+        const t = (title || '').toLowerCase();
+        return u.includes('.png') || u.includes('format=png') || t.includes('png') || t.includes('transparent');
+    }
+
+    // 1) Openverse (primary strict PNG mode)
+    try {
+        const smartQuery = `${safeQuery} t-shirt logo transparent png vector`;
+        const openverseUrl = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(smartQuery)}&page_size=${Math.max(count * 3, 24)}&license_type=all`;
+        const response = await fetch(openverseUrl, { headers: { Accept: 'application/json' } });
+        if (response.ok) {
+            const data = await response.json();
+            const results = Array.isArray(data?.results) ? data.results : [];
+            const designs = results
+                .filter(item => item && getBestImageUrl(item))
+                .filter(item => {
+                    const title = item?.title || '';
+                    const url = getBestImageUrl(item);
+                    const isPng = isPngLike(url, title);
+                    const looksPhoto = likelyPhotoKeywords.test(`${title} ${url}`);
+                    // Keep only PNG-like assets and avoid obvious photos.
+                    return isPng && !looksPhoto;
+                })
+                .sort((a, b) => {
+                    const aText = `${a?.title || ''} ${getBestImageUrl(a)}`;
+                    const bText = `${b?.title || ''} ${getBestImageUrl(b)}`;
+                    const aScore = printableKeywords.test(aText) ? 1 : 0;
+                    const bScore = printableKeywords.test(bText) ? 1 : 0;
+                    return bScore - aScore;
+                })
+                .slice(0, count)
+                .map((item, index) => ({
+                    id: item.id || `design-openverse-${Date.now()}-${index}`,
+                    title: item.title || `${safeQuery} inspiration ${index + 1}`,
+                    imageUrl: getBestImageUrl(item),
+                    source: 'openverse'
+                }));
+            if (designs.length) return designs;
+        }
+    } catch (err) {
+        console.warn('Openverse failed, trying Wikimedia fallback:', err);
+    }
+
+    // 2) Wikimedia fallback (very CORS-friendly)
+    try {
+        const wikiUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(safeQuery + ' logo png transparent')}&gsrlimit=${Math.max(count * 3, 18)}&prop=pageimages|info|imageinfo&iiprop=url&inprop=url&pithumbsize=600&format=json&origin=*`;
+        const response = await fetch(wikiUrl);
+        if (response.ok) {
+            const data = await response.json();
+            const pages = data?.query?.pages ? Object.values(data.query.pages) : [];
+            const designs = pages
+                .filter(page => page && page.thumbnail && page.thumbnail.source)
+                .filter(page => isPngLike(page.thumbnail.source, page.title || ''))
+                .slice(0, count)
+                .map((page, index) => ({
+                    id: `design-wiki-${Date.now()}-${index}`,
+                    title: page.title || `${safeQuery} inspiration ${index + 1}`,
+                    imageUrl: page.thumbnail.source,
+                    source: 'wikimedia'
+                }));
+            if (designs.length) return designs;
+        }
+    } catch (err) {
+        console.warn('Wikimedia failed:', err);
+    }
+
+    // 3) Fallback mode: return general images and let UI convert for print-like use.
+    try {
+        const fallbackQuery = `${safeQuery} logo graphic`;
+        const openverseFallbackUrl = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(fallbackQuery)}&page_size=${Math.max(count * 2, 16)}&license_type=all`;
+        const fallbackRes = await fetch(openverseFallbackUrl, { headers: { Accept: 'application/json' } });
+        if (fallbackRes.ok) {
+            const data = await fallbackRes.json();
+            const results = Array.isArray(data?.results) ? data.results : [];
+            const fallbackDesigns = results
+                .filter(item => item && getBestImageUrl(item))
+                .slice(0, count)
+                .map((item, index) => ({
+                    id: item.id || `design-openverse-fallback-${Date.now()}-${index}`,
+                    title: item.title || `${safeQuery} inspiration ${index + 1}`,
+                    imageUrl: getBestImageUrl(item),
+                    source: 'openverse-fallback',
+                    autoProcess: true
+                }));
+            if (fallbackDesigns.length) return fallbackDesigns;
+        }
+    } catch (err) {
+        console.warn('Openverse relaxed fallback failed:', err);
+    }
+
+    // 4) Last fallback to avoid empty panel.
+    return Array.from({ length: count }, (_, i) => ({
+        id: `design-fallback-${Date.now()}-${i}`,
+        title: `${safeQuery} inspiration ${i + 1}`,
+        imageUrl: `https://picsum.photos/600/400?random=${Math.floor(Math.random() * 100000)}`,
+        source: 'picsum-fallback',
+        autoProcess: true
+    }));
+}
+
+/**
+ * Render design recommendations in the design list
+ * @param {Array} items - Array of design objects
+ */
+function renderDesignRecommendations(items) {
+    const designList = document.getElementById('design-list');
+    if (!designList) return;
+    
+    designList.innerHTML = '';
+    if (!items || !items.length) return;
+    
+    items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'design-item';
+        div.style.cursor = 'pointer';
+        div.style.borderRadius = '6px';
+        div.style.overflow = 'hidden';
+        div.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.06)';
+        div.style.transition = 'transform 0.2s, box-shadow 0.2s';
+        div.style.backgroundColor = '#f9f9f9';
+        
+        // Add hover effect
+        div.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+            this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+        });
+        div.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+            this.style.boxShadow = '0 1px 4px rgba(0, 0, 0, 0.06)';
+        });
+        
+        // Image container
+        const imgContainer = document.createElement('div');
+        imgContainer.style.width = '100%';
+        imgContainer.style.height = '100px';
+        imgContainer.style.backgroundColor = '#e5e7eb';
+        imgContainer.style.display = 'flex';
+        imgContainer.style.alignItems = 'center';
+        imgContainer.style.justifyContent = 'center';
+        imgContainer.style.position = 'relative';
+        imgContainer.style.overflow = 'hidden';
+        
+        // Loading indicator
+        const loadingDiv = document.createElement('div');
+        loadingDiv.textContent = '⏳ Loading...';
+        loadingDiv.style.fontSize = '12px';
+        loadingDiv.style.color = '#999';
+        imgContainer.appendChild(loadingDiv);
+        
+        // Actual image
+        const img = document.createElement('img');
+        img.src = item.imageUrl;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.display = 'none';
+        img.style.backgroundColor = '#e5e7eb';
+        img.alt = item.title;
+        img.crossOrigin = 'anonymous';
+        
+        // Handle image load success
+        img.onload = function() {
+            loadingDiv.style.display = 'none';
+            img.style.display = 'block';
+
+            // For non-PNG fallback items, create a print-usable processed preview.
+            if (item.autoProcess) {
+                const processed = makeImageBackgroundTransparent(img);
+                if (processed) {
+                    item.processedImageUrl = processed;
+                    img.src = processed;
+                }
+            }
+        };
+        
+        // Handle image load error
+        img.onerror = function() {
+            loadingDiv.textContent = '❌ Failed to load';
+            loadingDiv.style.color = '#d97706';
+        };
+        
+        imgContainer.appendChild(img);
+        div.appendChild(imgContainer);
+        
+        // Title
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.style.fontSize = '0.75rem';
+        meta.style.color = '#4b5563';
+        meta.style.padding = '6px 4px';
+        meta.style.textAlign = 'center';
+        meta.style.whiteSpace = 'nowrap';
+        meta.style.overflow = 'hidden';
+        meta.style.textOverflow = 'ellipsis';
+        meta.style.backgroundColor = '#fafafa';
+        meta.textContent = item.title;
+        div.appendChild(meta);
+        
+        // Click handler
+        div.addEventListener('click', function() {
+            const designUrl = item.processedImageUrl || item.imageUrl;
+            console.log('Design clicked:', item.title, designUrl);
+            applyDesign(designUrl, item.title);
+        });
+        
+        designList.appendChild(div);
+    });
+}
+
+/**
+ * Apply a design image to the canvas
+ * @param {string} imageUrl - URL of the image to apply
+ * @param {string} title - Title of the design (optional)
+ */
+function applyDesign(imageUrl, title = 'Design Image') {
+    if (!window.fabricCanvas) {
+        console.error('Canvas not initialized');
+        alert('Please open the design studio first');
+        return;
+    }
+    
+    fabric.Image.fromURL(imageUrl, function(img) {
+        if (!img) {
+            alert('Failed to load image');
+            return;
+        }
+        const placeImage = function(finalImg) {
+            const area = window.printArea || getDefaultPrintArea();
+            const maxWidth = area.width * 0.85;
+            const maxHeight = area.height * 0.85;
+            const scale = Math.min(maxWidth / finalImg.width, maxHeight / finalImg.height);
+
+            finalImg.set({
+                left: area.left + (area.width - (finalImg.width * scale)) / 2,
+                top: area.top + (area.height - (finalImg.height * scale)) / 2,
+                scaleX: scale,
+                scaleY: scale,
+                selectable: true,
+                evented: true,
+                name: title,
+                skewX: -2
+            });
+            finalImg._originalElement = finalImg._element;
+            finalImg._originalSrc = imageUrl;
+
+            applyPrintStyle(finalImg);
+            keepObjectInsidePrintArea(finalImg);
+            window.fabricCanvas.add(finalImg);
+            window.fabricCanvas.setActiveObject(finalImg);
+            bringShirtOverlayToFront();
+            window.fabricCanvas.renderAll();
+            console.log('Design applied:', title);
+        };
+
+        // Keep the exact original design image (no pixel modification),
+        // so the preview card and shirt print look the same.
+        placeImage(img);
+    }, {
+        crossOrigin: 'anonymous'
+    });
+}
+
+// --- Wire up Design Search UI ---
+window.addEventListener('DOMContentLoaded', async function() {
+    console.log('Design panel initializing...');
+    
+    // Load initial designs immediately 
+    try {
+        const initialDesigns = await fetchUnsplashDesigns('shirt design', 6);
+        renderDesignRecommendations(initialDesigns);
+        console.log('Initial designs loaded:', initialDesigns.length);
+    } catch (err) {
+        console.error('Failed to load initial designs:', err);
+    }
+    
+    // Design search button
+    const searchBtn = document.getElementById('design-search-btn');
+    const searchInput = document.getElementById('design-search-input');
+    
+    if (searchBtn && searchInput) {
+        searchBtn.addEventListener('click', async function() {
+            const query = searchInput.value.trim() || 'design';
+            if (!query) return;
+            
+            console.log('Searching for:', query);
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Searching...';
+            
+            try {
+                const designs = await fetchUnsplashDesigns(query, 8);
+                renderDesignRecommendations(designs);
+            } catch (err) {
+                console.error('Search failed:', err);
+                alert('Failed to load designs');
+            }
+            
+            searchBtn.disabled = false;
+            searchBtn.textContent = 'Search';
+        });
+        
+        // Allow Enter key to search
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchBtn.click();
+        });
+    }
+    
+    // Reload designs when design studio opens
+    const startBtn = document.getElementById('start-customizing-btn');
+    if (startBtn) {
+        startBtn.addEventListener('click', async function() {
+            console.log('Design studio opened, refreshing designs');
+            setTimeout(async function() {
+                try {
+                    const refreshedDesigns = await fetchUnsplashDesigns('shirt design', 6);
+                    renderDesignRecommendations(refreshedDesigns);
+                } catch (err) {
+                    console.error('Failed to refresh designs:', err);
+                }
+            }, 300);
+        });
+    }
+});

@@ -1,0 +1,4 @@
+male1_mountain|d:\ffyp\New folder\scratch\test_outputs\male1_mountain.png|person_male_1.png|shirt_mountain.png|mediapipe_pose_warp
+male2_nasa|d:\ffyp\New folder\scratch\test_outputs\male2_nasa.png|person_male_2.png|shirt_nasa.png|mediapipe_pose_warp
+female1_galaxy|d:\ffyp\New folder\scratch\test_outputs\female1_galaxy.png|person_female_1.png|shirt_galaxy.png|mediapipe_pose_warp
+male1_white|d:\ffyp\New folder\scratch\test_outputs\male1_white.png|person_male_1.png|shirt_plain_white.png|mediapipe_pose_warp

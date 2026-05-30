@@ -3,8 +3,21 @@ const MockShirt = require('../models/MockShirt');
 // Create a new mock shirt
 exports.createMockShirt = async (req, res) => {
   try {
-    const { name, type, price, imageUrl } = req.body;
-    const shirt = await MockShirt.create({ name, type, price, imageUrl });
+    const { name, type, price, imageUrl, images } = req.body;
+    const normalizedImages = Array.isArray(images)
+      ? images
+      : String(images || '')
+          .split(',')
+          .map((image) => image.trim())
+          .filter(Boolean);
+
+    const shirt = await MockShirt.create({
+      name,
+      type,
+      price,
+      imageUrl,
+      images: normalizedImages
+    });
     res.status(201).json(shirt);
   } catch (err) {
     res.status(400).json({ message: err.message });

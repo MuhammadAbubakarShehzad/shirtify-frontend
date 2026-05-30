@@ -1,0 +1,14 @@
+flask
+flask-cors
+opencv-python
+Pillow
+google-genai
+google-generativeai
+numpy
+python-dotenv
+pyopenssl
+mediapipe
+rembg
+onnxruntime
+scikit-image
+gradio_client

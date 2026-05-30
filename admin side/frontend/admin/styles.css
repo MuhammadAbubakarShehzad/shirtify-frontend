@@ -1,0 +1,352 @@
+/* 
+ * Shirtify Admin - Pixel-Perfect Design System
+ * Centralized styles for 100% visual consistency
+ */
+
+/* ==================== COLOR PALETTE ==================== */
+:root {
+    /* Primary Brand Colors */
+    --primary-cyan: #7DD3C0;
+    --primary-cyan-light: #A8E6CF;
+    --primary-cyan-dark: #5DBAA7;
+
+    /* Semantic Colors */
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-error: #EF4444;
+    --color-info: #3B82F6;
+
+    /* Neutral Palette */
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+
+    /* Background Colors */
+    --bg-page: #F8FAFC;
+    --bg-card: #FFFFFF;
+    --bg-input: #FFFFFF;
+
+    /* Border Colors */
+    --border-light: #E2E8F0;
+    --border-default: #D1D5DB;
+    --border-focus: #7DD3C0;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 20px;
+    --spacing-2xl: 24px;
+
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-pill: 20px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+    /* Typography */
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+}
+
+/* ==================== GLOBAL STYLES ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--bg-page);
+    color: var(--gray-900);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==================== BUTTONS ==================== */
+.btn-primary {
+    background-color: var(--primary-cyan);
+    color: white;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-semibold);
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-cyan-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--gray-700);
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    font-size: 14px;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background-color: var(--gray-50);
+    border-color: var(--gray-300);
+}
+
+/* ==================== FORM ELEMENTS ==================== */
+.input-field {
+    width: 100%;
+    height: 48px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-input);
+    font-size: 14px;
+    color: var(--gray-900);
+    transition: all 0.2s ease;
+}
+
+.input-field::placeholder {
+    color: var(--gray-400);
+    opacity: 0.6;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    border-width: 2px;
+    padding: 11px 15px;
+    /* Adjust for 2px border */
+    box-shadow: 0 0 0 3px rgba(125, 211, 192, 0.1);
+}
+
+.textarea-field {
+    width: 100%;
+    min-height: 120px;
+    padding: 12px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--bg-input);
+    font-size: 14px;
+    color: var(--gray-900);
+    font-family: var(--font-family);
+    resize: vertical;
+    transition: all 0.2s ease;
+}
+
+.textarea-field:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    border-width: 2px;
+    padding: 11px 15px;
+    box-shadow: 0 0 0 3px rgba(125, 211, 192, 0.1);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    color: var(--gray-700);
+    margin-bottom: 8px;
+}
+
+/* Checkbox Styling */
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.checkbox-input {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* ==================== TAB NAVIGATION ==================== */
+.tab-btn {
+    padding: 8px 20px;
+    border-radius: var(--radius-pill);
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    transition: all 0.2s ease;
+    border: none;
+    background: transparent;
+    color: var(--gray-600);
+    cursor: pointer;
+}
+
+.tab-btn:hover {
+    background-color: var(--gray-50);
+    color: var(--gray-900);
+}
+
+.tab-btn.active {
+    background-color: var(--primary-cyan);
+    color: white;
+}
+
+/* ==================== CARDS ==================== */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-padding {
+    padding: 20px 24px;
+}
+
+/* ==================== METRIC CARDS ==================== */
+.metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
+.metric-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.metric-icon-bg-cyan {
+    background-color: #E0F7F4;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.metric-icon-bg-green {
+    background-color: #D4F4DD;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.metric-icon-bg-yellow {
+    background-color: #FFF4E0;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.metric-value {
+    font-size: 24px;
+    font-weight: var(--font-weight-bold);
+    color: var(--gray-900);
+}
+
+.metric-label {
+    font-size: 14px;
+    font-weight: var(--font-weight-medium);
+    color: var(--gray-600);
+}
+
+/* ==================== ICON SIZES ==================== */
+.icon-sm {
+    width: 16px;
+    height: 16px;
+}
+
+.icon-md {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-lg {
+    width: 48px;
+    height: 48px;
+}
+
+.icon-xl {
+    width: 64px;
+    height: 64px;
+}
+
+/* ==================== UTILITY CLASSES ==================== */
+.full-width {
+    width: 100%;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.gap-8 {
+    gap: 8px;
+}
+
+.gap-16 {
+    gap: 16px;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .metric-card-grid {
+        grid-template-columns: 1fr;
+    }
+}

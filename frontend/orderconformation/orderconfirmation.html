@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Confirmed - Shirtify</title>
-    <link rel="stylesheet" href="orderconfirmation.css">
+    
+    <link rel="stylesheet" href="../header.css">
+<link rel="stylesheet" href="orderconfirmation.css">
 </head>
 <body>
      <div id="header-placeholder"></div>
@@ -104,6 +106,48 @@
             if (main) main.style.marginTop = '120px';
         });
 
+        const SAME_ORIGIN_API_BASE = (window.location.protocol.startsWith('http') && window.location.host)
+            ? `${window.location.protocol}//${window.location.host}/api`
+            : null;
+        const LOCAL_API_BASE = 'http://localhost:5000/api';
+
+        const API_BASE_CANDIDATES = Array.from(new Set(
+            ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port && window.location.port !== '5000')
+                ? [LOCAL_API_BASE, SAME_ORIGIN_API_BASE]
+                : [SAME_ORIGIN_API_BASE, LOCAL_API_BASE]
+        )).filter(Boolean);
+
+        let resolvedApiBase = null;
+
+        async function apiFetch(path, options = {}) {
+            const bases = resolvedApiBase
+                ? [resolvedApiBase, ...API_BASE_CANDIDATES.filter(base => base !== resolvedApiBase)]
+                : API_BASE_CANDIDATES;
+
+            let lastError = null;
+
+            for (const base of bases) {
+                try {
+                    const res = await fetch(`${base}${path}`, options);
+                    if (res.ok) {
+                        resolvedApiBase = base;
+                        return res;
+                    }
+
+                    if (res.status === 404) {
+                        lastError = new Error(`API endpoint not found at ${base}${path}`);
+                        continue;
+                    }
+
+                    return res;
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+
+            throw lastError || new Error('Unable to reach API');
+        }
+
         // Create order in backend and display details
         document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('order-id').textContent = '';
@@ -117,7 +161,7 @@
                 // You may want to collect shipping/payment info from user before this step
                 const shippingAddress = localStorage.getItem('shirtifyShippingAddress') || '';
                 const paymentMethod = localStorage.getItem('shirtifyPaymentMethod') || 'cod';
-                const res = await fetch('http://localhost:5000/api/orders', {
+                const res = await apiFetch('/orders', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -125,7 +169,10 @@
                     },
                     body: JSON.stringify({ shippingAddress, paymentMethod })
                 });
-                if (!res.ok) throw new Error('Unable to create order');
+                if (!res.ok) {
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Unable to create order');
+                }
                 const order = await res.json();
                 document.getElementById('order-id').textContent = order._id.slice(-8).toUpperCase();
                 document.getElementById('shipping-address').textContent = order.shippingAddress || 'N/A';
@@ -159,19 +206,6 @@
             }
         });
     </script>
-    <script>
-        // header-loader.js
-        function loadHeader() {
-            fetch('../header.html')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('header-placeholder').innerHTML = data;
-                })
-                .catch(error => console.error('Error loading header:', error));
-        }
-
-        // Run the function when the page loads
-        window.onload = loadHeader;
-    </script>
+    <script src="../header-loader.js"></script>
 </body>
 </html>

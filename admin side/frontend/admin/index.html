@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shirtify - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-service.js"></script>
+    <link href="https://unpkg.com/lucide-icons/dist/umd/lucide.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-gray-50">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <span
+                        class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">Shirtify</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#" class="text-gray-900 font-medium">Shop</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-900">Men</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-900">Women</a>
+                    <a href="#" class="text-gray-500 hover:text-gray-900">About</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-900"><i data-lucide="search"
+                            class="w-6 h-6"></i></button>
+                    <a href="cart.html" class="text-gray-500 hover:text-gray-900 relative">
+                        <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                        <span
+                            class="absolute -top-1 -right-1 bg-indigo-600 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">0</span>
+                    </a>
+                    <a href="login.html" class="text-gray-500 hover:text-gray-900"><i data-lucide="user"
+                            class="w-6 h-6"></i></a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="relative bg-gray-900 overflow-hidden">
+        <div class="absolute inset-0">
+            <img class="w-full h-full object-cover opacity-30"
+                src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
+                alt="Hero background">
+        </div>
+        <div class="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">New Summer Collection
+            </h1>
+            <p class="mt-6 text-xl text-gray-300 max-w-3xl mx-auto">Discover the latest trends in street fashion.
+                Premium quality, sustainable materials.</p>
+            <div class="mt-10">
+                <a href="#products"
+                    class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-full text-gray-900 bg-white hover:bg-gray-100 transition-colors duration-300">
+                    Shop Now
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div id="products" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="flex justify-between items-end mb-8">
+            <h2 class="text-3xl font-bold text-gray-900">Featured Products</h2>
+            <div class="flex space-x-2">
+                <button class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm">All</button>
+                <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm">Casual</button>
+                <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm">Formal</button>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="flex justify-center items-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+
+        <!-- Products Container -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-6 hidden">
+            <!-- Dynamic Content -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 border-t border-gray-800 mt-12">
+            <p class="text-center text-gray-400">&copy; 2026 Shirtify. FYP Project Submission.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        async function loadProducts() {
+            try {
+                // Use the Service Layer you built!
+                await ShirtifyData.init();
+                const products = ShirtifyData.products;
+
+                const grid = document.getElementById('product-grid');
+                grid.innerHTML = products.map(product => `
+                    <div class="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100">
+                        <div class="w-full min-h-80 bg-gray-200 aspect-w-1 aspect-h-1 rounded-t-2xl overflow-hidden group-hover:opacity-75 lg:h-80 lg:aspect-none relative">
+                            <img src="${product.image || 'https://via.placeholder.com/300'}" alt="${product.name}" class="w-full h-full object-center object-cover lg:w-full lg:h-full">
+                            ${product.stock === 0 ? `<span class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">Out of Stock</span>` : (product.stock < 5 ? `<span class="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full">Low Stock</span>` : '')}
+                        </div>
+                        <div class="p-4">
+                            <div class="flex justify-between">
+                                <div>
+                                    <h3 class="text-sm text-gray-700">
+                                        <a href="product.html?id=${product._id}">
+                                            <span aria-hidden="true" class="absolute inset-0"></span>
+                                            ${product.name}
+                                        </a>
+                                    </h3>
+                                    <p class="mt-1 text-sm text-gray-500">${product.category}</p>
+                                </div>
+                                <p class="text-sm font-medium text-gray-900">₹${product.price}</p>
+                            </div>
+                            <button class="mt-4 w-full bg-indigo-600 border border-transparent rounded-lg py-2 px-4 flex items-center justify-center text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Add to Cart
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('loading').classList.add('hidden');
+                grid.classList.remove('hidden');
+                lucide.createIcons();
+            } catch (error) {
+                console.error("Error loading frontend:", error);
+                document.getElementById('loading').innerHTML = `<p class="text-red-500">Failed to load products. Is the backend running?</p>`;
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+
+</html>

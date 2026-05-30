@@ -1,0 +1,21 @@
+# ML Service - Python cache and model files
+__pycache__/
+*.pyc
+*.pyo
+*.pkl
+*.joblib
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

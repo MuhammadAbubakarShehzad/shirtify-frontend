@@ -4,35 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shirtify Design Studio</title>
+    <link rel="stylesheet" href="../header.css">
     <link rel="stylesheet" href="customizescreen.css">
-      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 </head>
 <body>
- <header>
-        <div class="logo">SHIRTIFY</div>
-        <nav>
-            <ul>
-                <li><a href="../homescreen/homescreen.html">Home</a></li>
-                <li><a href="../shopscreen/shopscreen.html">Shop</a></li>
-                <li><a href="../customizescreen/customizescreen.html">Design Studio</a></li>
-                <li><a href="../try-on-screen/try-on-screen.html">Try On</a></li>
-                <li><a href="../aboutscreen/about.html">About</a></li>
-            </ul>
-        </nav>
-        <div class="header-actions">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search products">
-            </div>
-            <div class="icons">
-                <i class="fas fa-shopping-cart" onclick="window.location.href='../addTocart/addtocart.html'" type="button"></i>
-                <i class="fas fa-box" onclick="window.location.href='../orderinfo/orderinfo.html'" type="button"></i>
-                <i class="fas fa-sign-out-alt" onclick="window.location.href='../login/login.html'"></i>
-            </div>
-        </div>
-    </header>
+    <div id="header-placeholder"></div>
 
     <!-- Stepper Section -->
     <main class="studio-container">
@@ -91,6 +70,9 @@
                                             <button onclick="addText()" title="Add Text" id="show-text-toolbar"><i class="fas fa-font"></i></button>
                                             <button id="show-shape-toolbar" title="Add Shape"><i class="fas fa-shapes"></i></button>
                                             <button id="pen-tool-btn" title="Pen Tool"><i class="fas fa-pen"></i></button>
+                                            <button id="toggle-design-panel-btn" title="Design Inspirations" onclick="toggleDesignPanel()"><i class="fas fa-wand-magic-sparkles"></i></button>
+                                            <button id="rotate-view-btn" title="Rotate View"><i class="fas fa-sync-alt"></i></button>
+                                            <input type="color" id="shirt-color-picker" title="Shirt Base Color" value="#ffffff">
                                             <div id="canva-text-toolbar" class="canva-text-toolbar" style="display:none;">
                                                 <select id="font-family">
                                                     <option value="Arial">Arial</option>
@@ -137,14 +119,26 @@
                                             </div>
                                         </div>
                     <!-- Shapes panel will be on the right side -->
-                    <button onclick="triggerUpload()" title="Upload Image">🖼️</button>
+                    <button onclick="triggerUpload()" title="Upload Image"><i class="fas fa-image"></i></button>
                     <div class="separator"></div>
-                    <button onclick="undo()" title="Undo">↩</button>
-                    <button onclick="redo()" title="Redo">↪</button>
-                    <button onclick="deleteObject()" title="Delete Selection">🗑️</button>
+                    <button onclick="undo()" title="Undo"><i class="fas fa-undo"></i></button>
+                    <button onclick="redo()" title="Redo"><i class="fas fa-redo"></i></button>
+                    <button onclick="deleteObject()" title="Delete Selection"><i class="fas fa-trash"></i></button>
                 </div>
                 <div class="canvas-wrapper">
                     <canvas id="main-canvas" width="600" height="500"></canvas>
+                </div>
+            </div>
+            <!-- Design Recommendations / Assets Panel -->
+            <div id="design-recommendations" class="design-recommendations" style="display:none; width:320px; padding:12px; background:#fff; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.06);">
+                <h3 style="margin:0 0 8px 0; font-size:1rem; font-weight:600;">Design Inspirations</h3>
+                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                    <input id="design-search-input" type="text" placeholder="e.g. anime hoodie, vintage" style="flex:1; padding:6px; border-radius:6px; border:1px solid #e5e7eb;" />
+                    <button id="design-search-btn" style="margin-left:6px; padding:6px 8px; border-radius:6px; background:#3b82f6; color:#fff; border:none; cursor:pointer;">Search</button>
+                </div>
+                <div id="design-list" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; max-height:360px; overflow:auto; padding-top:8px;"></div>
+                <div style="margin-top:10px; text-align:center;">
+                    <button id="load-more-designs" style="padding:6px 10px; border-radius:6px; background:#e6f6ff; border:none; cursor:pointer;">Load more</button>
                 </div>
             </div>
             <!-- Floating Shape Properties Sidebar -->
@@ -162,8 +156,19 @@
                 </div>
                 <h3>Shape Properties</h3>
                 <div class="prop-group">
+                    <label for="design-opacity">Design Opacity</label>
+                    <input type="range" id="design-opacity" min="0" max="1" step="0.05" value="1">
+                    <small id="design-opacity-value">100%</small>
+                </div>
+                <div class="prop-group">
                     <label for="shape-fill-color">Fill Color</label>
                     <input type="color" id="shape-fill-color" value="#10B981">
+                </div>
+                <div class="prop-group" id="design-tint-group" style="display:none;">
+                    <label for="design-tint-color">Design Color</label>
+                    <input type="color" id="design-tint-color" value="#ffffff">
+                    <label for="design-tint-strength">Tint Strength</label>
+                    <input type="range" id="design-tint-strength" min="0" max="1" step="0.05" value="0.6">
                 </div>
                 <div class="prop-group">
                     <label for="shape-width">Width</label>
@@ -275,6 +280,12 @@
                 <div id="shape-toolbar-sidebar" class="shape-toolbar-sidebar" style="display:none;">
                     <div class="toolbar-header">Shapes</div>
                     <div class="shapes-list">
+                        <style>
+                        /* Design recommendations panel */
+                        .design-recommendations img { width: 100%; height: 80px; object-fit: cover; border-radius: 6px; display: block; }
+                        .design-item { cursor: pointer; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06); }
+                        .design-item .meta { font-size: 0.8rem; color: #4b5563; padding: 6px 4px; text-align: center; }
+                        </style>
                         <button class="shape-btn" data-shape="Rectangle" title="Rectangle"><span>▭</span></button>
                         <button class="shape-btn" data-shape="Circle" title="Circle"><span>●</span></button>
                         <button class="shape-btn" data-shape="Triangle" title="Triangle"><span>▲</span></button>
@@ -288,6 +299,13 @@
                 </div>
 
     <input type="file" id="image-upload" hidden accept="image/*">
+
+        <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+            <symbol id="icon-search" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+            <symbol id="icon-cart" viewBox="0 0 24 24"><path d="M3 3h2l1.6 9.6A2 2 0 0 0 8.6 15H19" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></symbol>
+            <symbol id="icon-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M12 3v18" stroke="currentColor" stroke-width="1.2"/></symbol>
+            <symbol id="icon-signout" viewBox="0 0 24 24"><path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+        </svg>
 
         <script src="customizescreen.js"></script>
         <script>
@@ -437,17 +455,8 @@
                 };
             });
 
-            // header-loader.js
-            function loadHeader() {
-                fetch('../header.html')
-                    .then(response => response.text())
-                    .then(data => {
-                        const headerPlaceholder = document.getElementById('header-placeholder');
-                        if (headerPlaceholder) headerPlaceholder.innerHTML = data;
-                    })
-                    .catch(error => console.error('Error loading header:', error));
-            }
-            window.onload = loadHeader;
+            // load sample items when studio opens
         </script>
+        <script src="../header-loader.js"></script>
 </body>
 </html>

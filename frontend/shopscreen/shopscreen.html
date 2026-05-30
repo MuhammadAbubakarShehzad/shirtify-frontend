@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shirtify Store</title>
+    <link rel="stylesheet" href="../header.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="shopscreen.css">
@@ -27,17 +28,15 @@
                     <!-- Size Filter -->
                     <div class="mb-8">
                         <label class="block text-slate-500 font-medium mb-3">Size</label>
-                        <div class="relative group">
-                            <select
-                                class="w-full appearance-none bg-slate-200 text-slate-700 rounded-lg px-4 py-3 font-medium outline-none focus:ring-2 focus:ring-sky-200 cursor-pointer">
-                                <option>All Sizes</option>
-                                <option>Small</option>
-                                <option>Medium</option>
-                                <option>Large</option>
-                                <option>X-Large</option>
+                        <div class="relative group mt-2">
+                            <select id="size-filter" class="w-full appearance-none bg-gradient-to-r from-sky-100 to-sky-200 text-slate-700 rounded-lg px-4 py-3 font-medium outline-none focus:ring-2 focus:ring-sky-300 cursor-pointer shadow-md">
+                                <option value="All Sizes">All Sizes</option>
+                                <option value="S">Small</option>
+                                <option value="M">Medium</option>
+                                <option value="L">Large</option>
+                                <option value="XL">X-Large</option>
                             </select>
-                            <i data-lucide="chevron-down"
-                                class="absolute right-3 top-3.5 text-slate-500 w-5 h-5 pointer-events-none group-hover:text-slate-700"></i>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-3.5 text-slate-500 w-5 h-5 pointer-events-none group-hover:text-slate-700"></i>
                         </div>
                     </div>
 
@@ -45,34 +44,27 @@
                     <div class="mb-8">
                         <label class="block text-slate-500 font-medium mb-3">Color</label>
                         <div class="grid grid-cols-4 gap-3">
-                            <button
-                                class="w-8 h-8 rounded-full bg-red-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button
-                                class="w-8 h-8 rounded-full bg-yellow-400 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button
-                                class="w-8 h-8 rounded-full bg-black ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button
-                                class="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button
-                                class="w-8 h-8 rounded-full bg-green-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button
-                                class="w-8 h-8 rounded-full bg-orange-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button data-color="red" class="w-8 h-8 rounded-full bg-red-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button data-color="yellow" class="w-8 h-8 rounded-full bg-yellow-400 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button data-color="black" class="w-8 h-8 rounded-full bg-black ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button data-color="blue" class="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button data-color="green" class="w-8 h-8 rounded-full bg-green-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                            <button data-color="orange" class="w-8 h-8 rounded-full bg-orange-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
                         </div>
                     </div>
 
                     <!-- Price Filter -->
                     <div class="mb-8">
-                        <label class="block text-slate-500 font-medium mb-3">price Filter</label>
-                        <div class="relative group">
-                            <select
-                                class="w-full appearance-none bg-slate-200 text-slate-700 rounded-lg px-4 py-3 font-medium outline-none focus:ring-2 focus:ring-sky-200 cursor-pointer">
-                                <option>1000-1500</option>
-                                <option>1500-2000</option>
-                                <option>2000-3000</option>
-                                <option>3000-3500</option>
+                        <label class="block text-slate-500 font-medium mb-3">Price</label>
+                        <div class="relative group mt-2">
+                            <select id="price-filter" class="w-full appearance-none bg-gradient-to-r from-yellow-100 to-yellow-200 text-slate-700 rounded-lg px-4 py-3 font-medium outline-none focus:ring-2 focus:ring-yellow-300 cursor-pointer shadow-md">
+                                <option value="all">All Prices</option>
+                                <option value="1000-1500">1000-1500</option>
+                                <option value="1500-2000">1500-2000</option>
+                                <option value="2000-3000">2000-3000</option>
+                                <option value="3000-3500">3000-3500</option>
                             </select>
-                            <i data-lucide="chevron-down"
-                                class="absolute right-3 top-3.5 text-slate-500 w-5 h-5 pointer-events-none group-hover:text-slate-700"></i>
+                            <i data-lucide="chevron-down" class="absolute right-3 top-3.5 text-slate-500 w-5 h-5 pointer-events-none group-hover:text-slate-700"></i>
                         </div>
                     </div>
                 </div>
@@ -338,6 +330,7 @@
                             </div>
 
                             <p id="modal-desc" class="text-slate-500 leading-relaxed text-lg mb-8"></p>
+                            <p id="product-stock-line" class="hidden mt-2 text-sm text-red-500">Out of stock</p>
 
                             <div class="mb-8">
                                 <label class="block text-slate-900 font-medium mb-3">Select Size</label>
@@ -359,7 +352,7 @@
                         </div>
 
                         <div class="mt-auto pt-6 border-t border-slate-100">
-                            <button onclick="addToCartConfirm()"
+                            <button id="confirm-add-to-cart" onclick="addToCartConfirm()"
                                 class="w-full bg-slate-900 hover:bg-slate-800 text-white text-lg font-medium py-4 rounded-xl shadow-lg shadow-slate-200 transition-all flex items-center justify-center gap-3 active:scale-[0.98]">
                                 <span>Add to Cart</span>
                                 <i data-lucide="arrow-right" class="w-5 h-5"></i>
@@ -420,32 +413,10 @@
                 <div class="footer-col">
                     <h3 class="footer-heading">Support</h3>
                     <ul class="footer-links">
-                        <li>
-                            <details>
-                                <summary class="contactus" class="cursor-pointer text:bg-[#94D5E0] hover:underline">Faq
-                                </summary>
-
-                                <div class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                    <p class="text-sm text-slate-600"><strong>Email:</strong>shirtify@gmail.com</p>
-                                    <p class="text-sm text-slate-600"><strong>Contact:</strong>+92012-3456789</p>
-                                    <p class="text-sm text-slate-600"><strong>instagram:</strong>shirtify</p>
-                                </div>
-                            </details>
-                        </li>
+                        <li><a href="../faqscreen/faqscreen.html">Faq</a></li>
                         <li><a href="../pco/pco.html">Shipping & Delivery</a></li>
-                        <li><a href="#">Returns & Exchanges</a></li>
-                        <li>
-                            <details>
-                                <summary class="contactus" class="cursor-pointer text:bg-[#94D5E0] hover:underline">
-                                    contact us</summary>
-
-                                <div class="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                    <p class="text-sm text-slate-600"><strong>Email:</strong>shirtify@gmail.com</p>
-                                    <p class="text-sm text-slate-600"><strong>Contact:</strong>+92012-3456789</p>
-                                    <p class="text-sm text-slate-600"><strong>instagram:</strong>shirtify</p>
-                                </div>
-                            </details>
-                        </li>
+                        <li><a href="../returnandexchange/returnandexchange.html">Returns & Exchanges</a></li>
+                        <li><a class="contactus" href="../contactus/contactus.html">contact us</a></li>
                     </ul>
                 </div>
 
@@ -473,20 +444,7 @@
         </div>
     </footer>
     <script src="shopscreen.js"></script>
-    <script>
-        // header-loader.js
-        function loadHeader() {
-            fetch('../header.html')
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('header-placeholder').innerHTML = data;
-                })
-                .catch(error => console.error('Error loading header:', error));
-        }
-
-        // Run the function when the page loads
-        window.onload = loadHeader;
-    </script>
+    <script src="../header-loader.js"></script>
 </body>
 
 </html>

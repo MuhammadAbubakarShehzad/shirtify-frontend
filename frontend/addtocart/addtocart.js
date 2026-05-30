@@ -1,4 +1,45 @@
-const API_BASE = 'http://localhost:5000/api';
+const SAME_ORIGIN_API_BASE = (window.location.protocol.startsWith('http') && window.location.host)
+    ? `${window.location.protocol}//${window.location.host}/api`
+    : null;
+const LOCAL_API_BASE = 'http://localhost:5000/api';
+
+const API_BASE_CANDIDATES = Array.from(new Set(
+    ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port && window.location.port !== '5000')
+        ? [LOCAL_API_BASE, SAME_ORIGIN_API_BASE]
+        : [SAME_ORIGIN_API_BASE, LOCAL_API_BASE]
+)).filter(Boolean);
+
+let resolvedApiBase = null;
+
+async function apiFetch(path, options = {}) {
+    const bases = resolvedApiBase
+        ? [resolvedApiBase, ...API_BASE_CANDIDATES.filter(base => base !== resolvedApiBase)]
+        : API_BASE_CANDIDATES;
+
+    let lastError = null;
+
+    for (const base of bases) {
+        try {
+            const res = await fetch(`${base}${path}`, options);
+            if (res.ok) {
+                resolvedApiBase = base;
+                return res;
+            }
+
+            if (res.status === 404) {
+                lastError = new Error(`API endpoint not found at ${base}${path}`);
+                continue;
+            }
+
+            return res;
+        } catch (err) {
+            lastError = err;
+        }
+    }
+
+    throw lastError || new Error('Unable to reach API');
+}
+
 const shippingFee = 100;
 let currentCart = null;
 
@@ -8,23 +49,24 @@ const fetchCart = async () => {
     const token = getToken();
     if (!token) throw new Error('Login required to view cart');
 
-    const res = await fetch(`${API_BASE}/cart`, {
+    const res = await apiFetch('/cart', {
         headers: { 'Authorization': `Bearer ${token}` }
     });
 
     if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         throw new Error(data.message || 'Failed to fetch cart');
     }
 
-    return res.json();
+    const payload = await res.json();
+    return payload && payload.data ? payload.data : payload;
 };
 
 const updateCartToServer = async (items) => {
     const token = getToken();
     if (!token) throw new Error('Login required to update cart');
 
-    const res = await fetch(`${API_BASE}/cart`, {
+    const res = await apiFetch('/cart', {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -34,28 +76,30 @@ const updateCartToServer = async (items) => {
     });
 
     if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         throw new Error(data.message || 'Failed to update cart');
     }
 
-    return res.json();
+    const payload = await res.json();
+    return payload && payload.data ? payload.data : payload;
 };
 
 const deleteCartItem = async (productId) => {
     const token = getToken();
     if (!token) throw new Error('Login required to remove item');
 
-    const res = await fetch(`${API_BASE}/cart/${productId}`, {
+    const res = await apiFetch(`/cart/${productId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
     });
 
     if (!res.ok) {
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
         throw new Error(data.message || 'Failed to remove item');
     }
 
-    return res.json();
+    const payload = await res.json();
+    return payload && payload.data ? payload.data : payload;
 };
 
 function renderCart() {

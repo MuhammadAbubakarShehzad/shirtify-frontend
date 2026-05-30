@@ -3,7 +3,9 @@ const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 const connectDB = require('./config/db');
+const User = require('./models/User');
 
 const envPath = path.resolve(__dirname, '.env');
 dotenv.config({ path: envPath });
@@ -15,19 +17,68 @@ app.use(cors());
 const swaggerSetup = require('./config/swagger');
 app.use(morgan('dev'));
 
-connectDB();
+const ensureDefaultAdmin = async () => {
+  const adminEmail = 'admin@shirtify.pk';
+  const adminPassword = 'admin123';
 
+  const existingAdmin = await User.findOne({ email: adminEmail });
+  if (existingAdmin) {
+    console.log('Default admin account already exists');
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+  await User.create({
+    name: 'Admin Balaj',
+    email: adminEmail,
+    password: hashedPassword,
+    role: 'admin'
+  });
+
+  console.log('Default admin account created for', adminEmail);
+};
+
+connectDB()
+  .then(ensureDefaultAdmin)
+  .catch((error) => {
+    console.error('Database initialization failed:', error.message);
+    process.exit(1);
+  });
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/customizations', require('./routes/customizationRoutes'));
 app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
+app.use('/api/payment-gateway', require('./routes/paymentGatewayRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/mockshirts', require('./routes/mockShirtRoutes'));
 
 const { protect } = require('./middleware/auth');
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Get current authenticated user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserSafe'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 app.get('/api/auth/me', protect, (req, res) => {
   res.json(req.user);
 });
@@ -35,6 +86,15 @@ app.get('/api/auth/me', protect, (req, res) => {
 app.get('/', (req, res) => {
   res.json({ status: 'Shirtify backend running' });
 });
+
+// Mount admin-side app AFTER user routes so admin 404 middleware does not swallow user endpoints.
+try {
+  const adminApp = require('../admin side/backend/server');
+  app.use(adminApp);
+  console.log('✅ Admin side mounted into main backend');
+} catch (e) {
+  console.warn('⚠️  Admin side not mounted:', e.message);
+}
 
 // Initialize Swagger (must be before 404 handler)
 swaggerSetup(app);

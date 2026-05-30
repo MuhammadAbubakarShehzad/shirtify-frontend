@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Shopping Cart - Shirtify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://unpkg.com/lucide-icons/dist/umd/lucide.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="bg-gray-50">
+
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <a href="index.html" class="text-2xl font-bold text-indigo-600">Shirtify</a>
+                <a href="index.html" class="text-sm text-gray-500 hover:text-gray-900">Continue Shopping</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Shopping Cart</h1>
+
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6 text-center text-gray-500 py-20">
+                <div class="mx-auto h-12 w-12 text-gray-400 mb-4">
+                    <i data-lucide="shopping-cart" class="w-12 h-12"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Your cart is empty</h3>
+                <p class="mt-1 text-sm text-gray-500">Start adding some trendy items!</p>
+                <div class="mt-6">
+                    <a href="index.html"
+                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        Browse Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        // NOTE: This page currently serves as a navigation placeholder
+        // to verify 'Whole System Design' UI requirements.
+    </script>
+</body>
+
+</html>

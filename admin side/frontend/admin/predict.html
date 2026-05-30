@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shirtify - AI Sales Prediction</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- SheetJS for Excel/CSV parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation Header -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <i data-lucide="brain-circuit" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span class="text-lg font-bold text-slate-900 tracking-tight">Shirtify Prophet AI</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="dash.html" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors bg-slate-100 hover:bg-blue-50 px-4 py-2 rounded-lg">
+                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header Section -->
+        <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-2">Demand Forecasting</h1>
+                <p class="text-slate-500 max-w-2xl">Powered by Facebook Prophet. Analyze historical data to predict upcoming sales trends with seasonal impacts (e.g., Eid and Winter spikes).</p>
+            </div>
+            
+            <div class="mt-4 md:mt-0 flex space-x-3">
+                <select id="periodSelector" class="bg-white border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm">
+                    <option value="6">Analyze Last 6 Months</option>
+                    <option value="12">Analyze Last 12 Months</option>
+                    <option value="24">Analyze Last 2 Years</option>
+                    <option value="36">Analyze Last 3 Years (Research Mode)</option>
+                </select>
+                
+                <!-- Research Mode Toggle -->
+                <div class="flex items-center bg-white border border-slate-300 rounded-lg px-3 shadow-sm">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="researchModeToggle" class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                        <span class="ml-2 text-xs font-medium text-slate-600">Research Mode</span>
+                    </label>
+                </div>
+
+                <select id="horizonSelector" class="bg-white border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm">
+                    <option value="3">Predict 3 Months</option>
+                    <option value="6" selected>Predict 6 Months</option>
+                </select>
+                <div class="relative flex items-center">
+                    <input type="file" id="datasetUpload" accept=".csv, .xlsx, .xls" class="hidden">
+                    <label for="datasetUpload" class="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-medium rounded-lg text-sm px-4 py-2.5 flex items-center transition shadow-sm cursor-pointer mr-2">
+                        <i data-lucide="upload-cloud" class="w-4 h-4 mr-2"></i> Upload Dataset
+                    </label>
+                    <button id="downloadTemplateBtn" class="bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 font-medium rounded-lg text-sm px-4 py-2.5 flex items-center transition shadow-sm mr-2" title="Download Template">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <button id="runForecastBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm px-5 py-2.5 flex items-center transition shadow-md hover:shadow-lg">
+                    <i data-lucide="zap" class="w-4 h-4 mr-2"></i> Forecast
+                </button>
+            </div>
+        </div>
+
+        <!-- System Status Banner -->
+        <div id="statusBanner" class="hidden mb-6 rounded-lg p-4 text-sm font-medium border"></div>
+
+        <!-- KPIs Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card rounded-xl p-6 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-indigo-100 text-indigo-600 p-3 rounded-lg"><i data-lucide="target" class="w-6 h-6"></i></div>
+                    <span id="modelAccuracy" class="text-lg font-bold text-slate-700">--%</span>
+                </div>
+                <h3 class="text-slate-500 text-sm font-medium">Model Accuracy</h3>
+                <p class="text-xs text-slate-400 mt-1">Based on MAP Evaluation</p>
+            </div>
+            <div class="glass-card rounded-xl p-6 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-emerald-100 text-emerald-600 p-3 rounded-lg"><i data-lucide="trending-up" class="w-6 h-6"></i></div>
+                    <span id="growthPct" class="text-lg font-bold text-slate-700">--%</span>
+                </div>
+                <h3 class="text-slate-500 text-sm font-medium">Projected Growth</h3>
+                <p class="text-xs text-slate-400 mt-1">Versus previous period</p>
+            </div>
+            <div class="glass-card rounded-xl p-6 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-blue-100 text-blue-600 p-3 rounded-lg"><i data-lucide="package" class="w-6 h-6"></i></div>
+                    <span id="predictedUnits" class="text-lg font-bold text-slate-700">--</span>
+                </div>
+                <h3 class="text-slate-500 text-sm font-medium">Forecasted Units</h3>
+                <p class="text-xs text-slate-400 mt-1" id="forecastDurationText">Next -- Months</p>
+            </div>
+            <div class="glass-card rounded-xl p-6 shadow-sm hover:shadow-md transition">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-amber-100 text-amber-600 p-3 rounded-lg"><i data-lucide="banknote" class="w-6 h-6"></i></div>
+                    <span id="expectedRevenue" class="text-lg font-bold text-slate-700">Rs --</span>
+                </div>
+                <h3 class="text-slate-500 text-sm font-medium">Expected Revenue</h3>
+                <p class="text-xs text-slate-400 mt-1">Gross prediction</p>
+            </div>
+        </div>
+
+        <!-- Main Chart Section -->
+        <div class="glass-card rounded-xl shadow-sm mb-8 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-slate-800">Sales Velocity Forecast</h2>
+                <div class="flex items-center space-x-4 text-sm">
+                    <div class="flex items-center text-slate-600"><span class="w-3 h-3 rounded-full bg-slate-800 mr-2"></span> Historical</div>
+                    <div class="flex items-center text-blue-600"><span class="w-3 h-3 rounded-full bg-blue-500 mr-2"></span> Prophet Prediction</div>
+                </div>
+            </div>
+            <div class="relative h-96 w-full">
+                <canvas id="prophetChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Additional Insights -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Best Performing Products Table -->
+            <div class="glass-card rounded-xl shadow-sm p-6 overflow-hidden flex flex-col">
+                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                    <i data-lucide="award" class="w-5 h-5 text-amber-500 mr-2"></i> Predicted Top Sellers
+                </h2>
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 rounded-tl-lg">Product</th>
+                                <th scope="col" class="px-4 py-3">Category</th>
+                                <th scope="col" class="px-4 py-3">Units</th>
+                                <th scope="col" class="px-4 py-3 rounded-tr-lg">Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topProductsBody">
+                            <tr><td colspan="4" class="text-center py-8">Run forecast to load insights...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Distribution Charts (Doughnut) -->
+            <div class="glass-card rounded-xl shadow-sm p-6">
+                 <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                    <i data-lucide="pie-chart" class="w-5 h-5 text-purple-500 mr-2"></i> Category Distribution
+                 </h2>
+                 <div class="relative h-64 w-full flex justify-center items-center">
+                     <canvas id="distributionChart"></canvas>
+                 </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Load our modified API Service which proxies to Python backend -->
+    <script src="api-service.js"></script>
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // Chart instances
+        let forecastChartInstance = null;
+        let distributionChartInstance = null;
+
+        // UI Elements
+        const runForecastBtn = document.getElementById('runForecastBtn');
+        const periodSelector = document.getElementById('periodSelector');
+        const horizonSelector = document.getElementById('horizonSelector');
+        const statusBanner = document.getElementById('statusBanner');
+        const datasetUpload = document.getElementById('datasetUpload');
+        const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
+        const researchModeToggle = document.getElementById('researchModeToggle');
+        
+        let customCsvData = null;
+
+        // Formatter for currency
+        const pkrFormat = new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', maximumFractionDigits: 0 });
+
+        async function loadForecast() {
+            // Set loading state
+            runForecastBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 mr-2 spinner"></i> Processing...';
+            runForecastBtn.disabled = true;
+            statusBanner.classList.add('hidden');
+            
+            lucide.createIcons();
+            
+            const period = periodSelector.value;
+            const horizon = horizonSelector.value;
+            const isResearchMode = researchModeToggle.checked;
+            const source = isResearchMode ? 'kaggle' : 'mock';
+            
+            // API converts days to months roughly, we pass period as months and days as horizon * 30
+            const daysHorizon = horizon * 30; 
+
+            try {
+                let forecastRes, productsRes, distRes;
+
+                if (customCsvData) {
+                    showStatus("Processing custom dataset (CSV/Excel)...", "warning");
+                    // Call the custom CSV forecast endpoint
+                    forecastRes = await ShirtifyAPI.forecastFromCSV(customCsvData, horizon);
+                    // For custom datasets, we'll skip top products and distribution as it focuses on total sales series
+                    productsRes = { success: false }; distRes = { success: false };
+                } else {
+                    // Fetch Forecast from Python ML engine via Node proxy
+                    [forecastRes, productsRes, distRes] = await Promise.all([
+                        ShirtifyAPI.getProphetForecast(period, daysHorizon, source),
+                        ShirtifyAPI.getProphetProducts(period, source),
+                        ShirtifyAPI.getProphetDistribution(period, source)
+                    ]);
+                }
+
+                if (forecastRes.success) {
+                    renderForecastUI(forecastRes);
+                    renderCharts(forecastRes.data);
+                } else {
+                    const errorMsg = forecastRes.error || "Failed to load forecast data";
+                    const detailedMsg = forecastRes.details ? `\n${forecastRes.details}` : "";
+                    showStatus(`${errorMsg}${detailedMsg}`, "error");
+                }
+
+                if (productsRes.success && productsRes.data.top_products) {
+                    renderTopProducts(productsRes.data.top_products);
+                }
+
+                if (distRes.success && distRes.data.by_category) {
+                    renderDistributionChart(distRes.data.by_category);
+                }
+
+            } catch (err) {
+                console.error("Forecast Error:", err);
+                showStatus("API Connection Error. Ensure Node.js and Python servers are running.", "error");
+            } finally {
+                runForecastBtn.innerHTML = '<i data-lucide="zap" class="w-4 h-4 mr-2"></i> Forecast';
+                runForecastBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        function showStatus(message, type) {
+            statusBanner.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'border-red-200', 'bg-yellow-50', 'text-yellow-700', 'border-yellow-200');
+            
+            if (type === 'error') {
+                statusBanner.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+                statusBanner.innerHTML = `<div class="flex items-center"><i data-lucide="alert-circle" class="w-5 h-5 mr-2"></i> ${message}</div>`;
+            } else if (type === 'warning') {
+                statusBanner.classList.add('bg-yellow-50', 'text-yellow-700', 'border-yellow-200');
+                statusBanner.innerHTML = `<div class="flex items-center"><i data-lucide="alert-triangle" class="w-5 h-5 mr-2"></i> ${message}</div>`;
+            }
+            lucide.createIcons();
+        }
+
+        function renderForecastUI(response) {
+            if (response.fallback || response.warning) {
+                showStatus(response.warning || "Flask Prophet Service is unreachable. Currently showing Fallback Machine Learning logic generated by Node.js.", "warning");
+            } else if (response.data.kpis.data_source === "Kaggle (Research Mode)") {
+                showStatus("Currently in Research Mode using Kaggle-style fashion retail dataset (3-year horizon).", "warning");
+                statusBanner.classList.remove('bg-yellow-50', 'text-yellow-700', 'border-yellow-200');
+                statusBanner.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-200');
+                statusBanner.innerHTML = `<div class="flex items-center"><i data-lucide="info" class="w-5 h-5 mr-2"></i> Currently in <b>Research Mode</b> using validated Kaggle fashion retail dataset.</div>`;
+                statusBanner.classList.remove('hidden');
+                lucide.createIcons();
+            } else {
+                statusBanner.classList.add('hidden');
+            }
+
+            const kpis = response.data.kpis;
+            
+            // Populate KPIs
+            document.getElementById('modelAccuracy').textContent = `${kpis.model_accuracy_pct}%`;
+            document.getElementById('growthPct').textContent = `${kpis.growth_pct > 0 ? '+' : ''}${kpis.growth_pct}%`;
+            
+            // color mapping based on growth
+            const growthEl = document.getElementById('growthPct');
+            if (kpis.growth_pct >= 0) {
+                growthEl.className = "text-lg font-bold text-emerald-600";
+            } else {
+                growthEl.className = "text-lg font-bold text-red-600";
+            }
+
+            document.getElementById('predictedUnits').textContent = kpis.total_predicted_units.toLocaleString();
+            document.getElementById('forecastDurationText').textContent = `Next ${kpis.forecast_months} Months`;
+            document.getElementById('expectedRevenue').textContent = pkrFormat.format(kpis.expected_revenue_pkr);
+        }
+
+        function renderTopProducts(products) {
+            const tbody = document.getElementById('topProductsBody');
+            tbody.innerHTML = '';
+
+            products.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.className = "bg-white border-b hover:bg-slate-50 transition";
+                
+                const isPositive = p.trend && p.trend.includes('+');
+                const trendColor = isPositive ? 'text-emerald-500' : (p.trend === '0%' || p.trend === '+0.0%' ? 'text-slate-400' : 'text-red-500');
+                const trendIcon = isPositive ? 'trending-up' : 'trending-down';
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-medium text-slate-900">${p.name}</td>
+                    <td class="px-4 py-3"><span class="bg-slate-100 text-slate-600 px-2 py-1 rounded-md text-xs border">${p.category}</span></td>
+                    <td class="px-4 py-3">${p.units.toLocaleString()}</td>
+                    <td class="px-4 py-3 font-medium ${trendColor} flex items-center">
+                        <i data-lucide="${trendIcon}" class="w-4 h-4 mr-1"></i> ${p.trend || 'N/A'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function renderCharts(data) {
+            const ctx = document.getElementById('prophetChart').getContext('2d');
+            
+            // Destroy existing chart if any
+            if (forecastChartInstance) forecastChartInstance.destroy();
+
+            const histDates = data.historical.dates;
+            const histData = data.historical.units;
+            
+            const forecastDates = data.forecast.dates;
+            const forecastPred = data.forecast.pred;
+            const forecastUpper = data.forecast.upper;
+            const forecastLower = data.forecast.lower;
+
+            // Align arrays for continuous line
+            // Historical will be filled normally, then padded with nulls
+            // Forecast will be padded with nulls at start, then filled
+            
+            const allLabels = [...histDates, ...forecastDates];
+            
+            const alignedHistorical = [...histData, ...Array(forecastDates.length).fill(null)];
+            
+            // Connect the line visually by including the last historical point in the forecast array
+            const lastHistValue = histData[histData.length - 1];
+            const alignedForecast = [...Array(histDates.length - 1).fill(null), lastHistValue, ...forecastPred];
+            const alignedUpper = [...Array(histDates.length - 1).fill(null), lastHistValue, ...forecastUpper];
+            const alignedLower = [...Array(histDates.length - 1).fill(null), lastHistValue, ...forecastLower];
+
+            forecastChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: allLabels,
+                    datasets: [
+                        {
+                            label: 'Historical Data',
+                            data: alignedHistorical,
+                            borderColor: '#1e293b',
+                            backgroundColor: '#1e293b',
+                            borderWidth: 2.5,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#1e293b'
+                        },
+                        {
+                            label: 'Prophet Forecast (yhat)',
+                            data: alignedForecast,
+                            borderColor: '#3b82f6',
+                            backgroundColor: '#3b82f6',
+                            borderWidth: 2.5,
+                            borderDash: [5, 5],
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: '#3b82f6',
+                            pointBorderWidth: 2
+                        },
+                        {
+                            label: '80% Confidence Interval (Upper)',
+                            data: alignedUpper,
+                            borderColor: 'transparent',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: '+1', // fill to lower bounds
+                            pointRadius: 0,
+                            tension: 0.3
+                        },
+                        {
+                            label: '80% Confidence Interval (Lower)',
+                            data: alignedLower,
+                            borderColor: 'transparent',
+                            backgroundColor: 'transparent',
+                            pointRadius: 0,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { 
+                            display: false // We built our own custom legend above the chart
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { size: 13, family: 'Inter' },
+                            bodyFont: { size: 13, family: 'Inter' },
+                            padding: 10,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    if(context.dataset.label.includes('Confidence')) return null; // hide CI from tooltip
+                                    return `${context.dataset.label.replace(' (yhat)', '')}: ${context.parsed.y} units`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9', drawBorder: false },
+                            ticks: { 
+                                font: { family: 'Inter' }, color: '#64748b',
+                                callback: function(value) { return value + ' Units'; }
+                            }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { family: 'Inter' }, color: '#64748b', maxRotation: 45, minRotation: 45 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDistributionChart(categoryData) {
+            const ctx = document.getElementById('distributionChart').getContext('2d');
+            
+            if (distributionChartInstance) distributionChartInstance.destroy();
+
+            const labels = Object.keys(categoryData);
+            const data = Object.values(categoryData);
+            
+            // Modern colors
+            const bgColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#64748b', '#06b6d4'];
+
+            distributionChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: bgColors,
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: { family: 'Inter', size: 12 },
+                                color: '#475569',
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = Math.round((value / total) * 100);
+                                    return ` ${context.label}: ${value} units (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Handle File Upload for custom datasets
+        datasetUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            showStatus(`Reading custom dataset: ${file.name}...`, "warning");
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    // Parse Excel/CSV using SheetJS (type: 'array' is the modern standard)
+                    const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const csvString = XLSX.utils.sheet_to_csv(worksheet);
+                    
+                    console.log("Parsed CSV from Upload:", csvString.substring(0, 100) + "...");
+                    
+                    // Assign to global state
+                    customCsvData = csvString;
+                    showStatus(`Dataset "${file.name}" loaded successfully. Click 'Forecast' to analyze it.`, "warning");
+                    
+                    // Re-run forecast
+                    loadForecast();
+                } catch (err) {
+                    console.error("Upload Error:", err);
+                    showStatus(`Error reading dataset: ${err.message}. Ensure it is a valid Excel or CSV file.`, "error");
+                }
+            };
+            
+            // Read as array buffer (better for binary files like XLSX)
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Template Downloader
+        downloadTemplateBtn.addEventListener('click', () => {
+            const csvContent = "Date,Sales\n2024-01-01,150\n2024-02-01,180\n2024-03-01,210";
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "shirtify_template.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Attach event listeners
+        runForecastBtn.addEventListener('click', () => {
+            customCsvData = null; // Clear custom data to force default behavior if they manually click Forecast
+            loadForecast();
+        });
+
+        // Auto-run on mount
+        document.addEventListener('DOMContentLoaded', () => {
+            ShirtifyAPI.init(); // Ensure API is initialized
+            loadForecast();
+        });
+
+    </script>
+</body>
+</html>

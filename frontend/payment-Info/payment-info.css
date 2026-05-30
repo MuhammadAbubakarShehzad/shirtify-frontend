@@ -32,6 +32,10 @@ input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radi
 .input-group { flex: 1; }
 
 .secure-notice { background: #f4fff9; border: 1px solid #dff0e8; color: #2ecc71; padding: 12px; border-radius: 10px; margin: 25px 0; font-size: 0.85rem; }
+.payment-feedback { min-height: 22px; margin-bottom: 14px; font-size: 0.9rem; }
+.payment-feedback.info { color: #2563eb; }
+.payment-feedback.success { color: #15803d; }
+.payment-feedback.error { color: #b91c1c; }
 
 .action-buttons { display: flex; gap: 20px; }
 .btn-back { flex: 1; padding: 14px; background: white; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }

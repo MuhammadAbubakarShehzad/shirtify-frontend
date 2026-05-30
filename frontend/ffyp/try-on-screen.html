@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Shirtify AI Virtual Try-On — See how your custom shirt design looks on you before ordering.">
+    <title>Shirtify - AI Virtual Try-On</title>
+    
+    <link rel="stylesheet" href="../header.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../try-on-screen/try-on-screen.css?v=20260530b">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div id="header-placeholder"></div>
+
+    <main>
+        <h1>AI Virtual Try-On</h1>
+        <p class="subtitle">See how your custom design looks on you before ordering</p>
+
+        <div class="container">
+
+            <div class="chat-container">
+                <div class="chat-header">
+                    <i class="fa fa-robot"></i>
+                    <span>AI Assistant<br><small>Online</small></span>
+                </div>
+                <div class="chat-box" id="chatBox">
+                    <div class="message bot-message">
+                        Hi! I'm your AI shopping assistant. Upload your photo and a shirt design, then hit <strong>Generate Try-On</strong> to see how it looks on you!
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" placeholder="Ask about design or try-on…">
+                    <button type="button" id="sendBtn" aria-label="Send message"><i class="fa fa-paper-plane"></i></button>
+                </div>
+            </div>
+
+            <div class="upload-container">
+                <div class="drop-zone" id="dropZone">
+                    <i class="fa fa-user upload-icon"></i>
+                    <h3>Upload Your Photo</h3>
+                    <p class="drop-hint" id="personFileName">JPG or PNG, clear front-facing photo</p>
+                    <button type="button" class="btn-light" id="choosePersonBtn">
+                        <i class="fa fa-upload"></i> Choose Photo
+                    </button>
+                    <input type="file" id="personFileInput" accept="image/*" hidden>
+                </div>
+
+                <button type="button" class="btn-outline" id="selectshirt">
+                    <i class="fa fa-tshirt"></i> Select T-Shirt Design
+                    <span id="shirtFileName" class="file-badge"></span>
+                </button>
+                <input type="file" id="shirtFileInput" accept="image/*" hidden>
+
+                <button type="button" class="btn-primary" id="generateBtn">
+                    <i class="fa fa-magic"></i> Generate Try-On
+                </button>
+            </div>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div class="loader-wrapper" id="loaderWrapper">
+                <div class="spinner"></div>
+                <p class="loader-text">Generating your try-on… this takes a few seconds</p>
+                <div class="method-badge" id="methodBadge"></div>
+            </div>
+
+            <div class="result-card" id="resultCard">
+                <h2 class="result-title"><i class="fa fa-check-circle"></i> Your Try-On Result</h2>
+                <img id="resultImg" src="" alt="AI Try-On Result">
+                <div class="result-actions">
+                    <a id="downloadBtn" class="btn-primary" download="shirtify-tryon.png">
+                        <i class="fa fa-download"></i> Download Image
+                    </a>
+                    <button type="button" class="btn-outline" id="retryBtn">
+                        <i class="fa fa-redo"></i> Try Again
+                    </button>
+                </div>
+                <p id="methodLabel" class="method-label"></p>
+            </div>
+
+            <div class="error-card" id="errorCard">
+                <i class="fa fa-exclamation-triangle"></i>
+                <h3>Try-On Failed</h3>
+                <p id="errorMsg">Something went wrong. Please try again.</p>
+                <button type="button" class="btn-primary" id="errorRetryBtn">Try Again</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="../try-on-screen/try-on-screen.js?v=20260530b"></script>
+    <script src="../header-loader.js"></script>
+</body>
+
+</html>

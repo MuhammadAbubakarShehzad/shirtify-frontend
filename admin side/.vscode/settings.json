@@ -1,0 +1,5 @@
+{
+    "claudeCodeChatUI.thinking.enabled": true,
+    "claudeCodeChatUI.thinking.intensity": "sequential-thinking",
+    "liveServer.settings.port": 5501
+}

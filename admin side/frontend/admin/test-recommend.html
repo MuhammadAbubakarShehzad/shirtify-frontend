@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shirtify AI — Recommendation Engine</title>
+    <meta name="description"
+        content="AI-powered product recommendation engine using Cosine Similarity for the Shirtify T-shirt eCommerce platform.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* ─── Page Layout ─── */
+        .page-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        /* ─── Header ─── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .page-header h1 span.ai-badge {
+            background: linear-gradient(135deg, #7DD3C0, #3B82F6);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .page-subtitle {
+            color: var(--gray-500);
+            font-size: 15px;
+            margin-top: 4px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--gray-500);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--primary-cyan-dark);
+        }
+
+        /* ─── Two-column layout ─── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        /* ─── Sidebar (Simulate User) ─── */
+        .sidebar-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            padding: 24px;
+            position: sticky;
+            top: 24px;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+        }
+
+        .sidebar-desc {
+            font-size: 13px;
+            color: var(--gray-500);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .product-checklist {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .product-checklist li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .product-checklist li:hover {
+            background: var(--gray-50);
+        }
+
+        .product-checklist li.selected {
+            background: #E0F7F4;
+            border-color: var(--primary-cyan);
+        }
+
+        .product-checklist li img {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+        }
+
+        .product-checklist .prod-info {
+            flex: 1;
+        }
+
+        .product-checklist .prod-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .product-checklist .prod-cat {
+            font-size: 11px;
+            color: var(--gray-500);
+            margin-top: 2px;
+        }
+
+        .product-checklist .check-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--gray-300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .product-checklist li.selected .check-icon {
+            background: var(--primary-cyan);
+            border-color: var(--primary-cyan);
+        }
+
+        .product-checklist li.selected .check-icon::after {
+            content: '✓';
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .btn-recommend {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #7DD3C0, #5DBAA7);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-recommend:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(125, 211, 192, 0.4);
+        }
+
+        .btn-recommend:active {
+            transform: scale(0.97);
+        }
+
+        .btn-recommend:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ─── Results Area ─── */
+        .results-area {
+            min-height: 400px;
+        }
+
+        /* ─── Empty State ─── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 40px;
+            background: var(--bg-card);
+            border: 2px dashed var(--border-light);
+            border-radius: var(--radius-lg);
+        }
+
+        .empty-state .empty-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            color: var(--gray-500);
+            max-width: 340px;
+            line-height: 1.6;
+        }
+
+        /* ─── Algorithm Info Bar ─── */
+        .algo-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: linear-gradient(135deg, #F0FDF9, #E0F7F4);
+            border: 1px solid #B2DFDB;
+            border-radius: var(--radius-lg);
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .algo-bar .algo-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #fff;
+            border: 1px solid var(--border-light);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .algo-bar .algo-chip .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-green {
+            background: var(--color-success);
+        }
+
+        .dot-blue {
+            background: var(--color-info);
+        }
+
+        .dot-amber {
+            background: var(--color-warning);
+        }
+
+        /* ─── User Profile Summary ─── */
+        .profile-summary {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .profile-summary h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray-700);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .profile-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag-pill {
+            background: #E0F7F4;
+            color: #0D7A5F;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .tag-pill.cat {
+            background: #EDE9FE;
+            color: #6D28D9;
+        }
+
+        /* ─── Recommendation Cards Grid ─── */
+        .rec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .rec-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .rec-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+        }
+
+        .rec-card .match-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(16, 185, 129, 0.9);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            z-index: 2;
+        }
+
+        .rec-card .card-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .rec-card .card-body {
+            padding: 16px;
+        }
+
+        .rec-card .card-body h5 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 6px;
+        }
+
+        .rec-card .card-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .rec-card .card-cat {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-cyan-dark);
+            background: #E0F7F4;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .rec-card .card-price {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .rec-card .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .rec-card .card-tags span {
+            font-size: 10px;
+            color: var(--gray-500);
+            background: var(--gray-100);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* ─── Loading Spinner ─── */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ─── Fade-in animation ─── */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(16px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.4s ease-out both;
+        }
+
+        .rec-card:nth-child(1) {
+            animation-delay: 0.05s;
+        }
+
+        .rec-card:nth-child(2) {
+            animation-delay: 0.12s;
+        }
+
+        .rec-card:nth-child(3) {
+            animation-delay: 0.19s;
+        }
+
+        .rec-card:nth-child(4) {
+            animation-delay: 0.26s;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar-card {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page-wrapper">
+        <!-- ─── Header ─── -->
+        <header class="page-header">
+            <div>
+                <h1>
+                    🧠 Recommendation Engine
+                    <span class="ai-badge">AI Powered</span>
+                </h1>
+                <p class="page-subtitle">Content-Based Filtering using Cosine Similarity — Shirtify FYP</p>
+            </div>
+            <a href="dash.html" class="back-link">← Back to Dashboard</a>
+        </header>
+
+        <!-- ─── Main Grid ─── -->
+        <div class="main-grid">
+            <!-- ─── LEFT: Simulate User ─── -->
+            <aside class="sidebar-card">
+                <h3 class="sidebar-title">👤 Simulate User Behavior</h3>
+                <p class="sidebar-desc">Select the shirts the customer has viewed or purchased. The AI will recommend
+                    similar products based on category, style, fabric and tags.</p>
+
+                <ul class="product-checklist" id="productList">
+                    <!-- Populated by JS -->
+                </ul>
+
+                <button class="btn-recommend" id="btnRecommend" disabled>
+                    <span id="btnText">🤖 Get AI Recommendations</span>
+                    <div class="spinner" id="btnSpinner" style="display:none;"></div>
+                </button>
+            </aside>
+
+            <!-- ─── RIGHT: Results ─── -->
+            <section class="results-area" id="resultsArea">
+                <!-- HYBRID CONTROLS -->
+                <div style="background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-lg);padding:20px;margin-bottom:24px;box-shadow:var(--shadow-sm);">
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;color:var(--gray-900);">🎛️ Hybrid Algorithm Tuning</h3>
+                    <div style="display:flex;gap:20px;align-items:center;">
+                        <div style="flex:1;">
+                            <label style="font-size:13px;font-weight:600;color:var(--gray-700);display:block;margin-bottom:8px;">
+                                Content vs Collab Bias (<span id="weightLabel">50 / 50</span>)
+                            </label>
+                            <input type="range" id="weightSlider" min="0" max="100" value="50" style="width:100%;" oninput="document.getElementById('weightLabel').innerText = (100-this.value) + ' / ' + this.value">
+                            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-500);margin-top:4px;">
+                                <span>← More Content</span>
+                                <span>More Collab →</span>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                             <label style="font-size:13px;font-weight:600;color:var(--gray-700);display:block;margin-bottom:8px;">
+                                Simulate User Persona
+                            </label>
+                            <select id="userSelector" style="width:100%;padding:10px;border-radius:var(--radius-md);border:1px solid var(--gray-300);">
+                                <option value="u001">User 1 (Prefers Casual & Graphic)</option>
+                                <option value="u002">User 2 (Prefers Formal & Premium)</option>
+                                <option value="u003">User 3 (Prefers Streetwear)</option>
+                                <option value="u004">User 4 (Mixed Bag)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">🎯</div>
+                    <h3>Select Products to Begin</h3>
+                    <p>Choose one or more shirts from the left panel to simulate user browsing history. The AI engine
+                        will find the best matches.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // ─────────────────────────────────────────────
+        //  CONFIG
+        // ─────────────────────────────────────────────
+        const ML_API = 'http://localhost:5050';
+        let catalog = [];
+        let selectedIds = new Set();
+
+        // ─────────────────────────────────────────────
+        //  LOAD CATALOG
+        // ─────────────────────────────────────────────
+        async function loadCatalog() {
+            try {
+                const res = await fetch(`${ML_API}/api/catalog`);
+                const json = await res.json();
+                if (json.success) {
+                    catalog = json.data;
+                    renderChecklist();
+                }
+            } catch (err) {
+                console.error('Failed to load catalog:', err);
+                document.getElementById('productList').innerHTML =
+                    '<li style="color:var(--color-error);font-size:13px;">❌ ML Service offline. Start it with: <code>python app.py</code></li>';
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        //  RENDER PRODUCT CHECKLIST
+        // ─────────────────────────────────────────────
+        function renderChecklist() {
+            const list = document.getElementById('productList');
+            list.innerHTML = catalog.map(p => `
+                <li data-id="${p.id}" onclick="toggleProduct('${p.id}')">
+                    <img src="${p.image}" alt="${p.name}" loading="lazy"
+                         onerror="this.src='https://via.placeholder.com/44x44?text=T'" />
+                    <div class="prod-info">
+                        <div class="prod-name">${p.name}</div>
+                        <div class="prod-cat">${p.category} · ${p.style} · Rs ${p.price.toLocaleString()}</div>
+                    </div>
+                    <div class="check-icon"></div>
+                </li>
+            `).join('');
+        }
+
+        // ─────────────────────────────────────────────
+        //  TOGGLE PRODUCT SELECTION
+        // ─────────────────────────────────────────────
+        function toggleProduct(id) {
+            if (selectedIds.has(id)) {
+                selectedIds.delete(id);
+            } else {
+                selectedIds.add(id);
+            }
+
+            // Update UI
+            document.querySelectorAll('.product-checklist li').forEach(li => {
+                li.classList.toggle('selected', selectedIds.has(li.dataset.id));
+            });
+
+            // Enable/disable button
+            document.getElementById('btnRecommend').disabled = selectedIds.size === 0;
+        }
+
+        // ─────────────────────────────────────────────
+        //  GET RECOMMENDATIONS
+        // ─────────────────────────────────────────────
+        async function getRecommendations() {
+            const btn = document.getElementById('btnRecommend');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('btnSpinner');
+
+            const wVal = parseInt(document.getElementById('weightSlider').value, 10);
+            const collabW = wVal / 100;
+            const contentW = 1 - collabW;
+            const simUser = document.getElementById('userSelector').value;
+
+            // Loading state
+            btn.disabled = true;
+            btnText.textContent = 'Analyzing...';
+            spinner.style.display = 'block';
+
+            try {
+                // Calling the Hybrid Express Route (which calls Python + TFJS internally)
+                const res = await fetch(`http://localhost:5000/api/recommendations/hybrid`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: simUser,
+                        viewed_ids: Array.from(selectedIds),
+                        weights: { collab: collabW, content: contentW },
+                        top_n: 4
+                    })
+                });
+
+                const json = await res.json();
+
+                if (json.success) {
+                    renderResults(json.data);
+                } else {
+                    alert('Error: ' + json.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to connect to backend server. Is it running on port 5000?');
+            } finally {
+                btn.disabled = selectedIds.size === 0;
+                btnText.textContent = '🤖 Get AI Recommendations';
+                spinner.style.display = 'none';
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        //  RENDER RESULTS
+        // ─────────────────────────────────────────────
+        function renderResults(data) {
+            const area = document.getElementById('resultsArea');
+            const { recommendations, weights_used, algorithm } = data;
+
+            area.innerHTML = `
+                <!-- Algorithm Info Bar -->
+                <div class="algo-bar fade-in">
+                    <div class="algo-chip"><span class="dot dot-green"></span> Algorithm: Hybrid Engine</div>
+                    <div class="algo-chip"><span class="dot dot-blue"></span> Weights: Content ${(weights_used.content * 100).toFixed(0)}% / Collab ${(weights_used.collab * 100).toFixed(0)}%</div>
+                </div>
+
+                <!-- Recommendation Cards -->
+                <h4 style="font-size:16px;font-weight:700;color:var(--gray-800);margin-bottom:16px;">
+                    🎯 Top ${recommendations.length} Recommendations
+                </h4>
+                <div class="rec-grid">
+                    ${recommendations.map((p, i) => `
+                        <div class="rec-card fade-in" id="rec-${p.id}">
+                            <span class="match-badge" title="Content: ${p.scores.content}% | Collab: ${p.scores.collab}%">Score: ${p.scores.total}</span>
+                            <img class="card-img" src="${p.image}" alt="${p.name}" loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/400x200?text=${encodeURIComponent(p.name)}'" />
+                            <div class="card-body">
+                                <h5>${p.name}</h5>
+                                <div class="card-tags">
+                                    ${p.tags.map(t => `<span>${t}</span>`).join('')}
+                                </div>
+                                <div class="card-meta">
+                                    <span class="card-cat">${p.category}</span>
+                                    <span class="card-price">Rs ${p.price.toLocaleString()}</span>
+                                </div>
+                                <!-- Feedback Section -->
+                                <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-light);">
+                                    <p style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:8px;">How useful?</p>
+                                    <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+                                        <div class="feedback-stars" data-product="${p.id}" style="display:flex;gap:2px;">
+                                            ${[1,2,3,4,5].map(star => `<span class="star" data-star="${star}" onclick="rateFeedback('${p.id}', ${star})" style="cursor:pointer;font-size:18px;opacity:0.3;transition:opacity 0.2s;">★</span>`).join('')}
+                                        </div>
+                                        <input type="text" placeholder="Feedback..." class="feedback-input" data-product="${p.id}" style="flex:1;min-width:80px;font-size:11px;padding:4px 6px;border:1px solid var(--border-light);border-radius:4px;" />
+                                        <button onclick="submitFeedback('${p.id}')" style="padding:4px 8px;font-size:10px;font-weight:600;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer;">✓</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function formatAlgo(algo) {
+            return algo
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        // ─────────────────────────────────────────────
+        //  FEEDBACK FUNCTIONALITY
+        // ─────────────────────────────────────────────
+        function rateFeedback(productId, rating) {
+            const stars = document.querySelectorAll(`.feedback-stars[data-product="${productId}"] .star`);
+            stars.forEach((s, i) => {
+                s.style.opacity = i < rating ? '1' : '0.3';
+                s.dataset.currentRating = rating;
+            });
+        }
+
+        async function submitFeedback(productId) {
+            const starsEl = document.querySelector(`.feedback-stars[data-product="${productId}"]`);
+            const inputEl = document.querySelector(`.feedback-input[data-product="${productId}"]`);
+            const rating = parseInt(starsEl.querySelector('.star[data-current-rating]')?.dataset.currentRating || 0, 10);
+            const feedbackText = inputEl.value.trim();
+
+            if (rating === 0) {
+                alert('Please select a rating (1-5 stars)');
+                return;
+            }
+
+            try {
+                const res = await fetch('http://localhost:5000/api/ml/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: document.getElementById('userSelector').value,
+                        productId: productId,
+                        recommendationScore: rating,
+                        userRating: rating,
+                        feedback: feedbackText,
+                        algorithm: 'hybrid'
+                    })
+                });
+
+                const json = await res.json();
+                if (json.success) {
+                    alert('✅ Feedback recorded! Thank you.');
+                    inputEl.value = '';
+                    rateFeedback(productId, 0);
+                } else {
+                    alert('Error: ' + json.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to submit feedback. Backend server may be offline.');
+            }
+        }
+
+        // ─────────────────────────────────────────────
+        //  INIT
+        // ─────────────────────────────────────────────
+        document.getElementById('btnRecommend').addEventListener('click', getRecommendations);
+        loadCatalog();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Shirtify AI Virtual Try-On — See how your custom shirt design looks on you before ordering.">
+    <title>Shirtify - AI Virtual Try-On</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="try-on-screen.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+        <symbol id="icon-search" viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="2" fill="none"/></symbol>
+        <symbol id="icon-cart" viewBox="0 0 24 24"><path d="M3 3h2l1.6 9.6A2 2 0 0 0 8.6 15H19" stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round"/><circle cx="10" cy="20" r="1" fill="currentColor"/><circle cx="18" cy="20" r="1" fill="currentColor"/></symbol>
+        <symbol id="icon-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M12 3v18" stroke="currentColor" stroke-width="1.2"/></symbol>
+        <symbol id="icon-signout" viewBox="0 0 24 24"><path d="M16 17l5-5-5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+        <symbol id="icon-robot" viewBox="0 0 24 24"><rect x="6" y="8" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M9 8V6a3 3 0 0 1 6 0v2" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="9.5" cy="11" r="0.8" fill="currentColor"/><circle cx="14.5" cy="11" r="0.8" fill="currentColor"/></symbol>
+        <symbol id="icon-paperplane" viewBox="0 0 24 24"><path d="M22 2L11 13" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 2l-7 20 3-7 7-6-6 3" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/></symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M4 20a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.5" fill="none"/></symbol>
+        <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M12 3v12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M5 10l7-7 7 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+        <symbol id="icon-tshirt" viewBox="0 0 24 24"><path d="M4 7l3-2h2l1 2h4l1-2h2l3 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z" stroke="currentColor" stroke-width="1.2" fill="none"/></symbol>
+        <symbol id="icon-magic" viewBox="0 0 24 24"><path d="M3 14l9-9" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="5" cy="6" r="1.2" fill="currentColor"/><circle cx="7" cy="8" r="1" fill="currentColor"/></symbol>
+        <symbol id="icon-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 12l2 2 5-5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+        <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12" stroke="currentColor" stroke-width="2" fill="none"/><path d="M5 12l7 7 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 21h14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></symbol>
+        <symbol id="icon-redo" viewBox="0 0 24 24"><path d="M21 7v6h-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 17a9 9 0 0 1 9-12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+        <symbol id="icon-exclamation-triangle" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="1" fill="none"/><path d="M12 9v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></symbol>
+    </svg>
+
+    <div id="header-placeholder"></div>
+
+    <main>
+        <h1>AI Virtual Try-On</h1>
+        <p class="subtitle">See how your custom design looks on you before ordering</p>
+
+        <div class="container">
+
+            <!-- ─── AI Chat Assistant ─────────────────────────────── -->
+            <div class="chat-container">
+                <div class="chat-header">
+                    <svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-robot"></use></svg>
+                    <span>AI Assistant<br><small>Online</small></span>
+                </div>
+                <div class="chat-box" id="chatBox">
+                    <div class="message bot-message">
+                        Hi! I'm your AI shopping assistant. Upload your photo and a shirt design, then hit <strong>Generate Try-On</strong> to see how it looks on you!
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" placeholder="Ask about design or try-on…">
+                    <button id="sendBtn" aria-label="Send message"><svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-paperplane"></use></svg></button>
+                </div>
+            </div>
+
+            <!-- ─── Upload & Generate Panel ──────────────────────── -->
+            <div class="upload-container">
+
+                <!-- Person photo upload -->
+                <div class="drop-zone" id="dropZone">
+                    <svg class="icon upload-icon" width="22" height="22" aria-hidden="true"><use href="#icon-user"></use></svg>
+                    <h3>Upload Your Photo</h3>
+                    <p class="drop-hint" id="personFileName">JPG or PNG, clear front-facing photo</p>
+                    <button type="button" class="btn-light" id="choosePersonBtn">
+                        <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-upload"></use></svg> Choose Photo
+                    </button>
+                    <input type="file" id="personFileInput" accept="image/*" hidden>
+                </div>
+
+                <!-- Shirt design upload -->
+                <button type="button" class="btn-outline" id="selectshirt">
+                    <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-tshirt"></use></svg> Select T-Shirt Design
+                    <span id="shirtFileName" class="file-badge"></span>
+                </button>
+                <input type="file" id="shirtFileInput" accept="image/*" hidden>
+
+                <!-- Generate button -->
+                <button type="button" class="btn-primary" id="generateBtn">
+                    <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-magic"></use></svg> Generate Try-On
+                </button>
+            </div>
+        </div>
+
+        <!-- ─── Result Section (hidden until response) ──────────── -->
+        <div class="result-section" id="resultSection">
+
+            <!-- Loading spinner -->
+            <div class="loader-wrapper" id="loaderWrapper">
+                <div class="spinner"></div>
+                <p class="loader-text">Generating your try-on… this takes a few seconds</p>
+                <div class="method-badge" id="methodBadge"></div>
+            </div>
+
+            <!-- Result image -->
+            <div class="result-card" id="resultCard">
+                <h2 class="result-title"><svg class="icon" width="18" height="18" aria-hidden="true"><use href="#icon-check-circle"></use></svg> Your Try-On Result</h2>
+                <img id="resultImg" src="" alt="AI Try-On Result">
+                <div class="result-actions">
+                    <a id="downloadBtn" class="btn-primary" download="shirtify-tryon.png">
+                        <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-download"></use></svg> Download Image
+                    </a>
+                    <button type="button" class="btn-outline" id="retryBtn">
+                        <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#icon-redo"></use></svg> Try Again
+                    </button>
+                </div>
+                <p id="methodLabel" class="method-label"></p>
+            </div>
+
+            <!-- Error card -->
+            <div class="error-card" id="errorCard">
+                <svg class="icon" width="22" height="22" aria-hidden="true"><use href="#icon-exclamation-triangle"></use></svg>
+                <h3>Try-On Failed</h3>
+                <p id="errorMsg">Something went wrong. Please try again.</p>
+                <button type="button" class="btn-primary" id="errorRetryBtn">Try Again</button>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="try-on-screen.js"></script>
+    <script>
+        async function loadHeader() {
+            try {
+                const res = await fetch('../header.html');
+                const html = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const baseUrl = res.url ? new URL(res.url, window.location.href) : null;
+                const headNodes = doc.querySelectorAll('link[rel="stylesheet"], style');
+                headNodes.forEach(node => {
+                    if (node.tagName === 'LINK') {
+                        let href = node.getAttribute('href');
+                        if (baseUrl) {
+                            try { href = new URL(href, baseUrl).href; } catch(e) {}
+                        }
+                        if (!document.querySelector(`link[rel="stylesheet"][href="${href}"]`)) {
+                            const newLink = document.createElement('link');
+                            Array.from(node.attributes).forEach(a => newLink.setAttribute(a.name, a.value));
+                            newLink.setAttribute('href', href);
+                            document.head.appendChild(newLink);
+                        }
+                    } else if (node.tagName === 'STYLE') {
+                        document.head.appendChild(node.cloneNode(true));
+                    }
+                });
+
+                const headerEl = doc.querySelector('header');
+                if (headerEl) {
+                    document.getElementById('header-placeholder').innerHTML = headerEl.outerHTML;
+                }
+            } catch (err) {
+                console.error('Error loading header:', err);
+            }
+        }
+        window.addEventListener('load', loadHeader);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Shirtify</title>
+    <link rel="stylesheet" href="../header.css">
+    <link rel="stylesheet" href="contactus.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+    <main class="contact-page">
+        <section class="hero-card">
+            <div class="eyebrow">Contact Shirtify</div>
+            <h1>Tell us who to reach and what you need.</h1>
+            <p>Use this form to share your name, email, contact number, and message. We will use these details to respond to order, design, or support requests.</p>
+        </section>
+
+        <section class="contact-shell">
+            <aside class="info-panel">
+                <div class="info-block highlight">
+                    <span class="info-icon"><i class="fa-solid fa-headset"></i></span>
+                    <div>
+                        <h2>Support Details</h2>
+                        <p>Fast help for design, order, and payment questions.</p>
+                    </div>
+                </div>
+
+                <div class="contact-card">
+                    <span class="label">Email</span>
+                    <strong>shirtify@gmail.com</strong>
+                </div>
+                <div class="contact-card">
+                    <span class="label">Contact Number</span>
+                    <strong>+92 012 3456789</strong>
+                </div>
+                <div class="contact-card">
+                    <span class="label">Instagram</span>
+                    <strong>@shirtify</strong>
+                </div>
+                <div class="contact-card">
+                    <span class="label">Office Hours</span>
+                    <strong>Mon - Sat, 9:00 AM - 7:00 PM</strong>
+                </div>
+
+                <a class="back-link" href="../customizescreen/customizescreen.html">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Back to Design Studio
+                </a>
+            </aside>
+
+            <section class="form-panel">
+                <form id="contactForm" novalidate>
+                    <div class="grid-two">
+                        <label>
+                            Full Name
+                            <input type="text" name="name" placeholder="Your full name" required>
+                        </label>
+                        <label>
+                            Email Address
+                            <input type="email" name="email" placeholder="you@example.com" required>
+                        </label>
+                    </div>
+
+                    <div class="grid-two">
+                        <label>
+                            Contact Number
+                            <input type="tel" name="contact" placeholder="03xx xxxxxxx" required>
+                        </label>
+                        <label>
+                            Preferred Contact Method
+                            <select name="method" required>
+                                <option value="" selected disabled>Select one</option>
+                                <option>Email</option>
+                                <option>Phone</option>
+                                <option>WhatsApp</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <label>
+                        Subject
+                        <input type="text" name="subject" placeholder="Order, design, or general question" required>
+                    </label>
+
+                    <label>
+                        Message
+                        <textarea name="message" rows="6" placeholder="Write the details of your request" required></textarea>
+                    </label>
+
+                    <div class="actions">
+                        <button type="reset" class="secondary">Clear</button>
+                        <button type="submit" class="primary">Send Message</button>
+                    </div>
+
+                    <p id="contactStatus" class="status" aria-live="polite"></p>
+                </form>
+            </section>
+        </section>
+    </main>
+
+    <script src="contactus.js"></script>
+    <script src="../header-loader.js"></script>
+</body>
+</html>

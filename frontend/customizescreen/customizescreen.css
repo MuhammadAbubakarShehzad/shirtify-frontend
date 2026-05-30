@@ -58,7 +58,9 @@
 /* Canva-like Text Toolbar in Toolbar Area */
 .text-toolbar-container {
     position: relative;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 }
 .canva-text-toolbar {
     display: flex;
@@ -378,14 +380,66 @@ nav a:hover { color: var(--text-dark); }
 .input-group label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
 .input-group input, .input-group select { padding: 10px; border: 1px solid var(--border); border-radius: 5px; width: 250px; }
 
-.editor-layout { display: flex; gap: 30px; }
-.canvas-section { flex: 1; margin-top: 40px; }
+.editor-layout { display: flex; gap: 30px; align-items: flex-start; overflow-x: auto; }
+.canvas-section { flex: 0 1 auto; margin-top: 40px; }
+
+/* Design Recommendations Panel */
+#design-recommendations {
+    flex: 0 0 320px;
+    background: #fff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+    padding: 16px !important;
+    margin-top: 40px;
+    border: 1px solid #e5e7eb;
+    overflow-y: auto;
+    max-height: 600px;
+}
 
 .toolbar { 
     display: flex; gap: 10px; padding: 15px; border: 1px solid var(--border); 
     border-radius: 12px; margin-bottom: 20px; align-items: center;
 }
-.toolbar button { background: white; border: 1px solid var(--border); padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.toolbar button {
+    width: 40px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 1px solid var(--border);
+    padding: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    line-height: 1;
+}
+.toolbar button i {
+    font-size: 15px;
+    line-height: 1;
+}
+.toolbar input[type="color"] {
+    width: 40px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    padding: 0;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    vertical-align: middle;
+}
+.toolbar input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 3px;
+}
+.toolbar input[type="color"]::-webkit-color-swatch {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+.toolbar input[type="color"]::-moz-color-swatch {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
 
 /* Canvas Area */
 .canvas-wrapper { 
@@ -416,7 +470,7 @@ canvas {
 .temp-item { height: 100px; background-color: #eee; border-radius: 10px; background-size: cover; }
 
 .separator {
-    height: 25px;
+    height: 28px;
     width: 1px;
     background: var(--border);
 }
