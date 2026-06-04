@@ -96,7 +96,8 @@ function renderCheckoutSummary(cart) {
             const name = product.title || 'Product';
             const price = product.price || 0;
             const qty = item.quantity;
-            const img = product.imageUrl || 'https://via.placeholder.com/80';
+            const fallbackImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="10" fill="%2394a3b8">No Image</text></svg>';
+            const img = product.imageUrl || fallbackImage;
             const lineTotal = price * qty;
             subtotal += lineTotal;
 
@@ -119,7 +120,8 @@ function renderCheckoutSummary(cart) {
         itemsHtml += customCart.map((item) => {
             const name = item.name || 'Custom Design';
             const price = item.price || 0;
-            const img = item.image || 'https://via.placeholder.com/80';
+            const fallbackImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="10" fill="%2394a3b8">No Image</text></svg>';
+            const img = item.image || fallbackImage;
             subtotal += price;
 
             return `

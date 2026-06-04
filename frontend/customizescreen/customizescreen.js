@@ -1770,67 +1770,130 @@ function addCustomToCart() {
  */
 async function fetchUnsplashDesigns(query = 'design', count = 6) {
     const safeQuery = (query || 'design').trim();
-    const printableKeywords = /(logo|vector|illustration|icon|emblem|sticker|graphic|png|svg|art)/i;
-    const likelyPhotoKeywords = /(photo|photograph|landscape|city|nature|portrait|wallpaper|building|sea|mountain)/i;
 
-    function getBestImageUrl(item) {
-        return item?.url || item?.thumbnail || item?.detail_url || '';
-    }
-
-    function isPngLike(url = '', title = '') {
-        const u = (url || '').toLowerCase();
-        const t = (title || '').toLowerCase();
-        return u.includes('.png') || u.includes('format=png') || t.includes('png') || t.includes('transparent');
-    }
-
-    // 1) Openverse (primary strict PNG mode)
-    try {
-        const smartQuery = `${safeQuery} t-shirt logo transparent png vector`;
-        const openverseUrl = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(smartQuery)}&page_size=${Math.max(count * 3, 24)}&license_type=all`;
-        const response = await fetch(openverseUrl, { headers: { Accept: 'application/json' } });
-        if (response.ok) {
-            const data = await response.json();
-            const results = Array.isArray(data?.results) ? data.results : [];
-            const designs = results
-                .filter(item => item && getBestImageUrl(item))
-                .filter(item => {
-                    const title = item?.title || '';
-                    const url = getBestImageUrl(item);
-                    const isPng = isPngLike(url, title);
-                    const looksPhoto = likelyPhotoKeywords.test(`${title} ${url}`);
-                    // Keep only PNG-like assets and avoid obvious photos.
-                    return isPng && !looksPhoto;
-                })
-                .sort((a, b) => {
-                    const aText = `${a?.title || ''} ${getBestImageUrl(a)}`;
-                    const bText = `${b?.title || ''} ${getBestImageUrl(b)}`;
-                    const aScore = printableKeywords.test(aText) ? 1 : 0;
-                    const bScore = printableKeywords.test(bText) ? 1 : 0;
-                    return bScore - aScore;
-                })
-                .slice(0, count)
-                .map((item, index) => ({
-                    id: item.id || `design-openverse-${Date.now()}-${index}`,
-                    title: item.title || `${safeQuery} inspiration ${index + 1}`,
-                    imageUrl: getBestImageUrl(item),
-                    source: 'openverse'
-                }));
-            if (designs.length) return designs;
+    // Helper to generate Base64 SVG Data URLs safely in the browser
+    function getSvgDataUrl(svgMarkup) {
+        try {
+            return 'data:image/svg+xml;base64,' + window.btoa(unescape(encodeURIComponent(svgMarkup)));
+        } catch (e) {
+            console.error('Failed to encode SVG:', e);
+            return '';
         }
-    } catch (err) {
-        console.warn('Openverse failed, trying Wikimedia fallback:', err);
     }
 
-    // 2) Wikimedia fallback (very CORS-friendly)
+    const isDefaultQuery = safeQuery.toLowerCase() === 'shirt design' || safeQuery.toLowerCase() === 'design' || !safeQuery;
+
+    // 1) Curated Local SVG Designs (No network request, 100% transparent vector, loads instantly, offline friendly)
+    if (isDefaultQuery) {
+        const defaultDesigns = [
+            {
+                id: 'local-design-rocket',
+                title: 'Neon Rocket',
+                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,15 C50,15 65,35 65,55 C65,65 58,70 50,70 C42,70 35,65 35,55 C35,35 50,15 50,15 Z" fill="none" stroke="#10b981" stroke-width="4"/><path d="M35,60 C25,65 20,75 20,85 C35,85 40,75 42,70" fill="none" stroke="#10b981" stroke-width="3"/><path d="M65,60 C75,65 80,75 80,85 C65,85 60,75 58,70" fill="none" stroke="#10b981" stroke-width="3"/><circle cx="50" cy="45" r="5" fill="none" stroke="#f59e0b" stroke-width="3"/><path d="M50,72 V85 M45,75 V80 M55,75 V80" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/></svg>`),
+                source: 'local-svg'
+            },
+            {
+                id: 'local-design-gamepad',
+                title: 'Retro Gamer',
+                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,90 C25,80 15,50 15,30 L50,15 L85,30 C85,50 75,80 50,90 Z" fill="none" stroke="#3b82f6" stroke-width="4"/><rect x="35" y="40" width="30" height="20" rx="5" fill="none" stroke="#10b981" stroke-width="3"/><path d="M42,50 H48 M45,47 V53" stroke="#10b981" stroke-width="2" stroke-linecap="round"/><circle cx="58" cy="47" r="2" fill="#ef4444"/><circle cx="58" cy="53" r="2" fill="#f59e0b"/></svg>`),
+                source: 'local-svg'
+            },
+            {
+                id: 'local-design-mountain',
+                title: 'Peak Adventure',
+                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="4"/><path d="M20,65 L38,40 L52,55 L68,30 L80,65 Z" fill="none" stroke="#ec4899" stroke-width="3" stroke-linejoin="round"/><path d="M15,72 C30,68 45,76 60,72 C75,68 85,72 85,72" fill="none" stroke="#06b6d4" stroke-width="3"/></svg>`),
+                source: 'local-svg'
+            },
+            {
+                id: 'local-design-crown',
+                title: 'Royal Crest',
+                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="m15 25 10 40h50l10-40-20 23-15-23-15 23-20-23z" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linejoin="round"/><path d="M20 78h60" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/></svg>`),
+                source: 'local-svg'
+            },
+            {
+                id: 'local-design-skull',
+                title: 'Cyber Skull',
+                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30,50 C30,30 70,30 70,50 C70,60 65,65 65,75 L60,75 L60,82 L40,82 L40,75 L35,75 C35,65 30,60 30,50 Z" fill="none" stroke="#ef4444" stroke-width="4" stroke-linejoin="round"/><circle cx="42" cy="50" r="6" fill="none" stroke="#ef4444" stroke-width="3"/><circle cx="58" cy="50" r="6" fill="none" stroke="#ef4444" stroke-width="3"/><path d="M48,62 L50,58 L52,62 Z" fill="none" stroke="#ef4444" stroke-width="2"/><path d="M46,75 V82 M50,75 V82 M54,75 V82" stroke="#ef4444" stroke-width="2"/></svg>`),
+                source: 'local-svg'
+            },
+            {
+                id: 'local-design-mandala',
+                title: 'Sacred Geometry',
+                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#06b6d4" stroke-width="3"/><circle cx="50" cy="50" r="25" fill="none" stroke="#06b6d4" stroke-width="2"/><path d="M50,10 V90 M10,50 H90" stroke="#06b6d4" stroke-width="2"/><path d="M22,22 L78,78 M22,78 L78,22" stroke="#06b6d4" stroke-width="2"/><polygon points="50,25 75,50 50,75 25,50" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>`),
+                source: 'local-svg'
+            }
+        ];
+        return defaultDesigns.slice(0, count);
+    }
+
+    // 2) Active Search: Query reliable Keyless APIs first (DiceBear for vectors, Robohash for graphics)
+    // These APIs are 100% free, do not require API keys, and have robust CORS headers to prevent canvas issues.
+    const searchDesigns = [
+        {
+            id: `design-db-shapes-${Date.now()}-1`,
+            title: `${safeQuery} Shapes`,
+            imageUrl: `https://api.dicebear.com/8.x/shapes/svg?seed=${encodeURIComponent(safeQuery)}-shapes`,
+            source: 'dicebear-shapes'
+        },
+        {
+            id: `design-db-rings-${Date.now()}-2`,
+            title: `${safeQuery} Geo`,
+            imageUrl: `https://api.dicebear.com/8.x/rings/svg?seed=${encodeURIComponent(safeQuery)}-rings`,
+            source: 'dicebear-rings'
+        },
+        {
+            id: `design-db-bottts-${Date.now()}-3`,
+            title: `${safeQuery} Bot`,
+            imageUrl: `https://api.dicebear.com/8.x/bottts/svg?seed=${encodeURIComponent(safeQuery)}-bottts`,
+            source: 'dicebear-bottts'
+        },
+        {
+            id: `design-db-pixel-${Date.now()}-4`,
+            title: `${safeQuery} Pixel`,
+            imageUrl: `https://api.dicebear.com/8.x/pixel-art/svg?seed=${encodeURIComponent(safeQuery)}-pixel`,
+            source: 'dicebear-pixel'
+        },
+        {
+            id: `design-robo-robot-${Date.now()}-5`,
+            title: `${safeQuery} Robo`,
+            imageUrl: `https://robohash.org/${encodeURIComponent(safeQuery)}?set=set1`,
+            source: 'robohash-set1'
+        },
+        {
+            id: `design-robo-monster-${Date.now()}-6`,
+            title: `${safeQuery} Monster`,
+            imageUrl: `https://robohash.org/${encodeURIComponent(safeQuery)}?set=set2`,
+            source: 'robohash-set2'
+        },
+        {
+            id: `design-robo-kitten-${Date.now()}-7`,
+            title: `${safeQuery} Kitten`,
+            imageUrl: `https://robohash.org/${encodeURIComponent(safeQuery)}?set=set4`,
+            source: 'robohash-set4'
+        },
+        {
+            id: `design-db-identicon-${Date.now()}-8`,
+            title: `${safeQuery} Icon`,
+            imageUrl: `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(safeQuery)}-id`,
+            source: 'dicebear-identicon'
+        }
+    ];
+
+    if (searchDesigns.length >= count) {
+        return searchDesigns.slice(0, count);
+    }
+
+    // 3) Silent Wikimedia Fallback (Wrapped in try/catch to avoid console error leakage)
     try {
-        const wikiUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(safeQuery + ' logo png transparent')}&gsrlimit=${Math.max(count * 3, 18)}&prop=pageimages|info|imageinfo&iiprop=url&inprop=url&pithumbsize=600&format=json&origin=*`;
+        const cleanWikiQuery = safeQuery.replace(/[^a-zA-Z0-9 ]/g, ''); // strip symbols
+        const wikiUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cleanWikiQuery + ' logo png')}&gsrlimit=${Math.max(count * 2, 12)}&prop=pageimages|info|imageinfo&iiprop=url&inprop=url&pithumbsize=600&format=json&origin=*`;
+        
         const response = await fetch(wikiUrl);
         if (response.ok) {
             const data = await response.json();
             const pages = data?.query?.pages ? Object.values(data.query.pages) : [];
             const designs = pages
                 .filter(page => page && page.thumbnail && page.thumbnail.source)
-                .filter(page => isPngLike(page.thumbnail.source, page.title || ''))
                 .slice(0, count)
                 .map((page, index) => ({
                     id: `design-wiki-${Date.now()}-${index}`,
@@ -1841,34 +1904,10 @@ async function fetchUnsplashDesigns(query = 'design', count = 6) {
             if (designs.length) return designs;
         }
     } catch (err) {
-        console.warn('Wikimedia failed:', err);
+        console.log('Optional Wikimedia fallback bypassed.');
     }
 
-    // 3) Fallback mode: return general images and let UI convert for print-like use.
-    try {
-        const fallbackQuery = `${safeQuery} logo graphic`;
-        const openverseFallbackUrl = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(fallbackQuery)}&page_size=${Math.max(count * 2, 16)}&license_type=all`;
-        const fallbackRes = await fetch(openverseFallbackUrl, { headers: { Accept: 'application/json' } });
-        if (fallbackRes.ok) {
-            const data = await fallbackRes.json();
-            const results = Array.isArray(data?.results) ? data.results : [];
-            const fallbackDesigns = results
-                .filter(item => item && getBestImageUrl(item))
-                .slice(0, count)
-                .map((item, index) => ({
-                    id: item.id || `design-openverse-fallback-${Date.now()}-${index}`,
-                    title: item.title || `${safeQuery} inspiration ${index + 1}`,
-                    imageUrl: getBestImageUrl(item),
-                    source: 'openverse-fallback',
-                    autoProcess: true
-                }));
-            if (fallbackDesigns.length) return fallbackDesigns;
-        }
-    } catch (err) {
-        console.warn('Openverse relaxed fallback failed:', err);
-    }
-
-    // 4) Last fallback to avoid empty panel.
+    // 4) Ultimate fallback to Picsum
     return Array.from({ length: count }, (_, i) => ({
         id: `design-fallback-${Date.now()}-${i}`,
         title: `${safeQuery} inspiration ${i + 1}`,

@@ -51,7 +51,8 @@ function initFooter() {
 
 function createProductCard(product) {
   const productTitle = product.title || product.name || 'Untitled Product';
-  const productImage = product.imageUrl || product.image || 'https://via.placeholder.com/350x420?text=No+Image';
+  const fallbackImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="350" height="420" viewBox="0 0 350 420"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" fill="%2394a3b8">No Image</text></svg>';
+  const productImage = product.imageUrl || product.image || fallbackImage;
   const productPrice = product.price ?? 0;
 
   const card = document.createElement('div');
@@ -117,7 +118,8 @@ async function loadHomeProducts() {
 
 function openProductModal(product) {
   const productTitle = product.title || product.name || 'Untitled Product';
-  const productImage = product.imageUrl || product.image || 'https://via.placeholder.com/350x420?text=No+Image';
+  const fallbackImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="350" height="420" viewBox="0 0 350 420"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" fill="%2394a3b8">No Image</text></svg>';
+  const productImage = product.imageUrl || product.image || fallbackImage;
   const productPrice = product.price ?? 0;
 
   selectedProduct = product;

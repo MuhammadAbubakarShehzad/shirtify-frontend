@@ -77,9 +77,10 @@ function renderCheckoutItems(cart) {
             const title = product.title || 'Product';
             const price = product.price || 0;
             subtotal += price * item.quantity;
+            const fallbackImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%2394a3b8">No Image</text></svg>';
             return `
                 <div class="product-item">
-                    <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" alt="${title}" class="thumb">
+                    <img src="${product.imageUrl || fallbackImage}" alt="${title}" class="thumb">
                     <div class="details">
                         <h4>${title}</h4>
                         <p>Qty: ${item.quantity}</p>
@@ -96,9 +97,10 @@ function renderCheckoutItems(cart) {
         itemsHtml += customCart.map(item => {
             const price = item.price || 0;
             subtotal += price;
+            const fallbackImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="14" fill="%2394a3b8">No Image</text></svg>';
             return `
                 <div class="product-item">
-                    <img src="${item.image || 'https://via.placeholder.com/150'}" alt="Custom Design" class="thumb">
+                    <img src="${item.image || fallbackImage}" alt="Custom Design" class="thumb">
                     <div class="details">
                         <h4>${item.name || 'Custom Design'}</h4>
                         <p>Shirt: ${item.shirt || 'Custom'}</p>
