@@ -47,19 +47,36 @@
 
 <body>
     <h1>Backend Login Test</h1>
-    <p>Testing connection to: <code>http://localhost:5000/api/auth/login</code></p>
+    <p>Testing connection to: <code id="testUrl">http://localhost:5000/api/auth/login</code></p>
 
     <button onclick="testLogin()">Test Login with admin@shirtify.com</button>
 
     <div id="result"></div>
 
     <script>
+        var API_BASE_URL = window.API_BASE_URL || (() => {
+            if (window.location.protocol.startsWith('http')) {
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (isLocalhost && window.location.port !== '5000') {
+                    return 'http://localhost:5000/api';
+                }
+                return `${window.location.protocol}//${window.location.host}/api`;
+            }
+            return 'http://localhost:5000/api';
+        })();
+        window.API_BASE_URL = API_BASE_URL;
+
+        // Update UI target description on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('testUrl').textContent = `${API_BASE_URL}/auth/login`;
+        });
+
         async function testLogin() {
             const resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '<p>Testing...</p>';
 
             try {
-                const response = await fetch('http://localhost:5000/api/auth/login', {
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -559,7 +559,26 @@
         // ─────────────────────────────────────────────
         //  CONFIG
         // ─────────────────────────────────────────────
-        const ML_API = 'http://localhost:5050';
+        const getMlApiUrl = () => {
+            if (window.location.protocol.startsWith('http')) {
+                return `${window.location.protocol}//${window.location.hostname}:5050`;
+            }
+            return 'http://localhost:5050';
+        };
+        const ML_API = getMlApiUrl();
+
+        var API_BASE_URL = window.API_BASE_URL || (() => {
+            if (window.location.protocol.startsWith('http')) {
+                const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (isLocalhost && window.location.port !== '5000') {
+                    return 'http://localhost:5000/api';
+                }
+                return `${window.location.protocol}//${window.location.host}/api`;
+            }
+            return 'http://localhost:5000/api';
+        })();
+        window.API_BASE_URL = API_BASE_URL;
+
         let catalog = [];
         let selectedIds = new Set();
 
@@ -638,7 +657,7 @@
 
             try {
                 // Calling the Hybrid Express Route (which calls Python + TFJS internally)
-                const res = await fetch(`http://localhost:5000/api/recommendations/hybrid`, {
+                const res = await fetch(`${API_BASE_URL}/recommendations/hybrid`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -746,7 +765,7 @@
             }
 
             try {
-                const res = await fetch('http://localhost:5000/api/ml/feedback', {
+                const res = await fetch(`${API_BASE_URL}/ml/feedback`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

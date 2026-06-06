@@ -2,7 +2,17 @@
 // This service handles all communication with the backend REST API
 // Replaces localStorage-based data management with real HTTP requests
 
-const API_BASE_URL = 'http://localhost:5000/api';
+var API_BASE_URL = window.API_BASE_URL || (() => {
+    if (window.location.protocol.startsWith('http')) {
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalhost && window.location.port !== '5000') {
+            return 'http://localhost:5000/api';
+        }
+        return `${window.location.protocol}//${window.location.host}/api`;
+    }
+    return 'http://localhost:5000/api';
+})();
+window.API_BASE_URL = API_BASE_URL;
 
 // API Service Object (Exposed Globally)
 window.ShirtifyAPI = {

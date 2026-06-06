@@ -2376,14 +2376,10 @@
             const interval = document.getElementById('salesInterval').value;
 
             try {
-                const params = new URLSearchParams();
-                if (startDate) params.append('startDate', startDate);
-                if (endDate) params.append('endDate', endDate);
-                if (interval) params.append('interval', interval);
-                const res = await fetch(`http://localhost:5000/api/admin/sales-analytics?${params.toString()}`);
-                const result = await res.json();
+                // Use ShirtifyAPI service helper to avoid hardcoded localhost URL
+                const result = await ShirtifyAPI.getSalesAnalytics(startDate, endDate, interval);
 
-                if (res.ok && result.success && result.data) {
+                if (result && result.success && result.data) {
                     renderSalesCharts(result.data);
                 } else {
                     console.warn('Sales analytics API unavailable, using fallback dataset.');
