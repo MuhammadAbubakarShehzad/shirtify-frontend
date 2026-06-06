@@ -33,9 +33,13 @@ async function _probeHealth(host, port, timeoutMs = 1500) {
 async function resolveApiBase() {
     const host = window.location.hostname || 'localhost';
     const scheme = window.location.protocol === 'https:' ? 'https:' : 'http:';
-    const candidates = [];
-    if (window.location.port) candidates.push(window.location.port);
-    candidates.push('5001', '5000');
+    
+    // Prioritize 5001 (the python try-on port) first to avoid 404 errors from probing other active ports (like Live Server 5500 or Node.js 5000)
+    const candidates = ['5001'];
+    if (window.location.port && window.location.port !== '5001' && window.location.port !== '5500') {
+        candidates.push(window.location.port);
+    }
+    candidates.push('5000');
 
     for (const p of candidates) {
         if (!p) continue;
