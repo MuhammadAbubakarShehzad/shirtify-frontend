@@ -784,8 +784,8 @@ def tryon():
     try:
         p_path = save_upload(request.files["person_image"])
         s_path = save_upload(request.files["shirt_image"])
-        resize_img(p_path)
-        resize_img(s_path)
+        resize_img(p_path, max_size=768)
+        resize_img(s_path, max_size=768)
 
         # 1. First Priority: IDM-VTON (enabled by default)
         if idm_first:
@@ -805,16 +805,25 @@ def tryon():
                     "layers": [],
                     "composite": None
                 }
-                result = idm_client.predict(
-                    dict=dict_val,
-                    garm_img=handle_file(s_path),
-                    garment_des="t-shirt",
-                    is_checked=True,
-                    is_checked_crop=False,
-                    denoise_steps=30,
-                    seed=42,
-                    api_name="/tryon"
-                )
+                
+                # Set a 10-second timeout for the HuggingFace space prediction to keep UI responsive
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(
+                        idm_client.predict,
+                        dict=dict_val,
+                        garm_img=handle_file(s_path),
+                        garment_des="t-shirt",
+                        is_checked=True,
+                        is_checked_crop=False,
+                        denoise_steps=20,
+                        seed=42,
+                        api_name="/tryon"
+                    )
+                    try:
+                        result = future.result(timeout=10.0)
+                    except concurrent.futures.TimeoutError:
+                        raise TimeoutError("HuggingFace space request timed out (>10s)")
 
                 output_path = result[0]
                 import shutil
@@ -830,18 +839,23 @@ def tryon():
 
             except Exception as e:
                 err_str = str(e)
-                if "ZeroGPU quota" in err_str:
+                is_timeout = "timed out" in err_str.lower()
+                is_quota = "zerogpu quota" in err_str.lower()
+                
+                if is_quota:
                     print("\n[TryOn] ERROR: Hugging Face ZeroGPU quota exceeded!")
                     fit_hint = "Cloud try-on quota reached; used local pipeline fallback."
                 else:
                     print(f"[TryOn] IDM-VTON API failed: {e}")
 
-                if idm_only:
+                if idm_only and not is_timeout and not is_quota:
                     return jsonify({
                         "success": False,
                         "error": f"IDM-VTON failed: {err_str}"
                     }), 503
 
+                if is_timeout:
+                    fit_hint = "HuggingFace space was busy; automatically fell back to local pipeline."
                 print("[TryOn] Falling back to local classic/Gemini methods...")
 
         if os.getenv("GEMINI_FULL_TRYON", "").strip().lower() in ("1", "true", "yes"):
