@@ -80,8 +80,10 @@ if GEMINI_API_KEY:
     except:
         pass
 
-def save_upload(file_obj):
-    out = tempfile.mktemp(suffix=".png", dir=TEMP_DIR)
+def save_upload(file_obj, is_garment=False):
+    # Use .png for garments to preserve alpha transparency, and .jpg for person photos
+    suffix = ".png" if is_garment else ".jpg"
+    out = tempfile.mktemp(suffix=suffix, dir=TEMP_DIR)
     file_obj.save(out)
     return out
 
@@ -90,15 +92,39 @@ def image_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
-def resize_img(path, max_size=1024):
+def resize_img(path, max_size=768):
     try:
-        img = cv2.imread(path)
+        # Load image (including alpha channel if PNG)
+        img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         if img is None: return
         h, w = img.shape[:2]
         if max(h, w) > max_size:
             s = max_size / max(h, w)
-            cv2.imwrite(path, cv2.resize(img, (int(w*s), int(h*s)), interpolation=cv2.INTER_AREA))
-    except: pass
+            img = cv2.resize(img, (int(w*s), int(h*s)), interpolation=cv2.INTER_AREA)
+        
+        # High compression to minimize Hugging Face upload network time
+        if path.lower().endswith((".jpg", ".jpeg")):
+            cv2.imwrite(path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+        elif path.lower().endswith(".png"):
+            cv2.imwrite(path, img, [int(cv2.IMWRITE_PNG_COMPRESSION), 9])
+    except:
+        pass
+
+_global_idm_client = None
+_global_idm_lock = threading.Lock()
+
+def get_idm_client(hf_token):
+    global _global_idm_client
+    with _global_idm_lock:
+        if _global_idm_client is None:
+            from gradio_client import Client
+            client_kwargs = {}
+            if hf_token:
+                client_kwargs["token"] = hf_token
+            print("[TryOn] Connecting to Hugging Face Space yisol/IDM-VTON...")
+            _global_idm_client = Client("yisol/IDM-VTON", **client_kwargs)
+            print("[TryOn] Hugging Face Gradio Client connected successfully.")
+        return _global_idm_client
 
 # ════════════════════════════════
 # STAGE 2 — POSE DETECTION & TORSO QUAD (MediaPipe Setup)
@@ -782,8 +808,8 @@ def tryon():
     idm_only = os.getenv("IDM_VTON_ONLY", "1").strip().lower() in ("1", "true", "yes")
 
     try:
-        p_path = save_upload(request.files["person_image"])
-        s_path = save_upload(request.files["shirt_image"])
+        p_path = save_upload(request.files["person_image"], is_garment=False)
+        s_path = save_upload(request.files["shirt_image"], is_garment=True)
         resize_img(p_path, max_size=768)
         resize_img(s_path, max_size=768)
 
@@ -793,24 +819,19 @@ def tryon():
             hf_token = os.getenv("HF_TOKEN", "").strip()
 
             try:
-                from gradio_client import Client, handle_file
-                print("[TryOn] Connecting to IDM-VTON space...")
-                client_kwargs = {}
-                if hf_token:
-                    client_kwargs["token"] = hf_token
-
-                idm_client = Client("yisol/IDM-VTON", **client_kwargs)
-                dict_val = {
-                    "background": handle_file(p_path),
-                    "layers": [],
-                    "composite": None
-                }
-                
-                # Set a 10-second timeout for the HuggingFace space prediction to keep UI responsive
+                from gradio_client import handle_file
                 import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(
-                        idm_client.predict,
+                
+                def run_idm():
+                    # Move Client instantiation inside the timed thread and reuse the cached client
+                    idm_client = get_idm_client(hf_token)
+                    dict_val = {
+                        "background": handle_file(p_path),
+                        "layers": [],
+                        "composite": None
+                    }
+                    print("[TryOn] Submitting request to IDM-VTON Space...")
+                    return idm_client.predict(
                         dict=dict_val,
                         garm_img=handle_file(s_path),
                         garment_des="t-shirt",
@@ -820,10 +841,14 @@ def tryon():
                         seed=42,
                         api_name="/tryon"
                     )
+
+                # Use a 180-second timeout to allow the Hugging Face queue to clear and execute successfully
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(run_idm)
                     try:
-                        result = future.result(timeout=10.0)
+                        result = future.result(timeout=180.0)
                     except concurrent.futures.TimeoutError:
-                        raise TimeoutError("HuggingFace space request timed out (>10s)")
+                        raise TimeoutError("HuggingFace space request or connection timed out (>180s)")
 
                 output_path = result[0]
                 import shutil
@@ -839,22 +864,19 @@ def tryon():
 
             except Exception as e:
                 err_str = str(e)
-                is_timeout = "timed out" in err_str.lower()
-                is_quota = "zerogpu quota" in err_str.lower()
-                
-                if is_quota:
-                    print("\n[TryOn] ERROR: Hugging Face ZeroGPU quota exceeded!")
-                    fit_hint = "Cloud try-on quota reached; used local pipeline fallback."
-                else:
-                    print(f"[TryOn] IDM-VTON API failed: {e}")
+                print(f"[TryOn] IDM-VTON API failed: {e}")
 
-                if idm_only and not is_timeout and not is_quota:
+                if idm_only:
                     return jsonify({
                         "success": False,
                         "error": f"IDM-VTON failed: {err_str}"
                     }), 503
 
-                if is_timeout:
+                is_timeout = "timed out" in err_str.lower()
+                is_quota = "zerogpu quota" in err_str.lower()
+                if is_quota:
+                    fit_hint = "Cloud try-on quota reached; used local pipeline fallback."
+                elif is_timeout:
                     fit_hint = "HuggingFace space was busy; automatically fell back to local pipeline."
                 print("[TryOn] Falling back to local classic/Gemini methods...")
 
