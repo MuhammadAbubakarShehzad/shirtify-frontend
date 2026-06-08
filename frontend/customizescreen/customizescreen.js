@@ -2139,3 +2139,417 @@ window.addEventListener('DOMContentLoaded', async function() {
         });
     }
 });
+
+// --- AI Image Generator Logic ---
+function toggleAiPanel() {
+    const aiPanel = document.getElementById('ai-generator-panel');
+    const designRecommendations = document.getElementById('design-recommendations');
+    if (aiPanel) {
+        if (aiPanel.style.display === 'none' || !aiPanel.style.display) {
+            aiPanel.style.display = 'block';
+            if (designRecommendations) designRecommendations.style.display = 'none';
+        } else {
+            aiPanel.style.display = 'none';
+        }
+    }
+}
+window.toggleAiPanel = toggleAiPanel;
+
+// Update toggleDesignPanel to close AI panel
+const originalToggleDesignPanel = window.toggleDesignPanel;
+window.toggleDesignPanel = function() {
+    const aiPanel = document.getElementById('ai-generator-panel');
+    if (aiPanel) aiPanel.style.display = 'none';
+    if (typeof originalToggleDesignPanel === 'function') {
+        originalToggleDesignPanel();
+    } else {
+        const panel = document.getElementById('design-recommendations');
+        if (panel) {
+            if (panel.style.display === 'none' || !panel.style.display) {
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+    }
+};
+
+// Helper to authenticate with Puter.js in a user interaction tick (resolves popup block issues)
+async function ensurePuterAuthenticated() {
+    if (typeof puter === 'undefined') return false;
+    try {
+        if (puter.auth.isSignedIn()) {
+            return true;
+        }
+        console.log("User not signed in to Puter. Initializing automatic temp-user sign in...");
+        const result = await puter.auth.signIn({ attempt_temp_user_creation: true });
+        console.log("Puter temp-user sign-in result:", result);
+        return puter.auth.isSignedIn();
+    } catch (err) {
+        console.warn("Puter authentication failed:", err);
+        return false;
+    }
+}
+
+// AI Image Generation Event Listeners
+window.addEventListener('DOMContentLoaded', function() {
+    const generateBtn = document.getElementById('ai-generate-btn');
+    const promptInput = document.getElementById('ai-prompt-input');
+    const resultContainer = document.getElementById('ai-result-container');
+    const loader = document.getElementById('ai-loader');
+    const resultImg = document.getElementById('ai-result-img');
+    const applyBtn = document.getElementById('ai-apply-btn');
+    const removeBgCheckbox = document.getElementById('ai-remove-bg');
+
+    if (generateBtn && promptInput) {
+        generateBtn.addEventListener('click', function() {
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                alert('Please enter a description for the AI to generate.');
+                return;
+            }
+
+            // Client-side safety filter to block explicit words
+            const inappropriateWords = ['fuck', 'bitch', 'porn', 'sex', 'nude', 'naked', 'cunt', 'pussy', 'dick', 'boob', 'asshole'];
+            const containsInappropriate = inappropriateWords.some(word => prompt.toLowerCase().includes(word));
+            if (containsInappropriate) {
+                alert('Your prompt contains words that are blocked by the AI content and safety filters. Please modify your description and try again.');
+                return;
+            }
+
+            // Synchronous Puter.js authentication check to preserve user gesture context
+            if (typeof puter !== 'undefined' && !puter.auth.isSignedIn()) {
+                console.log("User not signed in to Puter. Initializing user sign-in in gesture tick...");
+                puter.auth.signIn({ attempt_temp_user_creation: true })
+                    .then(() => {
+                        console.log("Puter authentication successful.");
+                        startGeneration(prompt);
+                    })
+                    .catch((err) => {
+                        console.warn("Puter sign-in failed, trying fallback options:", err);
+                        startGeneration(prompt);
+                    });
+            } else {
+                startGeneration(prompt);
+            }
+        });
+
+        function startGeneration(prompt) {
+            console.log('Generating AI image for prompt:', prompt);
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Generating...';
+            resultContainer.style.display = 'flex';
+            loader.style.display = 'block';
+            resultImg.style.display = 'none';
+            applyBtn.style.display = 'none';
+
+            // Enhance prompt for clean vector logo styling if background removal is active
+            let enhancedPrompt = prompt;
+            if (removeBgCheckbox && removeBgCheckbox.checked && !prompt.toLowerCase().includes('transparent')) {
+                enhancedPrompt = `${prompt}, isolated on plain white background, vector logo style, clean borders`;
+            }
+
+            const seed = Math.floor(Math.random() * 1000000);
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+
+            // Set up a timeout to prevent the loader from spinning forever
+            let timeoutId = setTimeout(() => {
+                alert('AI Image generation timed out. The server might be busy. Please try again or simplify your prompt.');
+                loader.style.display = 'none';
+                resultContainer.style.display = 'none';
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate Image';
+            }, 60000);
+
+            // 1. Try Backend Hugging Face API first (if configured with token)
+            apiFetch('/ai/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: enhancedPrompt })
+            })
+            .then(async (res) => {
+                if (res.status === 412) {
+                    throw new Error('HF_TOKEN not configured on backend');
+                }
+                if (!res.ok) {
+                    const errPayload = await res.json().catch(() => ({}));
+                    throw new Error(errPayload.message || `Backend generation error ${res.status}`);
+                }
+                
+                const blob = await res.blob();
+                const localUrl = URL.createObjectURL(blob);
+                
+                const tempImg = new Image();
+                tempImg.crossOrigin = 'anonymous';
+                tempImg.onload = function() {
+                    clearTimeout(timeoutId);
+                    
+                    if (removeBgCheckbox && removeBgCheckbox.checked) {
+                        const processedUrl = makeImageBackgroundTransparent(tempImg);
+                        if (processedUrl) {
+                            resultImg.src = processedUrl;
+                            window.generatedAiImageUrl = processedUrl;
+                        } else {
+                            resultImg.src = localUrl;
+                            window.generatedAiImageUrl = localUrl;
+                        }
+                    } else {
+                        resultImg.src = localUrl;
+                        window.generatedAiImageUrl = localUrl;
+                    }
+                    
+                    loader.style.display = 'none';
+                    resultImg.style.display = 'block';
+                    applyBtn.style.display = 'block';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Generate Image';
+                };
+                
+                tempImg.onerror = function() {
+                    triggerFinalFailure();
+                };
+                
+                tempImg.src = localUrl;
+            })
+            .catch((err) => {
+                console.log('[AI Gen] Backend HF API bypassed or failed:', err.message);
+                
+                // 2. Try Puter.js
+                if (typeof puter !== 'undefined' && puter.auth.isSignedIn()) {
+                    puter.ai.txt2img(enhancedPrompt)
+                        .then(function(imageElement) {
+                            clearTimeout(timeoutId); // Clear timeout on success
+                            
+                            if (removeBgCheckbox && removeBgCheckbox.checked) {
+                                const processedUrl = makeImageBackgroundTransparent(imageElement);
+                                if (processedUrl) {
+                                    resultImg.src = processedUrl;
+                                    window.generatedAiImageUrl = processedUrl;
+                                } else {
+                                    resultImg.src = imageElement.src;
+                                    window.generatedAiImageUrl = imageElement.src;
+                                }
+                            } else {
+                                resultImg.src = imageElement.src;
+                                window.generatedAiImageUrl = imageElement.src;
+                            }
+                            
+                            loader.style.display = 'none';
+                            resultImg.style.display = 'block';
+                            applyBtn.style.display = 'block';
+                            generateBtn.disabled = false;
+                            generateBtn.textContent = 'Generate Image';
+                        })
+                        .catch(function(puterErr) {
+                            console.warn('Puter AI generation failed, falling back to legacy API:', puterErr);
+                            fallbackToLegacyAPI(0);
+                        });
+                } else {
+                    fallbackToLegacyAPI(0);
+                }
+            });
+
+            async function fallbackToLegacyAPI(retryCount = 0) {
+                const maxRetries = 2;
+                
+                // Try direct Pollinations AI with a different seed to bypass cache/rate limits
+                let url = imageUrl;
+                if (retryCount > 0) {
+                    const newSeed = Math.floor(Math.random() * 1000000);
+                    url = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=512&height=512&nologo=true&seed=${newSeed}`;
+                    console.log(`[AI Gen] Retrying with alternative seed ${newSeed}...`);
+                }
+
+                console.log(`[AI Gen] Attempting Pollinations AI (Attempt ${retryCount + 1})...`);
+                const tempImg = new Image();
+                tempImg.crossOrigin = 'anonymous';
+                
+                tempImg.onload = function() {
+                    clearTimeout(timeoutId); // Clear timeout on success
+                    
+                    if (removeBgCheckbox && removeBgCheckbox.checked) {
+                        const processedUrl = makeImageBackgroundTransparent(tempImg);
+                        if (processedUrl) {
+                            resultImg.src = processedUrl;
+                            window.generatedAiImageUrl = processedUrl;
+                        } else {
+                            resultImg.src = url;
+                            window.generatedAiImageUrl = url;
+                        }
+                    } else {
+                        resultImg.src = url;
+                        window.generatedAiImageUrl = url;
+                    }
+                    
+                    loader.style.display = 'none';
+                    resultImg.style.display = 'block';
+                    applyBtn.style.display = 'block';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = 'Generate Image';
+                };
+
+                tempImg.onerror = async function() {
+                    if (retryCount < maxRetries) {
+                        console.warn(`[AI Gen] Attempt ${retryCount + 1} failed. Retrying in 2 seconds...`);
+                        setTimeout(() => {
+                            fallbackToLegacyAPI(retryCount + 1);
+                        }, 2000);
+                    } else {
+                        // Pollinations AI failed all retries, fall back to AI Horde!
+                        console.warn('[AI Gen] Pollinations AI failed all attempts. Falling back to AI Horde...');
+                        clearTimeout(timeoutId);
+                        
+                        // Set up a longer timeout for AI Horde
+                        timeoutId = setTimeout(() => {
+                            triggerFinalFailure();
+                        }, 180000); // 3 minutes timeout for Horde queue
+                        
+                        try {
+                            const hordeImgUrl = await generateImageViaHorde(enhancedPrompt);
+                            console.log('[AI Gen] AI Horde generated image URL:', hordeImgUrl);
+                            
+                            const hordeImg = new Image();
+                            hordeImg.crossOrigin = 'anonymous';
+                            hordeImg.onload = function() {
+                                clearTimeout(timeoutId);
+                                if (removeBgCheckbox && removeBgCheckbox.checked) {
+                                    const processedUrl = makeImageBackgroundTransparent(hordeImg);
+                                    if (processedUrl) {
+                                        resultImg.src = processedUrl;
+                                        window.generatedAiImageUrl = processedUrl;
+                                    } else {
+                                        resultImg.src = hordeImgUrl;
+                                        window.generatedAiImageUrl = hordeImgUrl;
+                                    }
+                                } else {
+                                    resultImg.src = hordeImgUrl;
+                                    window.generatedAiImageUrl = hordeImgUrl;
+                                }
+                                loader.style.display = 'none';
+                                resultImg.style.display = 'block';
+                                applyBtn.style.display = 'block';
+                                generateBtn.disabled = false;
+                                generateBtn.textContent = 'Generate Image';
+                            };
+                            hordeImg.onerror = function() {
+                                triggerFinalFailure();
+                            };
+                            hordeImg.src = hordeImgUrl;
+                        } catch (hordeErr) {
+                            console.error('[AI Gen] AI Horde fallback failed:', hordeErr);
+                            triggerFinalFailure();
+                        }
+                    }
+                };
+
+                tempImg.src = url;
+            }
+
+            function triggerFinalFailure() {
+                clearTimeout(timeoutId);
+                alert('AI Image generation failed. The generation queues are currently busy. Please wait a few seconds and try again.');
+                
+                // Reset loader HTML to default
+                if (loader) {
+                    loader.innerHTML = `🤖 Generating design...<br><span style="font-size:0.75rem; color:#9ca3af;">(usually takes 3-5 seconds)</span>`;
+                }
+                loader.style.display = 'none';
+                resultContainer.style.display = 'none';
+                generateBtn.disabled = false;
+                generateBtn.textContent = 'Generate Image';
+            }
+
+            async function generateImageViaHorde(promptText) {
+                const response = await fetch('https://aihorde.net/api/v2/generate/async', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Client-Agent': 'shirtify:1.0:info@shirtify.pk',
+                        'apikey': '0000000000'
+                    },
+                    body: JSON.stringify({
+                        prompt: promptText,
+                        params: {
+                            width: 512,
+                            height: 512,
+                            steps: 20,
+                            n: 1
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`AI Horde submit failed: ${response.status}`);
+                }
+                
+                const submitResult = await response.json();
+                const jobId = submitResult.id;
+                console.log('[AI Gen] AI Horde Job ID:', jobId);
+                
+                const startPollTime = Date.now();
+                const maxPollTime = 170000;
+                
+                while (Date.now() - startPollTime < maxPollTime) {
+                    const checkRes = await fetch(`https://aihorde.net/api/v2/generate/check/${jobId}`, {
+                        headers: { 'Client-Agent': 'shirtify:1.0:info@shirtify.pk' }
+                    });
+                    if (checkRes.ok) {
+                        const checkData = await checkRes.json();
+                        
+                        // Update loader status text with queue position
+                        if (loader) {
+                            const queuePos = checkData.queue_position || 0;
+                            loader.innerHTML = `🤖 Queueing design via backup servers...<br><span style="font-size:0.75rem; color:#a855f7;">Position: ${queuePos} in queue (usually takes 30-90s)</span>`;
+                        }
+                        
+                        if (checkData.finished) {
+                            break;
+                        }
+                    }
+                    await new Promise(r => setTimeout(r, 3000));
+                }
+                
+                const statusRes = await fetch(`https://aihorde.net/api/v2/generate/status/${jobId}`, {
+                    headers: { 'Client-Agent': 'shirtify:1.0:info@shirtify.pk' }
+                });
+                if (!statusRes.ok) {
+                    throw new Error(`AI Horde status fetch failed: ${statusRes.status}`);
+                }
+                
+                const statusData = await statusRes.json();
+                
+                // Reset loader HTML to default
+                if (loader) {
+                    loader.innerHTML = `🤖 Generating design...<br><span style="font-size:0.75rem; color:#9ca3af;">(usually takes 3-5 seconds)</span>`;
+                }
+                
+                if (statusData.generations && statusData.generations.length > 0) {
+                    return statusData.generations[0].img;
+                } else {
+                    throw new Error('AI Horde returned no generations.');
+                }
+            }
+        }
+
+        // Allow Enter key to trigger generation
+        promptInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                generateBtn.click();
+            }
+        });
+    }
+
+    if (applyBtn) {
+        applyBtn.addEventListener('click', function() {
+            if (window.generatedAiImageUrl) {
+                console.log('Applying AI design...');
+                applyDesign(window.generatedAiImageUrl, 'AI Generated design');
+                
+                // Hide panel after applying
+                const aiPanel = document.getElementById('ai-generator-panel');
+                if (aiPanel) aiPanel.style.display = 'none';
+            }
+        });
+    }
+});

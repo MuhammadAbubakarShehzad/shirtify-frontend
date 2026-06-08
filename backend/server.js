@@ -83,6 +83,44 @@ app.get('/api/auth/me', protect, (req, res) => {
   res.json(req.user);
 });
 
+app.post('/api/ai/generate', async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ message: 'Prompt is required' });
+    }
+
+    const hfToken = process.env.HF_TOKEN;
+    if (!hfToken) {
+      return res.status(412).json({ message: 'HF_TOKEN not configured on server' });
+    }
+
+    console.log('[AI Gen Backend] Generating design via Hugging Face for prompt:', prompt);
+    const response = await fetch('https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${hfToken.trim()}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ inputs: prompt })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Hugging Face API returned ${response.status}: ${errText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.send(buffer);
+  } catch (err) {
+    console.error('[AI Gen Backend] Error:', err.message);
+    res.status(500).json({ message: err.message || 'Hugging Face generation failed' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.json({ status: 'Shirtify backend running' });
 });

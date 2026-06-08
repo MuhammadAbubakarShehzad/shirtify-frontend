@@ -32,7 +32,7 @@ app.use(cors({
 // ===== SERVE STATIC FILES =====
 
 // 1. Serve Storefront (Root)
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../../frontend')));
 
 // 2. Serve Admin Panel (Sub-route)
 app.use('/admin', express.static(path.join(__dirname, '../frontend/admin')));
