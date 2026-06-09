@@ -1562,8 +1562,12 @@ function updateProperties() {
     const designTintGroup = document.getElementById('design-tint-group');
     if (!sidebar) return;
     const active = c.getActiveObject();
+    
+    // We want shapes AND text to show skew, tilt, and rotate properties in the customization sidebar.
     const isShape = !!(active && (active.type === 'rect' || active.type === 'circle' || active.type === 'triangle' || active.type === 'polygon' || active.type === 'line' || active.type === 'ellipse'));
+    const isText = !!(active && (active.type === 'i-text' || active.type === 'textbox' || active.type === 'text'));
     const isDesignImage = !!(active && active.type === 'image' && !active._shirtObject);
+    
     const shapeGroups = [
         document.getElementById('shape-fill-color')?.closest('.prop-group'),
         document.getElementById('shape-width')?.closest('.prop-group'),
@@ -1572,17 +1576,50 @@ function updateProperties() {
         document.getElementById('shape-blend-mode')?.closest('.prop-group'),
         document.getElementById('shape-gradient-enable')?.closest('.prop-group')
     ].filter(Boolean);
+    
     // Show pen properties if pen mode is active
     if (isPenMode) {
         sidebar.style.display = 'flex';
         penProps.style.display = 'block';
         shapeGroups.forEach(group => { group.style.display = 'none'; });
         if (designTintGroup) designTintGroup.style.display = 'none';
-    } else if (isShape || isDesignImage) {
+        
+        // Hide skew/rotate controls in pen mode
+        document.getElementById('shape-skew-x')?.closest('.prop-group') && (document.getElementById('shape-skew-x').closest('.prop-group').style.display = 'none');
+        document.getElementById('shape-skew-y')?.closest('.prop-group') && (document.getElementById('shape-skew-y').closest('.prop-group').style.display = 'none');
+        document.getElementById('shape-angle')?.closest('.prop-group') && (document.getElementById('shape-angle').closest('.prop-group').style.display = 'none');
+    } else if (isShape || isText || isDesignImage) {
         sidebar.style.display = 'flex';
         penProps.style.display = 'none';
-        shapeGroups.forEach(group => { group.style.display = isShape ? '' : 'none'; });
+        
+        // Only show SVG/Vector shape specific color inputs if it's actually a shape (not text or image)
+        shapeGroups.forEach(group => { 
+            group.style.display = isShape ? '' : 'none'; 
+        });
+        
         if (designTintGroup) designTintGroup.style.display = isDesignImage ? '' : 'none';
+        
+        // Populate and show skew/rotate properties
+        const skewXInput = document.getElementById('shape-skew-x');
+        const skewYInput = document.getElementById('shape-skew-y');
+        const angleInput = document.getElementById('shape-angle');
+        
+        if (skewXInput) {
+            skewXInput.closest('.prop-group').style.display = '';
+            skewXInput.value = active.skewX || 0;
+            document.getElementById('shape-skew-x-value').textContent = Math.round(active.skewX || 0) + '°';
+        }
+        if (skewYInput) {
+            skewYInput.closest('.prop-group').style.display = '';
+            skewYInput.value = active.skewY || 0;
+            document.getElementById('shape-skew-y-value').textContent = Math.round(active.skewY || 0) + '°';
+        }
+        if (angleInput) {
+            angleInput.closest('.prop-group').style.display = '';
+            angleInput.value = active.angle || 0;
+            document.getElementById('shape-angle-value').textContent = Math.round(active.angle || 0) + '°';
+        }
+        
         if (isDesignImage) {
             const tintColorInput = document.getElementById('design-tint-color');
             const tintStrengthInput = document.getElementById('design-tint-strength');
@@ -1734,6 +1771,42 @@ window.addEventListener('DOMContentLoaded', function() {
             canvas.renderAll();
         }
     });
+    
+    // Skew and Rotate event listeners
+    document.getElementById('shape-skew-x').addEventListener('input', function() {
+        const c = window.fabricCanvas || canvas;
+        if (!c) return;
+        const active = c.getActiveObject();
+        if (active) {
+            const val = parseInt(this.value);
+            active.set({ skewX: val });
+            document.getElementById('shape-skew-x-value').textContent = val + '°';
+            c.renderAll();
+        }
+    });
+    document.getElementById('shape-skew-y').addEventListener('input', function() {
+        const c = window.fabricCanvas || canvas;
+        if (!c) return;
+        const active = c.getActiveObject();
+        if (active) {
+            const val = parseInt(this.value);
+            active.set({ skewY: val });
+            document.getElementById('shape-skew-y-value').textContent = val + '°';
+            c.renderAll();
+        }
+    });
+    document.getElementById('shape-angle').addEventListener('input', function() {
+        const c = window.fabricCanvas || canvas;
+        if (!c) return;
+        const active = c.getActiveObject();
+        if (active) {
+            const val = parseInt(this.value);
+            active.set({ angle: val });
+            document.getElementById('shape-angle-value').textContent = val + '°';
+            c.renderAll();
+        }
+    });
+
     document.getElementById('close-shape-sidebar').addEventListener('click', function() {
         sidebar.style.display = 'none';
         canvas.discardActiveObject();
@@ -2196,7 +2269,7 @@ function applyDesign(imageUrl, title = 'Design Image') {
                 selectable: true,
                 evented: true,
                 name: title,
-                skewX: -2
+                skewX: 0
             });
             finalImg._originalWidth = finalImg.width;
             finalImg._originalHeight = finalImg.height;
