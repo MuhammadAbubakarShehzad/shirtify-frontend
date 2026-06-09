@@ -154,7 +154,15 @@ window.addEventListener('DOMContentLoaded', function() {
     const toolbar = document.getElementById('canva-text-toolbar');
     const showBtn = document.getElementById('show-text-toolbar');
     if (!toolbar || !showBtn) return;
-    if (!window.fabricCanvas) window.fabricCanvas = new fabric.Canvas('main-canvas');
+    if (!window.fabricCanvas) {
+        window.fabricCanvas = new fabric.Canvas('main-canvas', {
+            backgroundColor: 'transparent',
+            width: 600,
+            height: 500,
+            preserveObjectStacking: true
+        });
+    }
+    setupCanvasEvents(window.fabricCanvas);
     canvas = window.fabricCanvas;
 
     function rgb2hex(rgb) {
@@ -622,18 +630,103 @@ const API_BASE_CANDIDATES = Array.from(new Set(
 
 let resolvedApiBase = null;
 window.printArea = null;
+window.shirtImageData = null;
 
-function getDefaultPrintArea() {
-    if (!window.fabricCanvas) {
-        return { left: 150, top: 120, width: 300, height: 260 };
+function isPixelOnShirt(x, y) {
+    if (!window.shirtImageData) return true;
+    x = Math.round(x);
+    y = Math.round(y);
+    const cw = window.fabricCanvas ? window.fabricCanvas.getWidth() : 600;
+    const ch = window.fabricCanvas ? window.fabricCanvas.getHeight() : 500;
+    if (x < 0 || x >= cw || y < 0 || y >= ch) return false;
+    const index = (y * cw + x) * 4;
+    return window.shirtImageData.data[index + 3] > 10;
+}
+
+function findNearestShirtPixel(targetX, targetY) {
+    targetX = Math.round(targetX);
+    targetY = Math.round(targetY);
+    
+    if (isPixelOnShirt(targetX, targetY)) {
+        return { x: targetX, y: targetY };
     }
+    
+    const cw = window.fabricCanvas ? window.fabricCanvas.getWidth() : 600;
+    const ch = window.fabricCanvas ? window.fabricCanvas.getHeight() : 500;
+    const maxRadius = Math.max(cw, ch);
+    
+    for (let r = 1; r < maxRadius; r++) {
+        for (let i = -r; i <= r; i++) {
+            if (isPixelOnShirt(targetX + i, targetY - r)) return { x: targetX + i, y: targetY - r };
+            if (isPixelOnShirt(targetX + i, targetY + r)) return { x: targetX + i, y: targetY + r };
+        }
+        for (let i = -r + 1; i < r; i++) {
+            if (isPixelOnShirt(targetX - r, targetY + i)) return { x: targetX - r, y: targetY + i };
+            if (isPixelOnShirt(targetX + r, targetY + i)) return { x: targetX + r, y: targetY + i };
+        }
+    }
+    
+    return { x: cw / 2, y: ch / 2 };
+}
+
+function analyzeShirtImage(imgElement) {
+    if (!window.fabricCanvas) return;
     const cw = window.fabricCanvas.getWidth();
     const ch = window.fabricCanvas.getHeight();
-    return {
-        left: cw * 0.26,
-        top: ch * 0.23,
-        width: cw * 0.48,
-        height: ch * 0.52
+    
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = cw;
+    tempCanvas.height = ch;
+    const tempCtx = tempCanvas.getContext('2d');
+    
+    tempCtx.drawImage(imgElement, 0, 0, cw, ch);
+    
+    window.shirtImageData = tempCtx.getImageData(0, 0, cw, ch);
+    
+    let minX = cw;
+    let maxX = 0;
+    let minY = ch;
+    let maxY = 0;
+    
+    const data = window.shirtImageData.data;
+    for (let y = 0; y < ch; y++) {
+        for (let x = 0; x < cw; x++) {
+            const alpha = data[(y * cw + x) * 4 + 3];
+            if (alpha > 10) {
+                if (x < minX) minX = x;
+                if (x > maxX) maxX = x;
+                if (y < minY) minY = y;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+    
+    if (minX <= maxX && minY <= maxY) {
+        window.printArea = {
+            left: minX,
+            top: minY,
+            width: maxX - minX,
+            height: maxY - minY
+        };
+    } else {
+        window.printArea = {
+            left: 0,
+            top: 0,
+            width: cw,
+            height: ch
+        };
+    }
+    console.log('Calculated dynamic shirt print area:', window.printArea);
+}
+
+function getDefaultPrintArea() {
+    const cw = window.fabricCanvas ? window.fabricCanvas.getWidth() : 600;
+    const ch = window.fabricCanvas ? window.fabricCanvas.getHeight() : 500;
+    return window.printArea || {
+        left: 0,
+        top: 0,
+        width: cw,
+        height: ch
     };
 }
 
@@ -656,27 +749,26 @@ function keepObjectInsidePrintArea(obj) {
         obj.top += dy;
         obj.setCoords();
     }
+    
+    if (window.shirtImageData) {
+        const currentBounds = obj.getBoundingRect(true, true);
+        const cx = currentBounds.left + currentBounds.width / 2;
+        const cy = currentBounds.top + currentBounds.height / 2;
+        
+        if (!isPixelOnShirt(cx, cy)) {
+            const nearest = findNearestShirtPixel(cx, cy);
+            obj.left += (nearest.x - cx);
+            obj.top += (nearest.y - cy);
+            obj.setCoords();
+        }
+    }
 }
 
 function applyPrintStyle(obj) {
     if (!obj) return;
-    const area = window.printArea || getDefaultPrintArea();
-    const clipRect = new fabric.Rect({
-        left: area.left,
-        top: area.top,
-        width: area.width,
-        height: area.height,
-        originX: 'left',
-        originY: 'top',
-        absolutePositioned: true,
-        rx: 16,
-        ry: 16
-    });
-
     obj.set({
-        clipPath: clipRect,
         // Render artwork with true colors; fabric realism is handled by light overlays.
-        globalCompositeOperation: 'source-over',
+        globalCompositeOperation: 'source-atop',
         opacity: 0.96,
         shadow: new fabric.Shadow({
             color: 'rgba(0,0,0,0.08)',
@@ -853,12 +945,35 @@ function softenImageCornersDataURL(imageElement) {
 
 function recolorDesignImageFromOriginal(activeImage, hexColor, strength) {
     if (!activeImage || activeImage.type !== 'image') return;
+    
+    // Save properties on the object so they persist
+    activeImage.lastTintColor = hexColor;
+    activeImage.lastTintStrength = strength;
+
     const srcEl = activeImage._originalElement || activeImage._element;
     if (!srcEl) return;
 
-    const w = srcEl.naturalWidth || srcEl.width;
-    const h = srcEl.naturalHeight || srcEl.height;
-    if (!w || !h) return;
+    const origW = activeImage._originalWidth || srcEl.naturalWidth || srcEl.width;
+    const origH = activeImage._originalHeight || srcEl.naturalHeight || srcEl.height;
+    if (!origW || !origH) return;
+
+    // Compute invariant scale factors relative to original loaded dimensions.
+    // This is asynchronous-safe and prevents race conditions from corrupting aspect ratio when dragging color picker.
+    const scaleFactorX = (activeImage.width * activeImage.scaleX) / origW;
+    const scaleFactorY = (activeImage.height * activeImage.scaleY) / origH;
+
+    let w = origW;
+    let h = origH;
+
+    // If it's a vector image or low-resolution image, scale it up to a high resolution (e.g. 1024px max dimension)
+    // so that it remains sharp and crisp when recolored and rendered on the t-shirt.
+    const targetMax = 1024;
+    const currentMax = Math.max(w, h);
+    if (currentMax < targetMax) {
+        const scale = targetMax / currentMax;
+        w = Math.round(w * scale);
+        h = Math.round(h * scale);
+    }
 
     const off = document.createElement('canvas');
     off.width = w;
@@ -892,6 +1007,11 @@ function recolorDesignImageFromOriginal(activeImage, hexColor, strength) {
     ctx.putImageData(imgData, 0, 0);
     const recoloredDataUrl = off.toDataURL('image/png');
     activeImage.setSrc(recoloredDataUrl, () => {
+        // Adjust scale to maintain the exact same visual size based on closure-captured invariant scale factors
+        activeImage.set({
+            scaleX: (scaleFactorX * origW) / activeImage.width,
+            scaleY: (scaleFactorY * origH) / activeImage.height
+        });
         activeImage.dirty = true;
         activeImage.canvas && activeImage.canvas.requestRenderAll();
     }, { crossOrigin: 'anonymous' });
@@ -1023,11 +1143,32 @@ startBtn.addEventListener('click', () => {
 });
 
 
+function setupCanvasEvents(canvasObj) {
+    if (!canvasObj || canvasObj._eventsRegistered) return;
+    canvasObj._eventsRegistered = true;
+    
+    canvasObj.on('object:moving', function(e) {
+        keepObjectInsidePrintArea(e.target);
+    });
+    canvasObj.on('object:scaling', function(e) {
+        keepObjectInsidePrintArea(e.target);
+    });
+    canvasObj.on('object:rotating', function(e) {
+        keepObjectInsidePrintArea(e.target);
+    });
+    canvasObj.on('object:added', function(e) {
+        const obj = e.target;
+        if (obj && !obj._shirtObject) {
+            obj.globalCompositeOperation = 'source-atop';
+        }
+    });
+}
+
 function showDesignStudio(mockShirt) {
     document.getElementById('customize-stepper').style.display = 'none';
     document.getElementById('design-studio').style.display = 'block';
     document.getElementById('product-selected-display').value = mockShirt.name || '';
-    // Canvas init if needed
+    
     if (!window.fabricCanvas) {
         window.fabricCanvas = new fabric.Canvas('main-canvas', {
             backgroundColor: 'transparent',
@@ -1035,22 +1176,25 @@ function showDesignStudio(mockShirt) {
             height: 500,
             preserveObjectStacking: true
         });
-        window.fabricCanvas.on('object:moving', function(e) {
-            keepObjectInsidePrintArea(e.target);
-        });
-        window.fabricCanvas.on('object:scaling', function(e) {
-            keepObjectInsidePrintArea(e.target);
-        });
-        window.fabricCanvas.on('object:rotating', function(e) {
-            keepObjectInsidePrintArea(e.target);
-        });
-        document.getElementById('image-upload').addEventListener('change', (e) => {
+    }
+    
+    setupCanvasEvents(window.fabricCanvas);
+    canvas = window.fabricCanvas;
+    
+    const imgUpload = document.getElementById('image-upload');
+    if (imgUpload && !imgUpload.dataset.bound) {
+        imgUpload.dataset.bound = '1';
+        imgUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
                 fabric.Image.fromURL(event.target.result, (img) => {
                     if (img) {
+                        img._originalWidth = img.width;
+                        img._originalHeight = img.height;
+                        img._originalElement = img._element;
+                        img._originalSrc = event.target.result;
                         const area = window.printArea || getDefaultPrintArea();
                         const maxW = area.width * 0.85;
                         const maxH = area.height * 0.85;
@@ -1075,7 +1219,6 @@ function showDesignStudio(mockShirt) {
             reader.readAsDataURL(file);
         });
     }
-    // Shirt image will be rendered by renderShirtView()
 }
 
 // --- Shirt View/Color Logic ---
@@ -1088,6 +1231,17 @@ function renderShirtView() {
     const imgUrl = window.shirtImages[window.currentView] || DEFAULT_PLACEHOLDER;
     fabric.Image.fromURL(imgUrl, function(img) {
         if (!img) return;
+
+        const imgElement = img.getElement();
+        if (imgElement.complete) {
+            analyzeShirtImage(imgElement);
+        } else {
+            imgElement.onload = function() {
+                analyzeShirtImage(imgElement);
+                window.fabricCanvas.renderAll();
+            };
+        }
+
         img.set({
             left: 0,
             top: 0,
@@ -1140,23 +1294,8 @@ function renderShirtView() {
             window.fabricCanvas.add(shirtGroup);
             window.fabricCanvas.sendToBack(shirtGroup);
 
-            const printAgingOverlay = createPrintAgingOverlay(window.printArea);
-            window.fabricCanvas.add(printAgingOverlay);
-
-        // Top shading layer makes print feel embedded into fabric.
+            // Top shading layer makes print feel embedded into fabric.
             img.clone(function(overlayImg) {
-                const area = window.printArea || getDefaultPrintArea();
-                const overlayClip = new fabric.Rect({
-                    left: area.left,
-                    top: area.top,
-                    width: area.width,
-                    height: area.height,
-                    originX: 'left',
-                    originY: 'top',
-                    absolutePositioned: true,
-                    rx: 16,
-                    ry: 16
-                });
                 overlayImg.set({
                     left: img.left,
                     top: img.top,
@@ -1168,7 +1307,6 @@ function renderShirtView() {
                     hasBorders: false,
                     opacity: 0.12,
                     globalCompositeOperation: 'multiply',
-                    clipPath: overlayClip,
                     _shirtObject: true,
                     _shirtOverlay: true
                 });
@@ -1448,11 +1586,8 @@ function updateProperties() {
         if (isDesignImage) {
             const tintColorInput = document.getElementById('design-tint-color');
             const tintStrengthInput = document.getElementById('design-tint-strength');
-            const blend = Array.isArray(active.filters)
-                ? active.filters.find(f => f && f.type === 'BlendColor')
-                : null;
-            if (tintColorInput) tintColorInput.value = blend?.color || '#ffffff';
-            if (tintStrengthInput) tintStrengthInput.value = typeof blend?.alpha === 'number' ? blend.alpha : 0;
+            if (tintColorInput) tintColorInput.value = active.lastTintColor || '#ffffff';
+            if (tintStrengthInput) tintStrengthInput.value = typeof active.lastTintStrength === 'number' ? active.lastTintStrength : 0.6;
         }
     } else {
         sidebar.style.display = 'none';
@@ -1783,138 +1918,142 @@ async function fetchUnsplashDesigns(query = 'design', count = 6) {
 
     const isDefaultQuery = safeQuery.toLowerCase() === 'shirt design' || safeQuery.toLowerCase() === 'design' || !safeQuery;
 
-    // 1) Curated Local SVG Designs (No network request, 100% transparent vector, loads instantly, offline friendly)
-    if (isDefaultQuery) {
-        const defaultDesigns = [
-            {
-                id: 'local-design-rocket',
-                title: 'Neon Rocket',
-                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,15 C50,15 65,35 65,55 C65,65 58,70 50,70 C42,70 35,65 35,55 C35,35 50,15 50,15 Z" fill="none" stroke="#10b981" stroke-width="4"/><path d="M35,60 C25,65 20,75 20,85 C35,85 40,75 42,70" fill="none" stroke="#10b981" stroke-width="3"/><path d="M65,60 C75,65 80,75 80,85 C65,85 60,75 58,70" fill="none" stroke="#10b981" stroke-width="3"/><circle cx="50" cy="45" r="5" fill="none" stroke="#f59e0b" stroke-width="3"/><path d="M50,72 V85 M45,75 V80 M55,75 V80" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/></svg>`),
-                source: 'local-svg'
-            },
-            {
-                id: 'local-design-gamepad',
-                title: 'Retro Gamer',
-                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,90 C25,80 15,50 15,30 L50,15 L85,30 C85,50 75,80 50,90 Z" fill="none" stroke="#3b82f6" stroke-width="4"/><rect x="35" y="40" width="30" height="20" rx="5" fill="none" stroke="#10b981" stroke-width="3"/><path d="M42,50 H48 M45,47 V53" stroke="#10b981" stroke-width="2" stroke-linecap="round"/><circle cx="58" cy="47" r="2" fill="#ef4444"/><circle cx="58" cy="53" r="2" fill="#f59e0b"/></svg>`),
-                source: 'local-svg'
-            },
-            {
-                id: 'local-design-mountain',
-                title: 'Peak Adventure',
-                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="4"/><path d="M20,65 L38,40 L52,55 L68,30 L80,65 Z" fill="none" stroke="#ec4899" stroke-width="3" stroke-linejoin="round"/><path d="M15,72 C30,68 45,76 60,72 C75,68 85,72 85,72" fill="none" stroke="#06b6d4" stroke-width="3"/></svg>`),
-                source: 'local-svg'
-            },
-            {
-                id: 'local-design-crown',
-                title: 'Royal Crest',
-                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="m15 25 10 40h50l10-40-20 23-15-23-15 23-20-23z" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linejoin="round"/><path d="M20 78h60" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/></svg>`),
-                source: 'local-svg'
-            },
-            {
-                id: 'local-design-skull',
-                title: 'Cyber Skull',
-                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30,50 C30,30 70,30 70,50 C70,60 65,65 65,75 L60,75 L60,82 L40,82 L40,75 L35,75 C35,65 30,60 30,50 Z" fill="none" stroke="#ef4444" stroke-width="4" stroke-linejoin="round"/><circle cx="42" cy="50" r="6" fill="none" stroke="#ef4444" stroke-width="3"/><circle cx="58" cy="50" r="6" fill="none" stroke="#ef4444" stroke-width="3"/><path d="M48,62 L50,58 L52,62 Z" fill="none" stroke="#ef4444" stroke-width="2"/><path d="M46,75 V82 M50,75 V82 M54,75 V82" stroke="#ef4444" stroke-width="2"/></svg>`),
-                source: 'local-svg'
-            },
-            {
-                id: 'local-design-mandala',
-                title: 'Sacred Geometry',
-                imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#06b6d4" stroke-width="3"/><circle cx="50" cy="50" r="25" fill="none" stroke="#06b6d4" stroke-width="2"/><path d="M50,10 V90 M10,50 H90" stroke="#06b6d4" stroke-width="2"/><path d="M22,22 L78,78 M22,78 L78,22" stroke="#06b6d4" stroke-width="2"/><polygon points="50,25 75,50 50,75 25,50" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>`),
-                source: 'local-svg'
-            }
-        ];
-        return defaultDesigns.slice(0, count);
-    }
-
-    // 2) Active Search: Query reliable Keyless APIs first (DiceBear for vectors, Robohash for graphics)
-    // These APIs are 100% free, do not require API keys, and have robust CORS headers to prevent canvas issues.
-    const searchDesigns = [
+    const defaultDesigns = [
         {
-            id: `design-db-shapes-${Date.now()}-1`,
-            title: `${safeQuery} Shapes`,
-            imageUrl: `https://api.dicebear.com/8.x/shapes/svg?seed=${encodeURIComponent(safeQuery)}-shapes`,
-            source: 'dicebear-shapes'
+            id: 'local-design-rocket',
+            title: 'Neon Rocket',
+            imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,15 C50,15 65,35 65,55 C65,65 58,70 50,70 C42,70 35,65 35,55 C35,35 50,15 50,15 Z" fill="none" stroke="#10b981" stroke-width="4"/><path d="M35,60 C25,65 20,75 20,85 C35,85 40,75 42,70" fill="none" stroke="#10b981" stroke-width="3"/><path d="M65,60 C75,65 80,75 80,85 C65,85 60,75 58,70" fill="none" stroke="#10b981" stroke-width="3"/><circle cx="50" cy="45" r="5" fill="none" stroke="#f59e0b" stroke-width="3"/><path d="M50,72 V85 M45,75 V80 M55,75 V80" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/></svg>`),
+            source: 'local-svg'
         },
         {
-            id: `design-db-rings-${Date.now()}-2`,
-            title: `${safeQuery} Geo`,
-            imageUrl: `https://api.dicebear.com/8.x/rings/svg?seed=${encodeURIComponent(safeQuery)}-rings`,
-            source: 'dicebear-rings'
+            id: 'local-design-gamepad',
+            title: 'Retro Gamer',
+            imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50,90 C25,80 15,50 15,30 L50,15 L85,30 C85,50 75,80 50,90 Z" fill="none" stroke="#3b82f6" stroke-width="4"/><rect x="35" y="40" width="30" height="20" rx="5" fill="none" stroke="#10b981" stroke-width="3"/><path d="M42,50 H48 M45,47 V53" stroke="#10b981" stroke-width="2" stroke-linecap="round"/><circle cx="58" cy="47" r="2" fill="#ef4444"/><circle cx="58" cy="53" r="2" fill="#f59e0b"/></svg>`),
+            source: 'local-svg'
         },
         {
-            id: `design-db-bottts-${Date.now()}-3`,
-            title: `${safeQuery} Bot`,
-            imageUrl: `https://api.dicebear.com/8.x/bottts/svg?seed=${encodeURIComponent(safeQuery)}-bottts`,
-            source: 'dicebear-bottts'
+            id: 'local-design-mountain',
+            title: 'Peak Adventure',
+            imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="#f59e0b" stroke-width="4"/><path d="M20,65 L38,40 L52,55 L68,30 L80,65 Z" fill="none" stroke="#ec4899" stroke-width="3" stroke-linejoin="round"/><path d="M15,72 C30,68 45,76 60,72 C75,68 85,72 85,72" fill="none" stroke="#06b6d4" stroke-width="3"/></svg>`),
+            source: 'local-svg'
         },
         {
-            id: `design-db-pixel-${Date.now()}-4`,
-            title: `${safeQuery} Pixel`,
-            imageUrl: `https://api.dicebear.com/8.x/pixel-art/svg?seed=${encodeURIComponent(safeQuery)}-pixel`,
-            source: 'dicebear-pixel'
+            id: 'local-design-crown',
+            title: 'Royal Crest',
+            imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="m15 25 10 40h50l10-40-20 23-15-23-15 23-20-23z" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linejoin="round"/><path d="M20 78h60" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/></svg>`),
+            source: 'local-svg'
         },
         {
-            id: `design-robo-robot-${Date.now()}-5`,
-            title: `${safeQuery} Robo`,
-            imageUrl: `https://robohash.org/${encodeURIComponent(safeQuery)}?set=set1`,
-            source: 'robohash-set1'
+            id: 'local-design-skull',
+            title: 'Cyber Skull',
+            imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M30,50 C30,30 70,30 70,50 C70,60 65,65 65,75 L60,75 L60,82 L40,82 L40,75 L35,75 C35,65 30,60 30,50 Z" fill="none" stroke="#ef4444" stroke-width="4" stroke-linejoin="round"/><circle cx="42" cy="50" r="6" fill="none" stroke="#ef4444" stroke-width="3"/><circle cx="58" cy="50" r="6" fill="none" stroke="#ef4444" stroke-width="3"/><path d="M48,62 L50,58 L52,62 Z" fill="none" stroke="#ef4444" stroke-width="2"/><path d="M46,75 V82 M50,75 V82 M54,75 V82" stroke="#ef4444" stroke-width="2"/></svg>`),
+            source: 'local-svg'
         },
         {
-            id: `design-robo-monster-${Date.now()}-6`,
-            title: `${safeQuery} Monster`,
-            imageUrl: `https://robohash.org/${encodeURIComponent(safeQuery)}?set=set2`,
-            source: 'robohash-set2'
-        },
-        {
-            id: `design-robo-kitten-${Date.now()}-7`,
-            title: `${safeQuery} Kitten`,
-            imageUrl: `https://robohash.org/${encodeURIComponent(safeQuery)}?set=set4`,
-            source: 'robohash-set4'
-        },
-        {
-            id: `design-db-identicon-${Date.now()}-8`,
-            title: `${safeQuery} Icon`,
-            imageUrl: `https://api.dicebear.com/8.x/identicon/svg?seed=${encodeURIComponent(safeQuery)}-id`,
-            source: 'dicebear-identicon'
+            id: 'local-design-mandala',
+            title: 'Sacred Geometry',
+            imageUrl: getSvgDataUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none" stroke="#06b6d4" stroke-width="3"/><circle cx="50" cy="50" r="25" fill="none" stroke="#06b6d4" stroke-width="2"/><path d="M50,10 V90 M10,50 H90" stroke="#06b6d4" stroke-width="2"/><path d="M22,22 L78,78 M22,78 L78,22" stroke="#06b6d4" stroke-width="2"/><polygon points="50,25 75,50 50,75 25,50" fill="none" stroke="#f59e0b" stroke-width="2"/></svg>`),
+            source: 'local-svg'
         }
     ];
 
-    if (searchDesigns.length >= count) {
-        return searchDesigns.slice(0, count);
+    if (isDefaultQuery) {
+        return defaultDesigns.slice(0, count);
     }
 
-    // 3) Silent Wikimedia Fallback (Wrapped in try/catch to avoid console error leakage)
     try {
-        const cleanWikiQuery = safeQuery.replace(/[^a-zA-Z0-9 ]/g, ''); // strip symbols
-        const wikiUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(cleanWikiQuery + ' logo png')}&gsrlimit=${Math.max(count * 2, 12)}&prop=pageimages|info|imageinfo&iiprop=url&inprop=url&pithumbsize=600&format=json&origin=*`;
-        
-        const response = await fetch(wikiUrl);
-        if (response.ok) {
-            const data = await response.json();
-            const pages = data?.query?.pages ? Object.values(data.query.pages) : [];
-            const designs = pages
-                .filter(page => page && page.thumbnail && page.thumbnail.source)
-                .slice(0, count)
-                .map((page, index) => ({
-                    id: `design-wiki-${Date.now()}-${index}`,
-                    title: page.title || `${safeQuery} inspiration ${index + 1}`,
-                    imageUrl: page.thumbnail.source,
-                    source: 'wikimedia'
-                }));
-            if (designs.length) return designs;
+        const cleanQuery = safeQuery.replace(/[^a-zA-Z0-9 ]/g, '').trim();
+
+        // 1) Search Iconify for clean vector icons/logos/illustrations
+        async function queryIconify(searchString) {
+            try {
+                const url = `https://api.iconify.design/search?query=${encodeURIComponent(searchString)}&limit=${Math.max(50, count * 2)}`;
+                const response = await fetch(url);
+                if (!response.ok) return [];
+                const data = await response.json();
+                const icons = data?.icons || [];
+                
+                return icons.map((icon, idx) => {
+                    const parts = icon.split(':');
+                    const prefix = parts[0];
+                    const name = parts[1];
+                    // Clean up title
+                    let title = name.replace(/[_-]/g, ' ');
+                    title = title.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    
+                    return {
+                        id: `design-iconify-${prefix}-${name}-${Date.now()}-${idx}`,
+                        title: `${title} (${prefix})`,
+                        imageUrl: `https://api.iconify.design/${prefix}/${name}.svg`,
+                        source: 'iconify'
+                    };
+                });
+            } catch (e) {
+                console.error('Iconify search error:', e);
+                return [];
+            }
+        }
+
+        // 2) Search Wikipedia for PNG/SVG files
+        async function queryWikimedia(searchString) {
+            try {
+                const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(searchString)}&gsrnamespace=6&gsrlimit=50&prop=pageimages|imageinfo&iiprop=url&pithumbsize=600&format=json&origin=*`;
+                const response = await fetch(wikiUrl);
+                if (!response.ok) return [];
+                const data = await response.json();
+                const pages = data?.query?.pages ? Object.values(data.query.pages) : [];
+                
+                return pages.filter(page => {
+                    if (!page || !page.thumbnail || !page.thumbnail.source) return false;
+                    const title = (page.title || '').toLowerCase();
+                    return title.endsWith('.png') || title.endsWith('.svg');
+                }).map((page, idx) => {
+                    let title = page.title || '';
+                    if (title.toLowerCase().startsWith('file:')) {
+                        title = title.substring(5);
+                    }
+                    const dotIdx = title.lastIndexOf('.');
+                    if (dotIdx > 0) {
+                        title = title.substring(0, dotIdx);
+                    }
+                    title = title.replace(/[_-]/g, ' ');
+                    
+                    return {
+                        id: `design-wiki-${page.pageid || Date.now()}-${idx}`,
+                        title: title || `${safeQuery} inspiration ${idx + 1}`,
+                        imageUrl: page.thumbnail.source,
+                        source: 'wikimedia'
+                    };
+                });
+            } catch (e) {
+                console.error('Wikimedia search error:', e);
+                return [];
+            }
+        }
+
+        // Run both searches in parallel
+        const [iconifyResults, wikiResults] = await Promise.all([
+            queryIconify(cleanQuery),
+            queryWikimedia(`${cleanQuery} (logo OR clipart OR svg OR png OR icon)`)
+        ]);
+
+        // Merge results: Iconify (clean vector icons) first, then Wikipedia (PNG/SVG logos)
+        let mergedResults = [...iconifyResults, ...wikiResults];
+
+        // If no results, try broader Wikipedia query
+        if (!mergedResults.length) {
+            mergedResults = await queryWikimedia(cleanQuery);
+        }
+
+        if (mergedResults.length) {
+            return mergedResults.slice(0, count);
         }
     } catch (err) {
-        console.log('Optional Wikimedia fallback bypassed.');
+        console.error('Unified design search error:', err);
     }
 
-    // 4) Ultimate fallback to Picsum
-    return Array.from({ length: count }, (_, i) => ({
-        id: `design-fallback-${Date.now()}-${i}`,
-        title: `${safeQuery} inspiration ${i + 1}`,
-        imageUrl: `https://picsum.photos/600/400?random=${Math.floor(Math.random() * 100000)}`,
-        source: 'picsum-fallback',
-        autoProcess: true
-    }));
+    // Fallback: if all fails, return default designs
+    return defaultDesigns.slice(0, count);
 }
 
 /**
@@ -2059,6 +2198,8 @@ function applyDesign(imageUrl, title = 'Design Image') {
                 name: title,
                 skewX: -2
             });
+            finalImg._originalWidth = finalImg.width;
+            finalImg._originalHeight = finalImg.height;
             finalImg._originalElement = finalImg._element;
             finalImg._originalSrc = imageUrl;
 
@@ -2095,24 +2236,32 @@ window.addEventListener('DOMContentLoaded', async function() {
     // Design search button
     const searchBtn = document.getElementById('design-search-btn');
     const searchInput = document.getElementById('design-search-input');
+    const loadMoreBtn = document.getElementById('load-more-designs');
     
+    let currentDesignQuery = '';
+    let currentDesignLimit = 16;
+
+    async function executeSearch(query) {
+        if (!query) return;
+        currentDesignQuery = query;
+        
+        try {
+            const designs = await fetchUnsplashDesigns(query, currentDesignLimit);
+            renderDesignRecommendations(designs);
+        } catch (err) {
+            console.error('Search failed:', err);
+            alert('Failed to load designs');
+        }
+    }
+
     if (searchBtn && searchInput) {
         searchBtn.addEventListener('click', async function() {
             const query = searchInput.value.trim() || 'design';
-            if (!query) return;
+            currentDesignLimit = 16; // Reset limit on new search
             
-            console.log('Searching for:', query);
             searchBtn.disabled = true;
             searchBtn.textContent = 'Searching...';
-            
-            try {
-                const designs = await fetchUnsplashDesigns(query, 8);
-                renderDesignRecommendations(designs);
-            } catch (err) {
-                console.error('Search failed:', err);
-                alert('Failed to load designs');
-            }
-            
+            await executeSearch(query);
             searchBtn.disabled = false;
             searchBtn.textContent = 'Search';
         });
@@ -2120,6 +2269,19 @@ window.addEventListener('DOMContentLoaded', async function() {
         // Allow Enter key to search
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') searchBtn.click();
+        });
+    }
+
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', async function() {
+            currentDesignLimit += 16; // Increase limit
+            const query = currentDesignQuery || (searchInput ? searchInput.value.trim() : '') || 'design';
+            
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.textContent = 'Loading...';
+            await executeSearch(query);
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Load more';
         });
     }
     

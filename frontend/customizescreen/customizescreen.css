@@ -561,3 +561,84 @@ nav a:hover { color: var(--text-dark); }
     cursor: pointer;
     color: #333;
 }
+
+/* --- AI Image Generator Theme Alignment --- */
+#ai-generator-panel {
+    border: 1px solid #e0f4f5 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 24px rgba(143, 211, 214, 0.12) !important;
+    background: #ffffff !important;
+}
+
+#ai-generator-panel h3 {
+    color: var(--primary-dark) !important;
+    font-family: var(--font-main) !important;
+}
+
+#ai-prompt-input {
+    border: 1.5px solid var(--border) !important;
+    border-radius: 8px !important;
+    font-family: var(--font-main) !important;
+    transition: border-color 0.2s, box-shadow 0.2s !important;
+}
+
+#ai-prompt-input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(143, 211, 214, 0.2) !important;
+    outline: none !important;
+}
+
+#ai-generate-btn {
+    background-color: var(--primary-color) !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    font-family: var(--font-main) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(143, 211, 214, 0.25) !important;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s !important;
+    height: 42px !important;
+}
+
+#ai-generate-btn:hover:not(:disabled) {
+    background-color: var(--primary-dark) !important;
+    box-shadow: 0 6px 16px rgba(110, 183, 186, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+#ai-generate-btn:active:not(:disabled) {
+    transform: translateY(1px) !important;
+}
+
+#ai-generate-btn:disabled {
+    background-color: #d1d5db !important;
+    color: #9ca3af !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+}
+
+#ai-apply-btn {
+    background-color: var(--primary-dark) !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    font-family: var(--font-main) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(110, 183, 186, 0.25) !important;
+    transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s !important;
+    height: 42px !important;
+}
+
+#ai-apply-btn:hover {
+    background-color: #58a0a3 !important;
+    box-shadow: 0 6px 16px rgba(88, 160, 163, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+#ai-apply-btn:active {
+    transform: translateY(1px) !important;
+}
+
+#ai-loader {
+    color: var(--primary-dark) !important;
+    font-family: var(--font-main) !important;
+    font-weight: 500 !important;
+}

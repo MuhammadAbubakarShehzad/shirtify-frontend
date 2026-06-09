@@ -45,12 +45,12 @@ const resetColor = '\x1b[0m';
 const startMongoDB = () => {
     return new Promise((resolve) => {
         console.log('📡 Checking if MongoDB is already running on port 27017...');
-        let portInUse = false;
         try {
             const stdout = execSync('netstat -ano').toString();
-            if (stdout.includes(':27017')) {
-                portInUse = true;
-                console.log('✅ Port 27017 is in use. Assuming MongoDB is already running.');
+            const lines = stdout.split('\n');
+            const portInUse = lines.some(line => line.includes(':27017') && line.includes('LISTENING'));
+            if (portInUse) {
+                console.log('✅ Port 27017 is in use (LISTENING). Assuming MongoDB is already running.');
                 resolve();
                 return;
             }
