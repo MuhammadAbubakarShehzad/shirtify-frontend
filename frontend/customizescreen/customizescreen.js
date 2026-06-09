@@ -2405,11 +2405,8 @@ window.addEventListener('DOMContentLoaded', function() {
             resultImg.style.display = 'none';
             applyBtn.style.display = 'none';
 
-            // Enhance prompt for clean vector logo styling if background removal is active
-            let enhancedPrompt = prompt;
-            if (removeBgCheckbox && removeBgCheckbox.checked && !prompt.toLowerCase().includes('transparent')) {
-                enhancedPrompt = `${prompt}, isolated on plain white background, vector logo style, clean borders`;
-            }
+            // Use prompt exactly as specified by the customer
+            const enhancedPrompt = prompt;
 
             const seed = Math.floor(Math.random() * 1000000);
             const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
