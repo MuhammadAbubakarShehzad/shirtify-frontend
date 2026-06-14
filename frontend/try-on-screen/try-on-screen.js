@@ -35,7 +35,11 @@ async function resolveApiBase() {
     const scheme = window.location.protocol === 'https:' ? 'https:' : 'http:';
     
     // Allow custom override via localStorage
-    const savedTryonBase = localStorage.getItem('shirtifyTryonApiBase');
+    let savedTryonBase = localStorage.getItem('shirtifyTryonApiBase');
+    if (savedTryonBase === 'null' || savedTryonBase === 'undefined' || (savedTryonBase && !savedTryonBase.startsWith('http'))) {
+        localStorage.removeItem('shirtifyTryonApiBase');
+        savedTryonBase = null;
+    }
     if (savedTryonBase) {
         API_BASE = savedTryonBase;
         console.log('[TryOn] using configured API_BASE =', API_BASE);
