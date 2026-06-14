@@ -1,8 +1,5 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "buildCommand": "pip install -r requirements.txt && pip uninstall -y opencv-python && pip install opencv-python-headless==4.6.0.66"
-  },
   "deploy": {
     "startCommand": "python tryon_pipeline.py"
   }

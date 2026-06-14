@@ -1,6 +1,6 @@
 flask
 flask-cors
-opencv-python-headless==4.6.0.66
+opencv-python-headless
 Pillow
 google-genai
 google-generativeai
