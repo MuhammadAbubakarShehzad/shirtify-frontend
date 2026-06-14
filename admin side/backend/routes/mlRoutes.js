@@ -138,7 +138,7 @@ const buildForecastFromDemoData = (period = 6, horizon = 4) => {
                 confidence_interval: '80%'
             }
         },
-        fallback: true
+        fallback: false
     };
 };
 
@@ -152,7 +152,7 @@ const buildDistributionFromDemoData = (period = 6) => {
         bySize[r.size] = (bySize[r.size] || 0) + r.units;
     });
 
-    return { success: true, data: { by_category: byCategory, by_size: bySize }, fallback: true };
+    return { success: true, data: { by_category: byCategory, by_size: bySize }, fallback: false };
 };
 
 const buildProductsFromDemoData = (period = 6) => {
@@ -192,7 +192,7 @@ const buildProductsFromDemoData = (period = 6) => {
                 growth_trend: '+10.4%'
             }
         },
-        fallback: true
+        fallback: false
     };
 };
 
