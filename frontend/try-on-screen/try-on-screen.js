@@ -34,6 +34,14 @@ async function resolveApiBase() {
     const host = window.location.hostname || 'localhost';
     const scheme = window.location.protocol === 'https:' ? 'https:' : 'http:';
     
+    // Allow custom override via localStorage
+    const savedTryonBase = localStorage.getItem('shirtifyTryonApiBase');
+    if (savedTryonBase) {
+        API_BASE = savedTryonBase;
+        console.log('[TryOn] using configured API_BASE =', API_BASE);
+        return;
+    }
+
     // Prioritize 5001 (the python try-on port) first to avoid 404 errors from probing other active ports (like Live Server 5500 or Node.js 5000)
     const candidates = ['5001'];
     if (window.location.port && window.location.port !== '5001' && window.location.port !== '5500') {
@@ -41,12 +49,18 @@ async function resolveApiBase() {
     }
     candidates.push('5000');
 
+    // If we are on production HTTPS, probing local ports via HTTPS scheme will fail due to SSL.
+    // We should directly test localhost on HTTP since browsers allow local HTTP connections from HTTPS sites.
+    const isProduction = host !== 'localhost' && host !== '127.0.0.1';
+    const probeHost = isProduction ? '127.0.0.1' : host;
+    const probeScheme = isProduction ? 'http:' : scheme;
+
     for (const p of candidates) {
         if (!p) continue;
         try {
             // short probe to keep UI responsive
-            if (await _probeHealth(host, p, 1200)) {
-                API_BASE = `${scheme}//${host}:${p}`;
+            if (await _probeHealth(probeHost, p, 1200)) {
+                API_BASE = `${probeScheme}//${probeHost}:${p}`;
                 console.log('[TryOn] using API_BASE =', API_BASE);
                 return;
             }
@@ -55,8 +69,8 @@ async function resolveApiBase() {
         }
     }
 
-    // Fallback: assume 5001 (keeps previous behaviour)
-    API_BASE = `${scheme}//${host}:5001`;
+    // Fallback: assume local Python server on port 5001
+    API_BASE = 'http://127.0.0.1:5001';
     console.warn('[TryOn] API probe failed — falling back to', API_BASE);
 }
 
