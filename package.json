@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node start_all.js",
+    "start": "node backend/server.js",
+    "start:local": "node start_all.js",
     "dev": "nodemon backend/server.js"
   },
   "dependencies": {
