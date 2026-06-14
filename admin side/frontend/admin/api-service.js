@@ -3,12 +3,16 @@
 // Replaces localStorage-based data management with real HTTP requests
 
 var API_BASE_URL = window.API_BASE_URL || (() => {
+    const savedApiBase = localStorage.getItem('shirtifyApiBase');
+    if (savedApiBase && savedApiBase.startsWith('http') && savedApiBase !== 'null' && savedApiBase !== 'undefined') {
+        return savedApiBase;
+    }
     if (window.location.protocol.startsWith('http')) {
         const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (isLocalhost && window.location.port !== '5000') {
+        if (isLocalhost) {
             return 'http://localhost:5000/api';
         }
-        return `${window.location.protocol}//${window.location.host}/api`;
+        return 'https://backend-production-e03d.up.railway.app/api';
     }
     return 'http://localhost:5000/api';
 })();
