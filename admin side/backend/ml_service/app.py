@@ -441,4 +441,4 @@ def health():
 if __name__ == "__main__":
     print("Shirtify ML Backend starting on http://localhost:5050")
     print("Model: Facebook Prophet | Framework: Flask")
-    app.run(debug=True, port=5050)
+    app.run(debug=False, port=5050)

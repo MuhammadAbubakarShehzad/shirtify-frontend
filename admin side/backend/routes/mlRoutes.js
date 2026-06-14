@@ -402,58 +402,26 @@ const buildForecastFromSeries = (series, horizon = 4) => {
 /**
  * Helper function to call Python ML service
  */
-const callPythonService = (endpoint, data = null) => {
-    return new Promise((resolve, reject) => {
-        const pythonProcess = spawn(PYTHON_EXECUTABLE, [
-            '-c',
-            `
-import sys
-import json
-import requests
-
-try:
-    # Use port 5050 to match the new Prophet Service
-    url = 'http://localhost:5050${endpoint}'
-    response = requests.${data ? 'post' : 'get'}(
-        url,
-        ${data ? `json=${JSON.stringify(data)}` : ''}
-    )
-    print(json.dumps(response.json()))
-    sys.exit(0)
-except Exception as e:
-    print(json.dumps({'success': False, 'error': str(e)}), file=sys.stderr)
-    sys.exit(1)
-            `.trim()
-        ]);
-
-        let stdout = '';
-        let stderr = '';
-
-        pythonProcess.stdout.on('data', (data) => {
-            stdout += data.toString();
-        });
-
-        pythonProcess.stderr.on('data', (data) => {
-            stderr += data.toString();
-        });
-
-        pythonProcess.on('close', (code) => {
-            if (code === 0 && stdout) {
-                try {
-                    const result = JSON.parse(stdout);
-                    resolve(result);
-                } catch (e) {
-                    reject(new Error(`Failed to parse Python response: ${e.message}`));
-                }
-            } else {
-                reject(new Error(stderr || `Python process exited with code ${code}`));
+const callPythonService = async (endpoint, data = null) => {
+    const url = `http://localhost:5050${endpoint}`;
+    try {
+        const options = {
+            method: data ? 'POST' : 'GET',
+            headers: {
+                'Content-Type': 'application/json'
             }
-        });
-
-        pythonProcess.on('error', (error) => {
-            reject(new Error(`Failed to start Python process: ${error.message}`));
-        });
-    });
+        };
+        if (data) {
+            options.body = JSON.stringify(data);
+        }
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (err) {
+        throw new Error(`Failed to contact ML service: ${err.message}`);
+    }
 };
 
 /**

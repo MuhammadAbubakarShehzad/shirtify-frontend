@@ -2,11 +2,12 @@ const SAME_ORIGIN_API_BASE = (window.location.protocol.startsWith('http') && win
   ? `${window.location.protocol}//${window.location.host}/api`
   : null;
 const LOCAL_API_BASE = 'http://localhost:5000/api';
+const CONFIG_API_BASE = window.API_BASE_URL || localStorage.getItem('shirtifyApiBase');
 
 const API_BASE_CANDIDATES = Array.from(new Set(
   ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port && window.location.port !== '5000')
-    ? [LOCAL_API_BASE, SAME_ORIGIN_API_BASE]
-    : [SAME_ORIGIN_API_BASE, LOCAL_API_BASE]
+    ? [LOCAL_API_BASE, CONFIG_API_BASE, SAME_ORIGIN_API_BASE]
+    : [CONFIG_API_BASE, SAME_ORIGIN_API_BASE, LOCAL_API_BASE]
 )).filter(Boolean);
 
 let resolvedApiBase = null;
