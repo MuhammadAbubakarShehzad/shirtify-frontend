@@ -42,6 +42,26 @@ async function resolveApiBase() {
         return;
     }
 
+    const isProduction = host !== 'localhost' && host !== '127.0.0.1';
+
+    // If we are on production (like Vercel), prioritize the cloud try-on service
+    if (isProduction) {
+        const prodTryonUrl = 'https://tryon-pipeline-production.up.railway.app';
+        try {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), 2000);
+            const res = await fetch(`${prodTryonUrl}/api/tryon/health`, { method: 'GET', signal: controller.signal });
+            clearTimeout(id);
+            if (res.ok) {
+                API_BASE = prodTryonUrl;
+                console.log('[TryOn] using production API_BASE =', API_BASE);
+                return;
+            }
+        } catch (e) {
+            console.warn('[TryOn] Production API probe failed', e);
+        }
+    }
+
     // Prioritize 5001 (the python try-on port) first to avoid 404 errors from probing other active ports (like Live Server 5500 or Node.js 5000)
     const candidates = ['5001'];
     if (window.location.port && window.location.port !== '5001' && window.location.port !== '5500') {
@@ -51,7 +71,6 @@ async function resolveApiBase() {
 
     // If we are on production HTTPS, probing local ports via HTTPS scheme will fail due to SSL.
     // We should directly test localhost on HTTP since browsers allow local HTTP connections from HTTPS sites.
-    const isProduction = host !== 'localhost' && host !== '127.0.0.1';
     const probeHost = isProduction ? '127.0.0.1' : host;
     const probeScheme = isProduction ? 'http:' : scheme;
 
@@ -69,8 +88,8 @@ async function resolveApiBase() {
         }
     }
 
-    // Fallback: assume local Python server on port 5001
-    API_BASE = 'http://127.0.0.1:5001';
+    // Fallback
+    API_BASE = isProduction ? 'https://tryon-pipeline-production.up.railway.app' : 'http://127.0.0.1:5001';
     console.warn('[TryOn] API probe failed — falling back to', API_BASE);
 }
 
