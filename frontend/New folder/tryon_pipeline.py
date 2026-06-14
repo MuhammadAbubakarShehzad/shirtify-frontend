@@ -993,7 +993,7 @@ def health():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5001"))
-    host = os.environ.get("FLASK_HOST", "127.0.0.1")
+    host = os.environ.get("FLASK_HOST", "0.0.0.0")
     use_ssl = os.environ.get("FLASK_SSL", "").strip().lower() in ("1", "true", "yes")
     ssl_ctx = "adhoc" if use_ssl else None
     scheme = "https" if ssl_ctx else "http"
