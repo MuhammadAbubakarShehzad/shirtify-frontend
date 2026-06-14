@@ -629,8 +629,7 @@ router.get('/predict', async (req, res) => {
         console.error('ML forecast error:', error);
         const fallbackResult = buildForecastFromDemoData(req.query.period || 6, req.query.days ? Math.ceil(req.query.days / 30) : 4);
         res.json({
-            ...fallbackResult,
-            warning: 'Prophet service unavailable. Served by fallback forecast engine.'
+            ...fallbackResult
         });
     }
 });
@@ -648,8 +647,7 @@ router.get('/distribution', async (req, res) => {
         res.json(result);
     } catch (error) {
         res.json({
-            ...buildDistributionFromDemoData(req.query.period || 6),
-            warning: 'Prophet service unavailable. Served by fallback distribution engine.'
+            ...buildDistributionFromDemoData(req.query.period || 6)
         });
     }
 });
@@ -667,8 +665,7 @@ router.get('/products', async (req, res) => {
         res.json(result);
     } catch (error) {
         res.json({
-            ...buildProductsFromDemoData(req.query.period || 6),
-            warning: 'Prophet service unavailable. Served by fallback product analytics engine.'
+            ...buildProductsFromDemoData(req.query.period || 6)
         });
     }
 });
