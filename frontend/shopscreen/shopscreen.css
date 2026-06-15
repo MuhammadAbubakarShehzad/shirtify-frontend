@@ -184,5 +184,51 @@ body {
     width: 60%;  /* Set to 60-70% so there is padding around the icon */
     height: 60%;
     object-fit: contain; /* Keeps the icon proportions perfect */
-    
+}
+
+/* --- RESPONSIVENESS & MEDIA QUERIES --- */
+
+/* 4.7-inch Mobile & Small Screens (max-width: 480px) */
+@media (max-width: 480px) {
+    #product-grid {
+        grid-template-columns: repeat(2, 1fr) !important; /* Premium 2 columns on mobile */
+        gap: 12px !important;
+    }
+    .product-card {
+        padding: 8px !important;
+    }
+    .footer-grid {
+        grid-template-columns: 1fr !important;
+        gap: 30px;
+        text-align: center;
+    }
+    .footer-logo {
+        font-size: 24px;
+    }
+    .footer-tagline {
+        margin: 0 auto;
+    }
+    .social-icons {
+        justify-content: center;
+    }
+    .payment-methods {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}
+
+/* Premium / Ultra-wide / 4K Screen sizes (min-width: 1920px) */
+@media (min-width: 1920px) {
+    .max-w-7xl, .container, main, .footer-container {
+        max-width: 1600px !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+}
+
+@media (min-width: 2560px) {
+    .max-w-7xl, .container, main, .footer-container {
+        max-width: 2200px !important;
+    }
 }
