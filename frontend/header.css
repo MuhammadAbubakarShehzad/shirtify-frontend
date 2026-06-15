@@ -230,17 +230,35 @@ header.header {
     }
 }
 
-/* 4K/Premium Screen constraints for Header */
+/* Global Body & Layout Responsive Constraints */
+@media (max-width: 480px) {
+    body {
+        font-size: 14px !important;
+        overflow-x: hidden !important;
+    }
+}
+
+/* 4K/Premium Screen constraints for Header & Body */
 @media (min-width: 1920px) {
+    body {
+        max-width: 1600px !important;
+        margin: 0 auto !important;
+        background-color: #f8fafc !important;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.05) !important;
+        position: relative !important;
+    }
     header, header.header, #header-placeholder .header {
-        max-width: 1600px;
+        max-width: 1600px !important;
         margin: 0 auto !important;
         border-radius: 0 0 16px 16px;
     }
 }
 
 @media (min-width: 2560px) {
+    body {
+        max-width: 2200px !important;
+    }
     header, header.header, #header-placeholder .header {
-        max-width: 2200px;
+        max-width: 2200px !important;
     }
 }
