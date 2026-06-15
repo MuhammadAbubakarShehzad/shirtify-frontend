@@ -41,36 +41,7 @@ a    { text-decoration: none; color: inherit; }
 ul   { list-style: none; }
 body { background: var(--bg-page); color: var(--text-dark); }
 
-/* ── Header (shared component, loaded via JS) ──────── */
-header {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 18px 50px;
-    background: var(--bg-white);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    z-index: 1000;
-}
-.logo { font-size: 22px; font-weight: 700; color: var(--primary-dark); letter-spacing: 1px; }
-nav ul { display: flex; gap: 28px; }
-nav a  { font-size: 14px; font-weight: 500; color: var(--text-mid); transition: color var(--transition); }
-nav a:hover { color: var(--text-dark); }
-.header-actions { display: flex; align-items: center; gap: 18px; }
-.search-box {
-    background: #f0f0f0;
-    border-radius: 6px;
-    padding: 8px 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.search-box input { border: none; background: transparent; outline: none; font-size: 13px; width: 140px; }
-.search-box i { color: var(--text-light); font-size: 13px; }
-.icons i { cursor: pointer; font-size: 18px; margin-left: 14px; color: var(--text-dark); transition: color var(--transition); }
-.icons i:hover { color: var(--primary-dark); }
+
 
 /* ── Main Page Layout ──────────────────────────────── */
 main {
