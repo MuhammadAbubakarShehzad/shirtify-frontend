@@ -642,3 +642,28 @@ nav a:hover { color: var(--text-dark); }
     font-family: var(--font-main) !important;
     font-weight: 500 !important;
 }
+
+/* Responsiveness for Mobile Displays */
+@media (max-width: 680px) {
+    .canvas-wrapper {
+        padding: 10px !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+    }
+    .canvas-container {
+        width: 100% !important;
+        height: auto !important;
+        max-width: 100% !important;
+    }
+    canvas {
+        width: 100% !important;
+        height: auto !important;
+    }
+    .toolbar {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        padding: 10px !important;
+    }
+}
