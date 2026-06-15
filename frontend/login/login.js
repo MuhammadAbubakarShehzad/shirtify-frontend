@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailInput = document.querySelector('#authForm input[type="email"]');
     const passwordInput = document.querySelector('#authForm input[type="password"]:not(#confirmPassword)');
     const loginCard = document.querySelector('.login-card');
+    const adminOption = document.querySelector('.admin-option');
 
     const API_BASE = (() => {
         const params = new URLSearchParams(window.location.search);
@@ -38,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fullName) fullName.required = false;
         if (confirmPassword) confirmPassword.required = false;
         if (loginCard) loginCard.classList.remove('signup-mode');
+        if (adminOption) adminOption.style.display = 'block';
     });
 
     signUpTab.addEventListener('click', () => {
@@ -48,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fullName) fullName.required = true;
         if (confirmPassword) confirmPassword.required = true;
         if (loginCard) loginCard.classList.add('signup-mode');
+        if (adminOption) adminOption.style.display = 'none';
     });
 
     const handleError = (message) => {

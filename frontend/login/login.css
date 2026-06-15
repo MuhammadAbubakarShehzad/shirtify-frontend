@@ -152,6 +152,25 @@ body {
     background: #8bcbd3;
 }
 
+.admin-option {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.admin-link {
+    color: #9ed9e0;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+
+.admin-link:hover {
+    color: #8bcbd3;
+    text-decoration: underline;
+}
+
+
 /* Signup-mode tweaks to match signup screen sizing and spacing */
 .login-card.signup-mode {
     /* Match the primary login card sizing */
