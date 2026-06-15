@@ -412,5 +412,128 @@ body {
     width: 60%;  /* Set to 60-70% so there is padding around the icon */
     height: 60%;
     object-fit: contain; /* Keeps the icon proportions perfect */
-    
+}
+
+/* --- RESPONSIVENESS & MEDIA QUERIES --- */
+
+/* 4.7-inch Mobile & Small Screens (max-width: 480px) */
+@media (max-width: 480px) {
+    .hero {
+        height: auto;
+        padding: 40px 16px;
+        min-height: 70vh;
+    }
+    .hero h1 {
+        font-size: 2.2rem;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+    .hero p {
+        font-size: 0.95rem;
+        margin-bottom: 25px;
+        padding: 0 10px;
+    }
+    .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 12px;
+        padding: 0 20px;
+    }
+    .btn {
+        width: 100%;
+        padding: 14px 20px;
+    }
+    .collection {
+        padding: 24px 12px;
+    }
+    .collection h2 {
+        font-size: 1.8rem;
+        margin-bottom: 30px;
+    }
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr) !important; /* Force 2 columns on mobile */
+        gap: 12px;
+    }
+    .product-card {
+        padding: 8px;
+    }
+    .product-img-container {
+        height: 180px;
+    }
+    .product-title {
+        font-size: 13px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .price {
+        font-size: 13px;
+    }
+    .add-btn {
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+    .footer-grid {
+        grid-template-columns: 1fr !important;
+        gap: 30px;
+        text-align: center;
+    }
+    .footer-logo {
+        font-size: 24px;
+    }
+    .footer-tagline {
+        margin: 0 auto;
+    }
+    .social-icons {
+        justify-content: center;
+    }
+    .payment-methods {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}
+
+/* Medium / Tablet / HD budget models (min-width: 768px) and (max-width: 1366px) */
+@media (min-width: 768px) {
+    .features {
+        flex-direction: row;
+    }
+}
+
+/* Premium / Ultra-wide / 4K Screen sizes (min-width: 1920px) */
+@media (min-width: 1920px) {
+    .hero {
+        max-width: 1800px;
+        margin: 0 auto;
+        border-radius: 24px;
+        height: 60vh;
+    }
+    .hero h1 {
+        font-size: 5rem;
+    }
+    .features, .collection, .footer-container {
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .product-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (min-width: 2560px) {
+    .hero {
+        max-width: 2400px;
+        height: 50vh;
+    }
+    .hero h1 {
+        font-size: 6rem;
+    }
+    .features, .collection, .footer-container {
+        max-width: 2200px;
+    }
+    .product-grid {
+        grid-template-columns: repeat(5, 1fr);
+    }
 }

@@ -229,3 +229,18 @@ header.header {
         font-size: 16px;
     }
 }
+
+/* 4K/Premium Screen constraints for Header */
+@media (min-width: 1920px) {
+    header, header.header, #header-placeholder .header {
+        max-width: 1600px;
+        margin: 0 auto !important;
+        border-radius: 0 0 16px 16px;
+    }
+}
+
+@media (min-width: 2560px) {
+    header, header.header, #header-placeholder .header {
+        max-width: 2200px;
+    }
+}
