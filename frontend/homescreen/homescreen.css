@@ -494,12 +494,6 @@ body {
     }
 }
 
-/* Medium / Tablet / HD budget models (min-width: 768px) and (max-width: 1366px) */
-@media (min-width: 768px) {
-    .features {
-        flex-direction: row;
-    }
-}
 
 /* Premium / Ultra-wide / 4K Screen sizes (min-width: 1920px) */
 @media (min-width: 1920px) {
