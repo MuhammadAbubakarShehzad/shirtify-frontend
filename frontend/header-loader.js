@@ -27,7 +27,7 @@
         ensureHeaderStyles();
 
         try {
-            const response = await fetch('../header.html');
+            const response = await fetch('../header.html?v=' + Date.now());
             const html = await response.text();
             const doc = new DOMParser().parseFromString(html, 'text/html');
             const header = doc.querySelector('header');
