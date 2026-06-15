@@ -210,3 +210,21 @@ nav a:hover { color: var(--text-dark); }
     cursor: pointer;
     color: #333;
 }
+
+/* Responsiveness for Mobile */
+@media (max-width: 768px) {
+    .checkout-grid {
+        grid-template-columns: 1fr !important;
+        gap: 30px;
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .progress-bar {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+        padding-left: 20px;
+    }
+}
