@@ -595,28 +595,43 @@ const ShirtifyStore = {
     async init() {
         try {
             const productsResponse = await ShirtifyAPI.getAllProducts();
-            if (productsResponse.success) {
+            const productsResult = Array.isArray(productsResponse)
+                ? { success: true, data: productsResponse }
+                : productsResponse;
+
+            if (productsResult && productsResult.success) {
                 // Map products to the format expected by the dashboard
-                this.products = (productsResponse.data || []).map(product => ({
-                    id: product._id,
-                    designName: product.name,
-                    name: product.name,
-                    description: product.description,
-                    price: product.price,
-                    image: product.image.startsWith('http') ? product.image : '../' + product.image,
-                    category: product.category,
-                    stock: product.stock !== undefined ? product.stock : 50,
-                    stockBadge: product.stock === 0 ? 'Out of Stock' : (product.stock < 10 ? 'Low Stock' : 'In Stock'),
-                    stockBadgeClass: product.stock === 0 ? 'bg-red-100 text-red-700 border-red-200' : (product.stock < 10 ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'),
-                    featured: product.featured || false,
-                    isCustom: product.isCustom || false
-                }));
+                this.products = (productsResult.data || []).map(product => {
+                    const name = product.name || product.title || 'Unnamed Product';
+                    const img = product.image || product.imageUrl || '';
+                    const safeImg = img.startsWith('http') ? img : (img ? '../' + img : '');
+                    return {
+                        id: product._id,
+                        designName: name,
+                        name: name,
+                        description: product.description || '',
+                        price: product.price || 0,
+                        image: safeImg,
+                        category: product.category || 'Casual',
+                        stock: product.stock !== undefined ? product.stock : 50,
+                        stockBadge: product.stock === 0 ? 'Out of Stock' : (product.stock < 10 ? 'Low Stock' : 'In Stock'),
+                        stockBadgeClass: product.stock === 0 ? 'bg-red-100 text-red-700 border-red-200' : (product.stock < 10 ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-100 text-emerald-700 border-emerald-200'),
+                        featured: product.featured || false,
+                        isCustom: product.isCustom || false
+                    };
+                });
             }
 
             const ordersResponse = await ShirtifyAPI.getAllOrders();
-            if (ordersResponse.success) {
+            const ordersResult = Array.isArray(ordersResponse)
+                ? { success: true, data: ordersResponse }
+                : (ordersResponse && ordersResponse.orders)
+                    ? { success: true, data: ordersResponse.orders }
+                    : ordersResponse;
+
+            if (ordersResult && ordersResult.success) {
                 // Map orders to the format expected by the dashboard
-                this.orders = (ordersResponse.data || []).map(order => {
+                this.orders = (ordersResult.data || []).map(order => {
                     const customerName = order.customer ? (typeof order.customer === 'string' ? order.customer : (order.customer.name || "Customer")) :
                         (order.shippingAddress ? order.shippingAddress.fullName : "Guest");
 
@@ -624,7 +639,7 @@ const ShirtifyStore = {
                         (order.shippingAddress ? order.shippingAddress.city : "Unknown");
 
                     const itemsSummary = Array.isArray(order.items) ?
-                        `${order.items.length} item${order.items.length !== 1 ? 's' : ''} (${order.items.map(i => i.name || (i.product ? i.product.name : 'Product')).join(', ')})` :
+                        `${order.items.length} item${order.items.length !== 1 ? 's' : ''} (${order.items.map(i => i.name || (i.product ? (i.product.name || i.product.title) : 'Product')).join(', ')})` :
                         (order.items || "No items");
 
                     const statusBadgeClass = {
@@ -667,8 +682,12 @@ const ShirtifyStore = {
 
             // Load users
             const usersResponse = await ShirtifyAPI.getAllUsers();
-            if (usersResponse.success) {
-                this.users = (usersResponse.data || []).map(user => ({
+            const usersResult = Array.isArray(usersResponse)
+                ? { success: true, data: usersResponse }
+                : usersResponse;
+
+            if (usersResult && usersResult.success) {
+                this.users = (usersResult.data || []).map(user => ({
                     id: user._id,
                     name: user.name,
                     email: user.email,
