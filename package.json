@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "echo 'Root build - delegating to start script'",
+    "build": "echo build",
     "start": "node backend/server.js",
     "start:local": "node start_all.js",
     "dev": "nodemon backend/server.js"
