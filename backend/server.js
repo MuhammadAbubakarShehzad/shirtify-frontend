@@ -38,8 +38,12 @@ const ensureDefaultAdmin = async () => {
   console.log('Default admin account created for', adminEmail);
 };
 
+const { startJobs } = require('./jobs/retrainJob');
 connectDB()
-  .then(ensureDefaultAdmin)
+  .then(async () => {
+    await ensureDefaultAdmin();
+    startJobs();
+  })
   .catch((error) => {
     console.error('Database initialization failed:', error.message);
     process.exit(1);
@@ -55,6 +59,13 @@ app.use('/api/payment-gateway', require('./routes/paymentGatewayRoutes'));
 app.use('/api/feedback', require('./routes/feedbackRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/mockshirts', require('./routes/mockShirtRoutes'));
+
+// Mount Admin Panel APIs directly
+app.use('/api/ml', require('./routes/mlRoutes'));
+app.use('/api/recommendations', require('./routes/recommendationRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/activity', require('./routes/activityRoutes'));
 
 const { protect } = require('./middleware/auth');
 /**
@@ -125,14 +136,8 @@ app.get('/', (req, res) => {
   res.json({ status: 'Shirtify backend running' });
 });
 
-// Mount admin-side app AFTER user routes so admin 404 middleware does not swallow user endpoints.
-try {
-  const adminApp = require('../admin side/backend/server');
-  app.use(adminApp);
-  console.log('✅ Admin side mounted into main backend');
-} catch (e) {
-  console.warn('⚠️  Admin side not mounted:', e.message);
-}
+// Serve admin panel static assets (mainly for local development)
+app.use('/admin', express.static(path.join(__dirname, '../admin side/frontend/admin')));
 
 // Initialize Swagger (must be before 404 handler)
 swaggerSetup(app);
