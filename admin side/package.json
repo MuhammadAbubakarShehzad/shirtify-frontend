@@ -4,6 +4,7 @@
   "description": "Unified Shirtify Admin Dashboard and Backend",
   "main": "backend/server.js",
   "scripts": {
+    "build": "echo 'Admin build - static assets served from frontend/'",
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
     "ml": "python backend/ml_service/app.py"
