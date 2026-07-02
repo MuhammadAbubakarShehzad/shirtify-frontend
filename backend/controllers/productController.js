@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const { logActivity } = require('../../admin side/backend/models/ActivityLog');
 
 const listProducts = async (req, res) => {
   const { colour, size, minPrice, maxPrice } = req.query;
@@ -42,6 +43,7 @@ const getProduct = async (req, res) => {
 const createProduct = async (req, res) => {
   const { title, description, category, price, imageUrl, stock, size, colour } = req.body;
   const product = await Product.create({ title, description, category, price, imageUrl, stock, size, colour });
+  logActivity('product', `New product ${product.title || product.name} created`, req.user?._id);
   res.status(201).json(product);
 };
 

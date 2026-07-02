@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { logActivity } = require('../models/ActivityLog');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'shirtify-demo-secret';
 
@@ -103,6 +104,7 @@ router.post('/register', async (req, res) => {
 
         const user = new User({ name, email, password, role });
         await user.save();
+        logActivity('user', user.role === 'admin' ? `New admin registered: ${user.name}` : 'New customer registered', user._id);
 
         const token = generateToken(user);
 
@@ -162,3 +164,4 @@ router.get('/users', verifyToken, async (req, res) => {
 });
 
 module.exports = router;
+module.exports.verifyToken = verifyToken;

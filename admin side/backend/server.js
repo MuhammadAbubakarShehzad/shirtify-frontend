@@ -67,6 +67,10 @@ app.use('/api/recommendations', require('./routes/recommendationRoutes'));
 // Admin Routes (NEW)
 app.use('/api/admin', require('./routes/adminRoutes'));
 
+// Analytics & Activity logs (NEW)
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/activity', require('./routes/activityRoutes'));
+
 // Health check
 app.get('/api/health', (req, res) => {
     res.status(200).json({

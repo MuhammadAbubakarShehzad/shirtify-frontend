@@ -288,6 +288,172 @@ def get_product_table(df: pd.DataFrame) -> list:
     return rows
 
 
+def get_pakistani_sales_demo_data():
+    import datetime
+    start_date = datetime.date(2025, 6, 15)
+    demo_data = []
+    
+    for i in range(365):
+        current_date = start_date + datetime.timedelta(days=i)
+        ds_str = current_date.strftime("%Y-%m-%d")
+        base_revenue = 8000.0 + (20000.0 * (i / 364.0))
+        
+        wd = current_date.weekday()
+        if wd in [5, 6]:
+            base_revenue *= 0.75
+            
+        month = current_date.month
+        day = current_date.day
+        
+        if month == 4 and 10 <= day <= 22:
+            dist = abs(day - 16)
+            multiplier = 2.5 - (dist * 0.15)
+            base_revenue *= max(1.0, multiplier)
+            
+        if month == 6 and 8 <= day <= 20:
+            dist = abs(day - 14)
+            multiplier = 2.2 - (dist * 0.12)
+            base_revenue *= max(1.0, multiplier)
+            
+        if month == 8 and 10 <= day <= 16:
+            dist = abs(day - 14)
+            multiplier = 1.8 - (dist * 0.15)
+            base_revenue *= max(1.0, multiplier)
+            
+        noise = 1.0 + 0.12 * np.sin(i * 1.5)
+        revenue = round(base_revenue * noise, 2)
+        demo_data.append({"ds": ds_str, "y": revenue})
+        
+    return demo_data
+
+@app.route("/forecast", methods=["POST"])
+def forecast_post():
+    try:
+        data = request.get_json() or {}
+        use_demo = data.get("use_demo", True)
+        horizon = int(data.get("horizon", 90)) # Default 90 days (3M)
+        
+        mode = "demo"
+        if not use_demo:
+            try:
+                from pymongo import MongoClient
+                uri = os.getenv("MONGO_URI") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017/shirtify"
+                client = MongoClient(uri, serverSelectionTimeoutMS=3000)
+                db_name = uri.split("/")[-1].split("?")[0] or "shirtify"
+                db = client[db_name]
+                
+                query = {}
+                start_dt = data.get("startDate")
+                end_dt = data.get("endDate")
+                if start_dt or end_dt:
+                    query["createdAt"] = {}
+                    if start_dt:
+                        query["createdAt"]["$gte"] = datetime.strptime(start_dt, "%Y-%m-%d")
+                    if end_dt:
+                        query["createdAt"]["$lte"] = datetime.strptime(end_dt, "%Y-%m-%d")
+                
+                pipeline = [
+                    {"$match": query},
+                    {
+                        "$group": {
+                            "_id": {
+                                "$dateToString": {
+                                    "format": "%Y-%m-%d",
+                                    "date": "$createdAt"
+                                }
+                            },
+                            "y": {"$sum": "$totalAmount"}
+                        }
+                    },
+                    {"$sort": {"_id": 1}}
+                ]
+                
+                db_results = list(db.orders.aggregate(pipeline))
+                client.close()
+                
+                if len(db_results) >= 5:
+                    orders_data = [{"ds": row["_id"], "y": float(row["y"])} for row in db_results]
+                    df = pd.DataFrame(orders_data)
+                    mode = "live"
+                else:
+                    data_list = get_pakistani_sales_demo_data()
+                    df = pd.DataFrame(data_list)
+                    mode = "demo_fallback"
+            except Exception as mongo_err:
+                print("MongoDB aggregation error, falling back to demo:", mongo_err)
+                data_list = get_pakistani_sales_demo_data()
+                df = pd.DataFrame(data_list)
+                mode = "demo_fallback"
+        else:
+            data_list = get_pakistani_sales_demo_data()
+            df = pd.DataFrame(data_list)
+            mode = "demo"
+
+        # Fit model and predict
+        df['ds'] = pd.to_datetime(df['ds'])
+        
+        model = Prophet(
+            yearly_seasonality=True,
+            weekly_seasonality=True,
+            daily_seasonality=False,
+        )
+        model.add_country_holidays(country_name='PK')
+        model.fit(df)
+        
+        future = model.make_future_dataframe(periods=horizon)
+        forecast = model.predict(future)
+        
+        hist_len = len(df)
+        forecast_rows = forecast.iloc[hist_len:]
+        
+        forecast_list = []
+        for _, row in forecast_rows.iterrows():
+            forecast_list.append({
+                "ds": row["ds"].strftime("%Y-%m-%d"),
+                "yhat": max(0, float(row["yhat"])),
+                "yhat_lower": max(0, float(row["yhat_lower"])),
+                "yhat_upper": max(0, float(row["yhat_upper"]))
+            })
+            
+        expected_revenue = float(forecast_rows["yhat"].sum())
+        forecasted_units = int(expected_revenue / 2500)
+        
+        fitted = forecast.iloc[:hist_len]["yhat"].values
+        actual = df["y"].values
+        
+        mape = np.mean(np.abs((actual - fitted) / (actual + 1e-6))) * 100
+        accuracy = round(max(0, 100 - mape), 2)
+        
+        y_bar = np.mean(actual)
+        ss_tot = np.sum((actual - y_bar) ** 2)
+        ss_res = np.sum((actual - fitted) ** 2)
+        r2 = round(float(1 - (ss_res / (ss_tot + 1e-6))), 2)
+        if r2 < 0 or np.isnan(r2):
+            r2 = 0.0
+            
+        growth_pct = round(float(((df["y"].iloc[-1] - df["y"].iloc[0]) / (df["y"].iloc[0] + 1e-6)) * 100), 2)
+        
+        historical_list = []
+        for _, row in df.iterrows():
+            historical_list.append({
+                "ds": row["ds"].strftime("%Y-%m-%d"),
+                "y": float(row["y"])
+            })
+            
+        return jsonify({
+            "success": True,
+            "forecast": forecast_list,
+            "historical": historical_list,
+            "accuracy": accuracy,
+            "r2": r2,
+            "growth_pct": growth_pct,
+            "forecasted_units": forecasted_units,
+            "expected_revenue": expected_revenue,
+            "mode": mode
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 # ─────────────────────────────────────────────
 #  API ROUTES
 # ─────────────────────────────────────────────

@@ -403,7 +403,8 @@ const buildForecastFromSeries = (series, horizon = 4) => {
  * Helper function to call Python ML service
  */
 const callPythonService = async (endpoint, data = null) => {
-    const url = `http://localhost:5050${endpoint}`;
+    const flaskBase = process.env.FLASK_URL || 'http://localhost:5050';
+    const url = `${flaskBase}${endpoint}`;
     try {
         const options = {
             method: data ? 'POST' : 'GET',
@@ -423,6 +424,20 @@ const callPythonService = async (endpoint, data = null) => {
         throw new Error(`Failed to contact ML service: ${err.message}`);
     }
 };
+
+/**
+ * @route   POST /api/ml/forecast
+ * @desc    Proxy POST to Flask forecast endpoint
+ * @access  Public
+ */
+router.post('/forecast', async (req, res) => {
+    try {
+        const result = await callPythonService('/forecast', req.body);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 
 /**
  * @route   POST /api/ml/feedback

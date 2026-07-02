@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const Product = require('../models/Product');
+const { logActivity } = require('../../admin side/backend/models/ActivityLog');
 
 const createOrder = async (req, res) => {
   const { shippingAddress, paymentMethod } = req.body;
@@ -53,6 +54,8 @@ const createOrder = async (req, res) => {
 
   cart.items = [];
   await cart.save();
+
+  logActivity('order', `New order #${order.orderNumber || order._id.toString().slice(-6).toUpperCase()} placed`, req.user._id);
 
   return res.status(201).json(order);
 };

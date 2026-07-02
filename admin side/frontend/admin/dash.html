@@ -351,11 +351,14 @@
                         </div>
                     </div>
 
-                    <div id="userInfo" class="hidden flex items-center space-x-2 text-sm">
-                        <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                            <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
-                        </div>
-                        <span class="text-gray-700">Welcome, <span id="userName" class="font-medium"></span></span>
+                    <!-- User welcome info removed -->
+                    <!-- Demo/Live Switch Toggle -->
+                    <div class="flex items-center space-x-2 mr-3 bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-200">
+                        <span class="text-xs font-bold text-gray-600">Demo</span>
+                        <button id="modeToggleBtn" onclick="toggleDataMode()" class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none" style="background-color: #0891b2; width: 2.75rem; border-radius: 9999px;">
+                            <span id="modeToggleKnob" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out" style="transform: translateX(0px); transition: transform 0.2s ease; border-radius: 9999px; width: 1.25rem; height: 1.25rem;"></span>
+                        </button>
+                        <span class="text-xs font-bold text-gray-600">Live</span>
                     </div>
                     <button onclick="logout()"
                         class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
@@ -1535,6 +1538,496 @@
     <script>
         // Prevent runtime breaks if icon CDN is delayed.
         window.lucide = window.lucide || { createIcons: function () { } };
+
+        // Global getData helper
+        window.getData = async function(demoPayload, liveEndpoint, fetchOptions = {}) {
+            const mode = localStorage.getItem("shirtify_data_mode") || "demo";
+            if (mode === "demo") {
+                return Promise.resolve(demoPayload);
+            }
+            
+            const baseUrl = window.API_BASE_URL || 'http://localhost:5000/api';
+            const token = localStorage.getItem("adminToken") || localStorage.getItem("shirtify_token");
+            
+            try {
+                const headers = {
+                    "Content-Type": "application/json",
+                    ...fetchOptions.headers
+                };
+                if (token) {
+                    headers["Authorization"] = "Bearer " + token;
+                }
+                
+                const response = await fetch(baseUrl + liveEndpoint, {
+                    ...fetchOptions,
+                    headers
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const json = await response.json();
+                return json.data !== undefined ? json.data : json;
+            } catch (error) {
+                console.error("Live fetch failed for endpoint:", liveEndpoint, error);
+                showToast("Live data unavailable — showing demo data", "warning");
+                return demoPayload;
+            }
+        };
+
+        // Data mode toggle state management
+        window.toggleDataMode = function() {
+            var currentMode = localStorage.getItem("shirtify_data_mode") || "demo";
+            var newMode = currentMode === "demo" ? "live" : "demo";
+            localStorage.setItem("shirtify_data_mode", newMode);
+            updateModeUI(newMode);
+            showToast("Switched to " + newMode.toUpperCase() + " mode.", "success");
+            
+            if (typeof refreshAllWidgets === "function") {
+                refreshAllWidgets();
+            }
+        };
+
+        window.updateModeUI = function(mode) {
+            var btn = document.getElementById("modeToggleBtn");
+            var knob = document.getElementById("modeToggleKnob");
+            if (!btn || !knob) return;
+            
+            if (mode === "live") {
+                btn.style.backgroundColor = "#10b981"; // emerald-500
+                knob.style.transform = "translateX(20px)";
+            } else {
+                btn.style.backgroundColor = "#0891b2"; // cyan-600
+                knob.style.transform = "translateX(0px)";
+            }
+        };
+
+        window.initModeToggle = function() {
+            var mode = localStorage.getItem("shirtify_data_mode") || "demo";
+            localStorage.setItem("shirtify_data_mode", mode);
+            updateModeUI(mode);
+        };
+
+        // Widget refresh runner
+        window.refreshAllWidgets = function() {
+            loadKPICards();
+            loadRecentActivity();
+            loadOrderTrends();
+            loadSizePopularity();
+            loadTopDesigns();
+            loadAIRecommendations();
+        };
+
+        // Task 1: KPI Cards Loader
+        window.loadKPICards = async function() {
+            const totalSalesEl = document.getElementById('totalSales');
+            const totalOrdersEl = document.getElementById('totalOrders');
+            const totalProductsEl = document.getElementById('totalProducts');
+            const totalVisitorsEl = document.getElementById('totalVisitors');
+            
+            // Shimmer loading states
+            if (totalSalesEl) totalSalesEl.innerHTML = '<span class="animate-pulse bg-gray-200 h-6 w-24 inline-block rounded"></span>';
+            if (totalOrdersEl) totalOrdersEl.innerHTML = '<span class="animate-pulse bg-gray-200 h-6 w-16 inline-block rounded"></span>';
+            if (totalProductsEl) totalProductsEl.innerHTML = '<span class="animate-pulse bg-gray-200 h-6 w-12 inline-block rounded"></span>';
+            if (totalVisitorsEl) totalVisitorsEl.innerHTML = '<span class="animate-pulse bg-gray-200 h-6 w-16 inline-block rounded"></span>';
+            
+            const demoSeed = { totalRevenue: 847500, totalOrders: 312, productCount: 48, customerCount: 1240 };
+            
+            try {
+                const data = await getData(demoSeed, '/admin/stats');
+                
+                if (totalSalesEl) totalSalesEl.textContent = 'Rs ' + (data.totalRevenue || 0).toLocaleString('en-PK');
+                if (totalOrdersEl) totalOrdersEl.textContent = (data.totalOrders || 0).toLocaleString();
+                if (totalProductsEl) totalProductsEl.textContent = (data.productCount || 0).toLocaleString();
+                if (totalVisitorsEl) totalVisitorsEl.textContent = (data.customerCount || 0).toLocaleString();
+            } catch (err) {
+                console.error("Error loading KPI cards:", err);
+            }
+        };
+
+        // Task 2: Order Trends Chart Loader
+        window.loadOrderTrends = async function() {
+            const trendCtx = document.getElementById('salesTrendsChart').getContext('2d');
+            const demoPayload = [
+             {date:"2026-05-16",orders:9,  revenue:14200},
+             {date:"2026-05-17",orders:14, revenue:22800},
+             {date:"2026-05-18",orders:11, revenue:18400},
+             {date:"2026-05-19",orders:19, revenue:31600},
+             {date:"2026-05-20",orders:22, revenue:38900},
+             {date:"2026-05-21",orders:8,  revenue:12100},
+             {date:"2026-05-22",orders:7,  revenue:10800},
+             {date:"2026-05-23",orders:16, revenue:26400},
+             {date:"2026-05-24",orders:18, revenue:29700},
+             {date:"2026-05-25",orders:21, revenue:35200},
+             {date:"2026-05-26",orders:20, revenue:33800},
+             {date:"2026-05-27",orders:24, revenue:41500},
+             {date:"2026-05-28",orders:9,  revenue:13900},
+             {date:"2026-05-29",orders:8,  revenue:11600},
+             {date:"2026-05-30",orders:17, revenue:27300},
+             {date:"2026-05-31",orders:19, revenue:31100},
+             {date:"2026-06-01",orders:23, revenue:39400},
+             {date:"2026-06-02",orders:22, revenue:37600},
+             {date:"2026-06-03",orders:26, revenue:44800},
+             {date:"2026-06-04",orders:10, revenue:15700},
+             {date:"2026-06-05",orders:9,  revenue:13200},
+             {date:"2026-06-06",orders:20, revenue:33500},
+             {date:"2026-06-07",orders:22, revenue:37100},
+             {date:"2026-06-08",orders:25, revenue:42300},
+             {date:"2026-06-09",orders:24, revenue:40700},
+             {date:"2026-06-10",orders:28, revenue:47200},
+             {date:"2026-06-11",orders:11, revenue:16800},
+             {date:"2026-06-12",orders:10, revenue:15100},
+             {date:"2026-06-13",orders:23, revenue:38600},
+             {date:"2026-06-14",orders:27, revenue:45900}
+            ];
+
+            try {
+                const data = await getData(demoPayload, '/analytics/order-trends');
+                
+                if (window._orderTrendsChart) {
+                    window._orderTrendsChart.destroy();
+                }
+                
+                window._orderTrendsChart = new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.date),
+                        datasets: [
+                            {
+                                label: 'Orders',
+                                data: data.map(d => d.orders),
+                                borderColor: '#1D9E75',
+                                backgroundColor: 'rgba(29,158,117,0.1)',
+                                yAxisID: 'yOrders',
+                                tension: 0.3,
+                                fill: true
+                            },
+                            {
+                                label: 'Revenue (Rs)',
+                                data: data.map(d => d.revenue),
+                                borderColor: '#378ADD',
+                                backgroundColor: 'transparent',
+                                yAxisID: 'yRevenue',
+                                tension: 0.3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            yOrders: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: { display: true, text: 'Orders' },
+                                grid: { drawOnChartArea: true }
+                            },
+                            yRevenue: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: { display: true, text: 'Revenue (Rs)' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Error loading order trends chart:", err);
+            }
+        };
+
+        // Task 3: Size Popularity Doughnut Loader
+        window.loadSizePopularity = async function() {
+            const sizeCtx = document.getElementById('salesSizeChart').getContext('2d');
+            const demoPayload = [{size:"S",count:42},{size:"M",count:98},{size:"L",count:121},{size:"XL",count:87},{size:"XXL",count:34}];
+            const colors = ["#378ADD","#1D9E75","#EF9F27","#E24B4A","#7F77DD"];
+
+            try {
+                const data = await getData(demoPayload, '/analytics/size-popularity');
+                
+                if (window._sizeChart) {
+                    window._sizeChart.destroy();
+                }
+                
+                window._sizeChart = new Chart(sizeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.map(d => d.size),
+                        datasets: [{
+                            data: data.map(d => d.count),
+                            backgroundColor: colors
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+                
+                // Render legend with percentages
+                const legendEl = document.getElementById('sizeLegend');
+                if (legendEl) {
+                    const totalCount = data.reduce((sum, d) => sum + d.count, 0) || 1;
+                    let legendHtml = '';
+                    data.forEach((d, idx) => {
+                        const percentage = ((d.count / totalCount) * 100).toFixed(1);
+                        const color = colors[idx % colors.length];
+                        legendHtml += `
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3.5 h-3.5 rounded-full flex-shrink-0" style="background-color: ${color}"></span>
+                                <span class="font-medium text-gray-700">${d.size}:</span>
+                                <span class="text-gray-500">${d.count} (${percentage}%)</span>
+                            </div>
+                        `;
+                    });
+                    legendEl.innerHTML = legendHtml;
+                }
+            } catch (err) {
+                console.error("Error loading size popularity chart:", err);
+            }
+        };
+
+        // Task 4: Top Designs Horizontal Bar Loader
+        window.loadTopDesigns = async function() {
+            const designsCtx = document.getElementById('topDesignsChart').getContext('2d');
+            const demoPayload = [
+             {designName:"Floral Urdu Calligraphy",revenue:128400,orders:47},
+             {designName:"Mountain Sunset Graphic", revenue:94200, orders:38},
+             {designName:"Minimal Geometric",       revenue:76500, orders:31},
+             {designName:"Pakistan Flag Heritage",  revenue:61800, orders:26},
+             {designName:"Street Art Splatter",     revenue:48900, orders:19}
+            ];
+
+            try {
+                const data = await getData(demoPayload, '/analytics/top-designs');
+                
+                if (window._topDesignsChart) {
+                    window._topDesignsChart.destroy();
+                }
+                
+                // Draw numbers at end of bars
+                const valueAtEndOfBarPlugin = {
+                    id: 'valueAtEndOfBar',
+                    afterDatasetsDraw(chart) {
+                        const { ctx, data } = chart;
+                        ctx.save();
+                        ctx.font = 'bold 11px Inter, sans-serif';
+                        ctx.fillStyle = '#4b5563';
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        
+                        chart.getDatasetMeta(0).data.forEach((bar, index) => {
+                            const val = data.datasets[0].data[index];
+                            const label = 'Rs ' + val.toLocaleString();
+                            ctx.fillText(label, bar.x + 8, bar.y);
+                        });
+                        ctx.restore();
+                    }
+                };
+
+                window._topDesignsChart = new Chart(designsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map(d => d.designName),
+                        datasets: [{
+                            label: 'Revenue',
+                            data: data.map(d => d.revenue),
+                            backgroundColor: '#378ADD',
+                            borderRadius: 4,
+                            barThickness: 18
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: { right: 75 }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Revenue (Rs)' },
+                                grid: { display: false }
+                            },
+                            y: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    },
+                    plugins: [valueAtEndOfBarPlugin]
+                });
+            } catch (err) {
+                console.error("Error loading top designs chart:", err);
+            }
+        };
+
+        // Task 5: Recent Activity Loader (60s timer wired)
+        window.loadRecentActivity = async function() {
+            const activityContainer = document.getElementById('recentActivity');
+            if (!activityContainer) return;
+            
+            const demoPayload = [
+             {type:"order",   message:"New order #SH-0312 placed",       user:"Bilal Ahmed",   city:"Lahore",    time:"2 min ago",  icon:"shopping-cart"},
+             {type:"product", message:"Heavy Tee (Black) stock updated", user:"Admin",         city:"",          time:"8 min ago",  icon:"package"},
+             {type:"order",   message:"New order #SH-0311 placed",       user:"Sana Mirza",    city:"Karachi",   time:"15 min ago", icon:"shopping-cart"},
+             {type:"user",    message:"New customer registered",         user:"Hamza Qureshi", city:"Islamabad", time:"23 min ago", icon:"user-plus"},
+             {type:"order",   message:"Order #SH-0309 delivered",        user:"Zara Khan",     city:"Multan",    time:"41 min ago", icon:"check"},
+             {type:"system",  message:"Forecast model retrained",        user:"System",        city:"",          time:"1 hr ago",   icon:"brain"},
+             {type:"order",   message:"New order #SH-0308 placed",       user:"Usman Tariq",   city:"Peshawar",  time:"1 hr ago",   icon:"shopping-cart"},
+             {type:"product", message:"Summer Graphic Tee added",        user:"Admin",         city:"",          time:"2 hrs ago",  icon:"plus"}
+            ];
+
+            try {
+                const rawData = await getData(demoPayload, '/activity');
+                let html = '';
+                const items = Array.isArray(rawData) ? rawData : [];
+                
+                items.forEach(activity => {
+                    let icon = activity.icon;
+                    if (!icon) {
+                        if (activity.type === 'order') icon = 'shopping-cart';
+                        else if (activity.type === 'product') icon = 'package';
+                        else if (activity.type === 'user') icon = 'user-plus';
+                        else icon = 'brain';
+                    }
+                    
+                    let color = 'cyan';
+                    if (activity.type === 'order') color = 'emerald';
+                    else if (activity.type === 'product') color = 'amber';
+                    else if (activity.type === 'user') color = 'blue';
+                    else if (activity.type === 'system') color = 'indigo';
+                    
+                    const iconBgClass = 'bg-' + color + '-100';
+                    const iconTextClass = 'text-' + color + '-600';
+                    
+                    let timeStr = activity.time;
+                    if (!timeStr && activity.createdAt) {
+                        const diffMs = new Date() - new Date(activity.createdAt);
+                        const diffMins = Math.round(diffMs / 60000);
+                        if (diffMins < 1) timeStr = 'Just now';
+                        else if (diffMins < 60) timeStr = `${diffMins} min ago`;
+                        else {
+                            const diffHrs = Math.round(diffMins / 60);
+                            if (diffHrs < 24) timeStr = `${diffHrs} hr${diffHrs > 1 ? 's' : ''} ago`;
+                            else timeStr = new Date(activity.createdAt).toLocaleDateString();
+                        }
+                    }
+                    
+                    const title = activity.message || activity.title;
+                    const subtitle = activity.user ? `${activity.user} ${activity.city ? '(' + activity.city + ')' : ''}` : '';
+                    
+                    html += `
+                        <div class="activity-item flex items-start space-x-4 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                            <div class="w-8 h-8 ${iconBgClass} rounded-full flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="${icon}" class="w-4 h-4 ${iconTextClass}"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900">${title}</p>
+                                <p class="text-xs text-gray-500 mt-1">${subtitle}</p>
+                                <p class="text-xs text-gray-400 mt-1">${timeStr || ''}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                activityContainer.innerHTML = html;
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Error loading recent activity:", err);
+            }
+        };
+
+        // Task 6: AI Recommendations Dynamic Loader
+        window.loadAIRecommendations = async function() {
+            const resultsContainer = document.getElementById('recommendationsResults');
+            if (!resultsContainer) return;
+
+            const demoPayload = [
+             {type:"price", title:"Price Optimization — Graphic Tees",
+              message:"Graphic Tee (White, L) has 94% sell-through. Market avg Rs 1,450. Current price Rs 1,200. Recommended: Rs 1,380 (+15% revenue uplift).",
+              priority:"high", action:"Apply Pricing", badge:"💰 +15% Revenue"},
+             {type:"stock", title:"Low Stock Alert — Heavy Tee (Black)",
+              message:"Stock: 4 units. Prophet forecasts 23 orders in 14 days. Reorder threshold: 10 units. Suggested quantity: 30 units.",
+              priority:"urgent", action:"Reorder Now", badge:"⚠ 4 Units Left"},
+             {type:"trend", title:"Rising Demand — Urdu Calligraphy",
+              message:"Urdu calligraphy designs up 38% in 14 days. Concentrated in Islamabad and Rawalpindi. Recommend homepage feature.",
+              priority:"medium", action:"Feature It", badge:"📈 +38% Demand"}
+            ];
+
+            try {
+                const data = await getData(demoPayload, '/recommendations');
+                let html = '';
+                
+                data.forEach(rec => {
+                    let borderClass = 'border-l-4 border-blue-500';
+                    if (rec.priority === 'urgent') borderClass = 'border-l-4 border-red-500';
+                    else if (rec.priority === 'high') borderClass = 'border-l-4 border-amber-500';
+                    
+                    let icon = 'brain', iconBg = 'bg-blue-100', iconColor = 'text-blue-600';
+                    if (rec.type === 'price') {
+                        icon = 'dollar-sign'; iconBg = 'bg-purple-100'; iconColor = 'text-purple-600';
+                    } else if (rec.type === 'stock') {
+                        icon = 'alert-triangle'; iconBg = 'bg-red-100'; iconColor = 'text-red-600';
+                    } else if (rec.type === 'trend') {
+                        icon = 'trending-up'; iconBg = 'bg-emerald-100'; iconColor = 'text-emerald-600';
+                    }
+                    
+                    let badgeBg = 'bg-blue-100 text-blue-800 border-blue-200';
+                    if (rec.priority === 'urgent') badgeBg = 'bg-red-100 text-red-800 border-red-200';
+                    else if (rec.priority === 'high') badgeBg = 'bg-amber-100 text-amber-800 border-amber-200';
+                    else if (rec.priority === 'medium') badgeBg = 'bg-emerald-100 text-emerald-800 border-emerald-200';
+
+                    html += `
+                        <div class="ai-insight-card relative bg-white rounded-xl p-6 shadow-sm border border-gray-100 ${borderClass}">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 ${iconBg} rounded-lg flex items-center justify-center">
+                                        <i data-lucide="${icon}" class="w-5 h-5 ${iconColor}"></i>
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-gray-900">${rec.title}</h3>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badgeBg}">
+                                    ${rec.badge}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">${rec.message}</p>
+                            <button onclick="applyRecommendationAction('${rec.type}', '${rec.title.replace(/'/g, "\\'")}')"
+                                class="w-full px-4 py-2 ${rec.priority === 'urgent' ? 'bg-red-500 hover:bg-red-600' : rec.priority === 'high' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-500 hover:bg-blue-600'} text-white text-sm font-medium rounded-lg transition-colors">
+                                ${rec.action}
+                            </button>
+                        </div>
+                    `;
+                });
+                
+                resultsContainer.innerHTML = html;
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Error loading recommendations:", err);
+            }
+        };
+
+        window.applyRecommendationAction = function(type, title) {
+            showToast(`Action applied for: ${title}`, 'success');
+        };
+
+        // Activity Polling (60 Seconds)
+        if (window._activityInterval) clearInterval(window._activityInterval);
+        window._activityInterval = setInterval(() => {
+            const mode = localStorage.getItem("shirtify_data_mode") || "demo";
+            if (mode === "live") {
+                loadRecentActivity();
+            }
+        }, 60000);
         var selectedOrderId = null;
 
         // Use shared data from ShirtifyData
@@ -3336,7 +3829,13 @@
                     // Trigger render updates if needed
                     switch (tabName) {
                         case 'overview': updateKPIs(); renderRecentActivity(); break;
-                        case 'analytics': renderAnalyticsCharts(); renderSparklines(); break;
+                        case 'analytics': 
+                            renderAnalyticsCharts(); 
+                            renderSparklines(); 
+                            loadOrderTrends(); 
+                            loadSizePopularity(); 
+                            loadTopDesigns(); 
+                            break;
                         case 'roles': renderUsersTable(); break;
                         case 'mock-shirts': renderMockShirtsTable(); break;
                         case 'feedback': renderFeedbackTable(); break;
@@ -3393,7 +3892,7 @@
             }
         }
 
-        function generateRecommendations() {
+        async function generateRecommendations() {
             // Hide empty state, results, and capability tags
             document.getElementById('recommendationsEmptyState').classList.add('hidden');
             document.getElementById('recommendationsResults').classList.add('hidden');
@@ -3427,7 +3926,10 @@
                     stepText.textContent = 'Finalizing...';
                     progressBar.style.width = '100%';
 
-                    setTimeout(function () {
+                    setTimeout(async function () {
+                        // Load data dynamically
+                        await loadAIRecommendations();
+
                         // Hide loading state
                         loadingState.classList.add('hidden');
 
@@ -3466,8 +3968,10 @@
 
             const user = ShirtifyData.getCurrentUser();
             if (user) {
-                document.getElementById('userName').textContent = user.name;
-                document.getElementById('userInfo').classList.remove('hidden');
+                const userNameEl = document.getElementById('userName');
+                if (userNameEl) userNameEl.textContent = user.name;
+                const userInfoEl = document.getElementById('userInfo');
+                if (userInfoEl) userInfoEl.classList.remove('hidden');
 
                 // Show welcome message for new sessions
                 const lastWelcomeShown = localStorage.getItem('shirtify_last_welcome');
@@ -3552,6 +4056,8 @@
 
         // Fast initialization - render everything immediately
         document.addEventListener('DOMContentLoaded', function () {
+            // Initialize the Demo/Live data mode toggle switch
+            initModeToggle();
             // Render static icons immediately; dynamic ones are re-rendered after DOM updates.
             lucide.createIcons();
 
@@ -3563,6 +4069,13 @@
                 checkAuthentication();
                 updateKPIs();
                 renderRecentActivity();
+                
+                // Load dynamic widgets & charts (live/demo)
+                loadKPICards();
+                loadRecentActivity();
+                loadOrderTrends();
+                loadSizePopularity();
+                loadTopDesigns();
 
                 // Pre-render all tabs for instant access
                 renderAllTabs();

@@ -2,7 +2,45 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const User = require('../models/User');
 const mongoose = require('mongoose');
+const { verifyToken } = require('./authRoutes');
+
+/**
+ * @route   GET /api/admin/stats
+ * @desc    Get dashboard KPI stats
+ * @access  Admin
+ */
+router.get('/stats', verifyToken, async (req, res) => {
+    try {
+        const totalOrders = await Order.countDocuments();
+        
+        const revenueAgg = await Order.aggregate([
+            { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+        ]);
+        const totalRevenue = revenueAgg[0]?.total || 0;
+        
+        const productCount = await Product.countDocuments();
+        const customerCount = await User.countDocuments({ role: 'customer' });
+        
+        res.json({
+            success: true,
+            data: {
+                totalRevenue,
+                totalOrders,
+                productCount,
+                customerCount
+            }
+        });
+    } catch (error) {
+        console.error('KPI stats error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while fetching KPI stats',
+            error: error.message
+        });
+    }
+});
 
 /**
  * @route   GET /api/admin/sales-analytics

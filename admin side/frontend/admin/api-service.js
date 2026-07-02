@@ -525,6 +525,19 @@ window.ShirtifyAPI = {
         }
     },
 
+    async postProphetForecast(payload) {
+        try {
+            const data = await this.request('/ml/forecast', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            return data;
+        } catch (error) {
+            console.error('Error in postProphetForecast:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
     async forecastFromCSV(csvText, horizon = 4) {
         try {
             const data = await this.request('/ml/forecast-from-csv', {

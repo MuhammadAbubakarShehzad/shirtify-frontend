@@ -74,6 +74,10 @@
                         <span class="ml-2 text-xs font-medium text-slate-600">Research Mode</span>
                     </label>
                 </div>
+                
+                <!-- Date Bounds Controls -->
+                <input type="date" id="startDate" class="bg-white border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm" title="Start Date">
+                <input type="date" id="endDate" class="bg-white border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm" title="End Date">
 
                 <select id="horizonSelector" class="bg-white border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm">
                     <option value="3">Predict 3 Months</option>
@@ -86,6 +90,9 @@
                     </label>
                     <button id="downloadTemplateBtn" class="bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 font-medium rounded-lg text-sm px-4 py-2.5 flex items-center transition shadow-sm mr-2" title="Download Template">
                         <i data-lucide="download" class="w-4 h-4"></i>
+                    </button>
+                    <button id="downloadCsvBtn" class="bg-emerald-50 border border-emerald-200 text-emerald-600 hover:bg-emerald-100 font-medium rounded-lg text-sm px-4 py-2.5 flex items-center transition shadow-sm mr-2" title="Download Forecast CSV">
+                        <i data-lucide="file-text" class="w-4 h-4 mr-2"></i> Download CSV
                     </button>
                 </div>
                 <button id="runForecastBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-sm px-5 py-2.5 flex items-center transition shadow-md hover:shadow-lg">
@@ -202,73 +209,106 @@
         const datasetUpload = document.getElementById('datasetUpload');
         const downloadTemplateBtn = document.getElementById('downloadTemplateBtn');
         const researchModeToggle = document.getElementById('researchModeToggle');
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const downloadCsvBtn = document.getElementById('downloadCsvBtn');
         
         let customCsvData = null;
+        let lastForecastData = null;
 
         // Formatter for currency
         const pkrFormat = new Intl.NumberFormat('en-PK', { style: 'currency', currency: 'PKR', maximumFractionDigits: 0 });
-
         async function loadForecast() {
-            // Set loading state
-            runForecastBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 mr-2 spinner"></i> Processing...';
+            runForecastBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 mr-2 spinner animate-spin"></i> Processing...';
             runForecastBtn.disabled = true;
             statusBanner.classList.add('hidden');
-            
             lucide.createIcons();
             
-            const period = periodSelector.value;
-            const horizon = horizonSelector.value;
-            const isResearchMode = researchModeToggle.checked;
-            const source = isResearchMode ? 'kaggle' : 'mock';
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            const horizonMonths = parseInt(horizonSelector.value);
+            const horizon = horizonMonths * 30; // 90 or 180
+            const mode = localStorage.getItem("shirtify_data_mode") || "demo";
             
-            // API converts days to months roughly, we pass period as months and days as horizon * 30
-            const daysHorizon = horizon * 30; 
+            const payload = {
+                startDate,
+                endDate,
+                horizon,
+                use_demo: mode === 'demo'
+            };
 
             try {
-                let forecastRes, productsRes, distRes;
+                let forecastRes;
+                
+                try {
+                    forecastRes = await ShirtifyAPI.postProphetForecast(payload);
+                    if (!forecastRes || !forecastRes.success) {
+                        throw new Error(forecastRes ? forecastRes.error : "Unknown error");
+                    }
+                } catch (err) {
+                    console.error("ML Prophet forecast failed:", err);
+                    if (mode === "live") {
+                        // Fallback to demo mode
+                        showStatus("Live data forecast unavailable — showing demo data", "warning");
+                        payload.use_demo = true;
+                        forecastRes = await ShirtifyAPI.postProphetForecast(payload);
+                    } else {
+                        throw err;
+                    }
+                }
 
-                if (customCsvData) {
-                    showStatus("Processing custom dataset (CSV/Excel)...", "warning");
-                    // Call the custom CSV forecast endpoint
-                    forecastRes = await ShirtifyAPI.forecastFromCSV(customCsvData, horizon);
-                    // For custom datasets, we'll skip top products and distribution as it focuses on total sales series
-                    productsRes = { success: false }; distRes = { success: false };
+                if (forecastRes && forecastRes.success) {
+                    lastForecastData = forecastRes.forecast;
+                    
+                    // Render UI metrics
+                    document.getElementById('modelAccuracy').textContent = `${forecastRes.accuracy}%`;
+                    document.getElementById('growthPct').textContent = `${forecastRes.growth_pct > 0 ? '+' : ''}${forecastRes.growth_pct}%`;
+                    
+                    const growthEl = document.getElementById('growthPct');
+                    if (forecastRes.growth_pct >= 0) {
+                        growthEl.className = "text-lg font-bold text-emerald-600";
+                    } else {
+                        growthEl.className = "text-lg font-bold text-red-600";
+                    }
+                    
+                    document.getElementById('predictedUnits').textContent = forecastRes.forecasted_units.toLocaleString();
+                    document.getElementById('forecastDurationText').textContent = `Next ${horizonMonths} Months`;
+                    document.getElementById('expectedRevenue').textContent = "Rs " + Math.round(forecastRes.expected_revenue).toLocaleString('en-PK');
+                    
+                    // Render chart
+                    renderCharts(forecastRes);
+                    
+                    // Trigger load of products and distribution using fallback helper
+                    const source = mode === 'demo' ? 'mock' : 'live';
+                    const period = periodSelector.value;
+                    
+                    try {
+                        const [productsRes, distRes] = await Promise.all([
+                            ShirtifyAPI.getProphetProducts(period, source),
+                            ShirtifyAPI.getProphetDistribution(period, source)
+                        ]);
+                        
+                        if (productsRes.success && productsRes.data.top_products) {
+                            renderTopProducts(productsRes.data.top_products);
+                        }
+                        if (distRes.success && distRes.data.by_category) {
+                            renderDistributionChart(distRes.data.by_category);
+                        }
+                    } catch (e) {
+                        console.warn("Failed loading supplementary ML products/distribution data:", e);
+                    }
                 } else {
-                    // Fetch Forecast from Python ML engine via Node proxy
-                    [forecastRes, productsRes, distRes] = await Promise.all([
-                        ShirtifyAPI.getProphetForecast(period, daysHorizon, source),
-                        ShirtifyAPI.getProphetProducts(period, source),
-                        ShirtifyAPI.getProphetDistribution(period, source)
-                    ]);
+                    showStatus(forecastRes.error || "Failed to load forecast data", "error");
                 }
-
-                if (forecastRes.success) {
-                    renderForecastUI(forecastRes);
-                    renderCharts(forecastRes.data);
-                } else {
-                    const errorMsg = forecastRes.error || "Failed to load forecast data";
-                    const detailedMsg = forecastRes.details ? `\n${forecastRes.details}` : "";
-                    showStatus(`${errorMsg}${detailedMsg}`, "error");
-                }
-
-                if (productsRes.success && productsRes.data.top_products) {
-                    renderTopProducts(productsRes.data.top_products);
-                }
-
-                if (distRes.success && distRes.data.by_category) {
-                    renderDistributionChart(distRes.data.by_category);
-                }
-
             } catch (err) {
                 console.error("Forecast Error:", err);
-                showStatus("API Connection Error. Ensure Node.js and Python servers are running.", "error");
+                showStatus("Failed to contact ML service: " + err.message, "error");
             } finally {
                 runForecastBtn.innerHTML = '<i data-lucide="zap" class="w-4 h-4 mr-2"></i> Forecast';
                 runForecastBtn.disabled = false;
                 lucide.createIcons();
             }
         }
-
         function showStatus(message, type) {
             statusBanner.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'border-red-200', 'bg-yellow-50', 'text-yellow-700', 'border-yellow-200');
             
@@ -340,33 +380,26 @@
             lucide.createIcons();
         }
 
-        function renderCharts(data) {
+        function renderCharts(result) {
             const ctx = document.getElementById('prophetChart').getContext('2d');
             
             // Destroy existing chart if any
             if (forecastChartInstance) forecastChartInstance.destroy();
 
-            const histDates = data.historical.dates;
-            const histData = data.historical.units;
+            const histData = result.historical || [];
+            const forecastData = result.forecast || [];
             
-            const forecastDates = data.forecast.dates;
-            const forecastPred = data.forecast.pred;
-            const forecastUpper = data.forecast.upper;
-            const forecastLower = data.forecast.lower;
-
-            // Align arrays for continuous line
-            // Historical will be filled normally, then padded with nulls
-            // Forecast will be padded with nulls at start, then filled
+            const histDates = histData.map(h => h.ds);
+            const forecastDates = forecastData.map(f => f.ds);
             
             const allLabels = [...histDates, ...forecastDates];
             
-            const alignedHistorical = [...histData, ...Array(forecastDates.length).fill(null)];
+            const alignedHistorical = [...histData.map(h => h.y), ...Array(forecastData.length).fill(null)];
             
-            // Connect the line visually by including the last historical point in the forecast array
-            const lastHistValue = histData[histData.length - 1];
-            const alignedForecast = [...Array(histDates.length - 1).fill(null), lastHistValue, ...forecastPred];
-            const alignedUpper = [...Array(histDates.length - 1).fill(null), lastHistValue, ...forecastUpper];
-            const alignedLower = [...Array(histDates.length - 1).fill(null), lastHistValue, ...forecastLower];
+            const lastHistValue = histData.length > 0 ? histData[histData.length - 1].y : null;
+            const alignedLower = [...Array(histData.length - 1).fill(null), lastHistValue, ...forecastData.map(f => f.yhat_lower)];
+            const alignedForecast = [...Array(histData.length - 1).fill(null), lastHistValue, ...forecastData.map(f => f.yhat)];
+            const alignedUpper = [...Array(histData.length - 1).fill(null), lastHistValue, ...forecastData.map(f => f.yhat_upper)];
 
             forecastChartInstance = new Chart(ctx, {
                 type: 'line',
@@ -374,42 +407,38 @@
                     labels: allLabels,
                     datasets: [
                         {
-                            label: 'Historical Data',
+                            label: 'Historical Actuals',
                             data: alignedHistorical,
-                            borderColor: '#1e293b',
-                            backgroundColor: '#1e293b',
+                            borderColor: '#378ADD',
+                            backgroundColor: '#378ADD',
                             borderWidth: 2.5,
                             tension: 0.3,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#1e293b'
+                            pointRadius: 2
                         },
                         {
-                            label: 'Prophet Forecast (yhat)',
-                            data: alignedForecast,
-                            borderColor: '#3b82f6',
-                            backgroundColor: '#3b82f6',
-                            borderWidth: 2.5,
-                            borderDash: [5, 5],
-                            tension: 0.3,
-                            pointRadius: 4,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: '#3b82f6',
-                            pointBorderWidth: 2
-                        },
-                        {
-                            label: '80% Confidence Interval (Upper)',
-                            data: alignedUpper,
+                            label: 'yhat_lower',
+                            data: alignedLower,
                             borderColor: 'transparent',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            fill: '+1', // fill to lower bounds
+                            backgroundColor: 'transparent',
                             pointRadius: 0,
                             tension: 0.3
                         },
                         {
-                            label: '80% Confidence Interval (Lower)',
-                            data: alignedLower,
+                            label: 'yhat Forecast',
+                            data: alignedForecast,
+                            borderColor: '#1D9E75',
+                            backgroundColor: '#1D9E75',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.3,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'yhat_upper',
+                            data: alignedUpper,
                             borderColor: 'transparent',
-                            backgroundColor: 'transparent',
+                            backgroundColor: 'rgba(29,158,117,0.12)',
+                            fill: '-2', // fill to yhat_lower (index 1)
                             pointRadius: 0,
                             tension: 0.3
                         }
@@ -421,7 +450,7 @@
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { 
-                            display: false // We built our own custom legend above the chart
+                            display: false
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.9)',
@@ -431,8 +460,8 @@
                             cornerRadius: 8,
                             callbacks: {
                                 label: function(context) {
-                                    if(context.dataset.label.includes('Confidence')) return null; // hide CI from tooltip
-                                    return `${context.dataset.label.replace(' (yhat)', '')}: ${context.parsed.y} units`;
+                                    if(context.dataset.label.includes('yhat_') || context.dataset.label.includes('lower')) return null;
+                                    return `${context.dataset.label}: Rs ${Math.round(context.parsed.y).toLocaleString()}`;
                                 }
                             }
                         }
@@ -443,7 +472,7 @@
                             grid: { color: '#f1f5f9', drawBorder: false },
                             ticks: { 
                                 font: { family: 'Inter' }, color: '#64748b',
-                                callback: function(value) { return value + ' Units'; }
+                                callback: function(value) { return 'Rs ' + value.toLocaleString(); }
                             }
                         },
                         x: {
@@ -558,6 +587,29 @@
             document.body.removeChild(link);
         });
 
+        // Download CSV click handler
+        downloadCsvBtn.addEventListener('click', () => {
+            if (!lastForecastData || lastForecastData.length === 0) {
+                alert("No forecast data available to download. Please run the forecast first.");
+                return;
+            }
+            
+            let csvContent = "Date,Predicted Revenue (Rs),Lower Bound (Rs),Upper Bound (Rs)\n";
+            lastForecastData.forEach(row => {
+                csvContent += `${row.ds},${Math.round(row.yhat)},${Math.round(row.yhat_lower)},${Math.round(row.yhat_upper)}\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `shirtify_sales_forecast_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
         // Attach event listeners
         runForecastBtn.addEventListener('click', () => {
             customCsvData = null; // Clear custom data to force default behavior if they manually click Forecast
@@ -567,6 +619,15 @@
         // Auto-run on mount
         document.addEventListener('DOMContentLoaded', () => {
             ShirtifyAPI.init(); // Ensure API is initialized
+            
+            // Set default dates: startDate is 1 year ago, endDate is today
+            const end = new Date();
+            const start = new Date();
+            start.setFullYear(end.getFullYear() - 1);
+            
+            startDateInput.value = start.toISOString().split('T')[0];
+            endDateInput.value = end.toISOString().split('T')[0];
+            
             loadForecast();
         });
 

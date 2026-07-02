@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
+const { logActivity } = require('../../admin side/backend/models/ActivityLog');
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -93,6 +94,8 @@ const register = async (req, res, next) => {
     const hashed = await bcrypt.hash(password, salt);
 
     const user = await User.create({ name, email, password: hashed });
+
+    logActivity('user', 'New customer registered', user._id);
 
     return res.status(201).json({
       id: user._id,

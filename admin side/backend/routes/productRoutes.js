@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
+const { logActivity } = require('../models/ActivityLog');
 
 /**
  * @route   GET /api/products/stats
@@ -89,6 +90,7 @@ router.post('/', async (req, res) => {
     try {
         const product = new Product(req.body);
         await product.save();
+        logActivity('product', `New product ${product.name} created`, req.user?.userId);
         res.status(201).json({ success: true, data: product });
     } catch (err) {
         res.status(400).json({ success: false, error: err.message });
