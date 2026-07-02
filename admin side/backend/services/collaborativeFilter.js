@@ -1,4 +1,9 @@
-const tf = require('@tensorflow/tfjs');
+let tf;
+try {
+    tf = require('@tensorflow/tfjs');
+} catch (e) {
+    console.warn("⚠️ @tensorflow/tfjs is not installed. Collaborative filtering will run in degraded/mock mode.");
+}
 const fs = require('fs');
 const path = require('path');
 const UserInteraction = require('../models/UserInteraction');
@@ -142,6 +147,10 @@ async function prepareData() {
  * Train the Collaborative Filter Model
  */
 async function trainModel() {
+    if (!tf) {
+        console.warn("Collaborative filtering training bypassed because @tensorflow/tfjs is unavailable.");
+        return { success: false, message: "TensorFlow unavailable" };
+    }
     console.log("Starting Collaborative Filtering Retraining...");
     
     const { xsUser, xsProduct, ysScore } = await prepareData();
@@ -189,6 +198,10 @@ async function trainModel() {
  * using Matrix Factorization
  */
 async function getRecommendations(userId, topN = 4) {
+    if (!tf) {
+        console.warn("Collaborative filtering recommendations bypassed because @tensorflow/tfjs is unavailable.");
+        return { success: false, recommendations: [] };
+    }
     // Lazy load model if missing
     if (!model) {
         const loaded = await loadModel();
