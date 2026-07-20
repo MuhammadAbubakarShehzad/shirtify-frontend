@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "echo build",
+    "build": "node -e \"console.log('Build bypassed')\"",
     "start": "node backend/server.js",
     "start:local": "node start_all.js",
     "dev": "nodemon backend/server.js"
