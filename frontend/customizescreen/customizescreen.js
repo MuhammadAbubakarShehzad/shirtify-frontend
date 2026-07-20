@@ -621,7 +621,7 @@ const SAME_ORIGIN_API_BASE = (window.location.protocol.startsWith('http') && win
     ? `${window.location.protocol}//${window.location.host}/api`
     : null;
 const LOCAL_API_BASE = 'http://localhost:5000/api';
-const PROD_API_BASE = 'https://backend-production-e03d.up.railway.app/api';
+const PROD_API_BASE = '/api';
 
 let savedApiBase = localStorage.getItem('shirtifyApiBase');
 if (savedApiBase === 'null' || savedApiBase === 'undefined' || (savedApiBase && !savedApiBase.startsWith('http'))) {

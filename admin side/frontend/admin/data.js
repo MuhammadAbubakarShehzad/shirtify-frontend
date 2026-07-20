@@ -12,7 +12,7 @@ var API_BASE_URL = window.API_BASE_URL || (() => {
         if (isLocalhost) {
             return 'http://localhost:5000/api';
         }
-        return 'https://backend-production-e03d.up.railway.app/api';
+        return '/api';
     }
     return 'http://localhost:5000/api';
 })();

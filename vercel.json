@@ -21,6 +21,10 @@
       "dest": "admin side/frontend/index.html"
     },
     {
+      "src": "/api/(.*)",
+      "dest": "https://backend-production-e03d.up.railway.app/api/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "frontend/$1"
     }
