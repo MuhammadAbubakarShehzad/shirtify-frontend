@@ -110,7 +110,7 @@
             ? `${window.location.protocol}//${window.location.host}/api`
             : null;
         const LOCAL_API_BASE = 'http://localhost:5000/api';
-        const PROD_API_BASE = '/api';
+        const PROD_API_BASE = 'https://backend-production-e03d.up.railway.app/api';
 
         let savedApiBase = localStorage.getItem('shirtifyApiBase');
         if (savedApiBase === 'null' || savedApiBase === 'undefined' || (savedApiBase && !savedApiBase.startsWith('http'))) {
