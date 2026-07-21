@@ -45,8 +45,8 @@ connectDB()
     startJobs();
   })
   .catch((error) => {
-    console.error('Database initialization failed:', error.message);
-    process.exit(1);
+    console.error('Database initialization warning:', error.message);
+    console.warn('⚠️ Server will continue running API routes and fallback demo data.');
   });
 
 app.use('/api/auth', require('./routes/authRoutes'));
