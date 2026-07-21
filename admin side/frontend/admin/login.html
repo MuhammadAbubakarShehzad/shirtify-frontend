@@ -173,8 +173,8 @@
                     if (authResult.success) {
                         // Show success message
                         const successMessage = document.createElement('div');
-                        successMessage.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm';
-                        successMessage.textContent = `Welcome back, ${authResult.user.name}! Redirecting to dashboard...`;
+                        successMessage.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 text-sm font-medium text-center';
+                        successMessage.textContent = `Welcome back`;
                         loginForm.appendChild(successMessage);
 
                         // Navigate to dashboard after a brief delay
