@@ -246,15 +246,31 @@
                         throw new Error(forecastRes ? forecastRes.error : "Unknown error");
                     }
                 } catch (err) {
-                    console.error("ML Prophet forecast failed:", err);
-                    if (mode === "live") {
-                        // Fallback to demo mode
-                        showStatus("Live data forecast unavailable — showing demo data", "warning");
-                        payload.use_demo = true;
-                        forecastRes = await ShirtifyAPI.postProphetForecast(payload);
-                    } else {
-                        throw err;
-                    }
+                    console.warn("ML Prophet forecast API request failed, loading fallback demo data:", err);
+                    showStatus("Live server unreachable — displaying offline demo predictions", "warning");
+                    
+                    // Fallback dataset when server or network is offline
+                    forecastRes = {
+                        success: true,
+                        accuracy: 94.2,
+                        growth_pct: 12.5,
+                        forecasted_units: 1450,
+                        expected_revenue: 3625000,
+                        historical: [
+                            { ds: "2025-08-01", y: 380 },
+                            { ds: "2025-09-01", y: 410 },
+                            { ds: "2025-10-01", y: 450 },
+                            { ds: "2025-11-01", y: 520 },
+                            { ds: "2025-12-01", y: 610 },
+                            { ds: "2026-01-01", y: 490 }
+                        ],
+                        forecast: [
+                            { ds: "2026-02-01", yhat: 530, yhat_lower: 470, yhat_upper: 590 },
+                            { ds: "2026-03-01", yhat: 580, yhat_lower: 510, yhat_upper: 650 },
+                            { ds: "2026-04-01", yhat: 640, yhat_lower: 560, yhat_upper: 720 },
+                            { ds: "2026-05-01", yhat: 710, yhat_lower: 620, yhat_upper: 800 }
+                        ]
+                    };
                 }
 
                 if (forecastRes && forecastRes.success) {
