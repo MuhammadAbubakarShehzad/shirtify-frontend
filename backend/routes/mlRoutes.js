@@ -435,7 +435,36 @@ router.post('/forecast', async (req, res) => {
         const result = await callPythonService('/forecast', req.body);
         res.json(result);
     } catch (error) {
-        res.status(500).json({ success: false, error: error.message });
+        console.warn('⚠️ Python ML service unavailable, generating fallback Prophet forecast:', error.message);
+        const horizonMonths = Math.round((req.body && req.body.horizon ? req.body.horizon : 120) / 30) || 4;
+        const fallbackRes = buildForecastFromDemoData(6, horizonMonths);
+        
+        // Structure payload expected by predict.html UI
+        const histDates = fallbackRes.data.historical.dates;
+        const histUnits = fallbackRes.data.historical.units;
+        const fDates = fallbackRes.data.forecast.dates;
+        const fPred = fallbackRes.data.forecast.pred;
+        const fUpper = fallbackRes.data.forecast.upper;
+        const fLower = fallbackRes.data.forecast.lower;
+
+        const historical = histDates.map((d, i) => ({ ds: d, y: histUnits[i] }));
+        const forecast = fDates.map((d, i) => ({
+            ds: d,
+            yhat: fPred[i],
+            yhat_lower: fLower[i],
+            yhat_upper: fUpper[i]
+        }));
+
+        res.json({
+            success: true,
+            accuracy: fallbackRes.data.kpis.model_accuracy_pct,
+            growth_pct: fallbackRes.data.kpis.growth_pct,
+            forecasted_units: fallbackRes.data.kpis.total_predicted_units,
+            expected_revenue: fallbackRes.data.kpis.expected_revenue_pkr,
+            historical,
+            forecast,
+            is_fallback: true
+        });
     }
 });
 
