@@ -139,6 +139,9 @@ app.get('/', (req, res) => {
 // Serve admin panel static assets (mainly for local development)
 app.use('/admin', express.static(path.join(__dirname, '../admin side/frontend/admin')));
 
+// Serve user side frontend static files
+app.use(express.static(path.join(__dirname, '../frontend')));
+
 // Initialize Swagger (must be before 404 handler)
 swaggerSetup(app);
 
