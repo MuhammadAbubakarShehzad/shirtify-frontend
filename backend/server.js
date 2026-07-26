@@ -13,7 +13,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: ['https://shirtify-pk.vercel.app', 'https://shirtify-frontend-t5ro.vercel.app', 'http://localhost:5000', 'http://localhost:3000'],
+  origin: function(origin, callback) {
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    // allow any vercel subdomain or localhost domain origins
+    if (origin.indexOf('vercel.app') !== -1 || origin.indexOf('localhost') !== -1 || origin.indexOf('127.0.0.1') !== -1) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Fallback allow all to prevent browser locks
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-is-human', 'x-path', 'x-method'],
   credentials: true
