@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (err) {
             console.error(err);
-            handleError('Network error, try again later.');
+            handleError('Network error: ' + err.message + ' (Target API: ' + API_BASE + ')');
         }
     });
 });
