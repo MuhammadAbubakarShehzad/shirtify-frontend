@@ -62,7 +62,7 @@ router.get('/size-popularity', protect, async (req, res) => {
                     as: 'productInfo'
                 }
             },
-            { $unwind: { path: '$productInfo', preserveNullAndEmpty: true } },
+            { $unwind: { path: '$productInfo', preserveNullAndEmptyArrays: true } },
             {
                 $group: {
                     _id: { $ifNull: ['$productInfo.size', 'N/A'] },
@@ -111,7 +111,7 @@ router.get('/top-designs', protect, async (req, res) => {
                     as: 'productInfo'
                 }
             },
-            { $unwind: { path: '$productInfo', preserveNullAndEmpty: true } },
+            { $unwind: { path: '$productInfo', preserveNullAndEmptyArrays: true } },
             {
                 $project: {
                     _id: 0,
