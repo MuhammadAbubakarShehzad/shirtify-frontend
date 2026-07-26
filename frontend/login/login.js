@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const savedApiBase = localStorage.getItem('shirtifyApiBase');
-        if (savedApiBase) {
+        if (savedApiBase && savedApiBase !== 'null' && savedApiBase !== 'undefined') {
             return savedApiBase;
         }
 
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return 'http://localhost:5000/api';
         }
 
-        return `${window.location.origin}/api`;
+        return 'https://backend-production-e03d.up.railway.app/api';
     })();
 
     // Simple Tab Switching Logic
