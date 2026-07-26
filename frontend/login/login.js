@@ -105,7 +105,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            const data = await response.json();
+            const contentType = response.headers.get('content-type');
+            let data = {};
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const textError = await response.text();
+                console.error("Non-JSON API Response received:", textError);
+                throw new Error("Server returned non-JSON format error response (HTTP " + response.status + ").");
+            }
+
             if (!response.ok) {
                 handleError(data.message || 'Authentication failed');
                 return;
