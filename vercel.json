@@ -13,6 +13,10 @@
   ],
   "routes": [
     {
+      "src": "/api/(.*)",
+      "dest": "https://backend-production-e03d.up.railway.app/api/$1"
+    },
+    {
       "src": "/admin/(.*)",
       "dest": "/admin side/frontend/admin/$1"
     },
