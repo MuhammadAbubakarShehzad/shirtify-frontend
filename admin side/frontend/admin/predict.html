@@ -241,11 +241,41 @@
                 let forecastRes;
                 
                 try {
-                    forecastRes = await ShirtifyAPI.postProphetForecast(payload);
-                    if (!forecastRes || !forecastRes.success) {
-                        throw new Error(forecastRes ? forecastRes.error : "Unknown error");
+                    if (customCsvData) {
+                        const csvRes = await ShirtifyAPI.forecastFromCSV(customCsvData, horizonMonths);
+                        if (csvRes && csvRes.success && csvRes.data) {
+                            const d = csvRes.data;
+                            forecastRes = {
+                                success: true,
+                                accuracy: d.kpis.model_accuracy_pct,
+                                growth_pct: d.kpis.growth_pct,
+                                forecasted_units: d.kpis.total_predicted_units,
+                                expected_revenue: d.kpis.expected_revenue_pkr,
+                                historical: d.historical.dates.map((date, idx) => ({
+                                    ds: date,
+                                    y: d.historical.units[idx]
+                                })),
+                                forecast: d.forecast.dates.map((date, idx) => ({
+                                    ds: date,
+                                    yhat: d.forecast.pred[idx],
+                                    yhat_lower: d.forecast.lower[idx],
+                                    yhat_upper: d.forecast.upper[idx]
+                                })),
+                                kpis: d.kpis
+                            };
+                        } else {
+                            throw new Error(csvRes ? csvRes.error : "Unknown error");
+                        }
+                    } else {
+                        forecastRes = await ShirtifyAPI.postProphetForecast(payload);
+                        if (!forecastRes || !forecastRes.success) {
+                            throw new Error(forecastRes ? forecastRes.error : "Unknown error");
+                        }
                     }
                 } catch (err) {
+                    if (customCsvData) {
+                        throw err;
+                    }
                     console.warn("ML Prophet forecast API request failed, loading fallback demo data:", err);
                     showStatus("Live server unreachable — displaying offline demo predictions", "warning");
                     
