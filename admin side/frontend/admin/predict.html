@@ -507,7 +507,7 @@
                             callbacks: {
                                 label: function(context) {
                                     if(context.dataset.label.includes('yhat_') || context.dataset.label.includes('lower')) return null;
-                                    return `${context.dataset.label}: Rs ${Math.round(context.parsed.y).toLocaleString()}`;
+                                    return `${context.dataset.label}: ${Math.round(context.parsed.y).toLocaleString()} Units`;
                                 }
                             }
                         }
@@ -518,7 +518,7 @@
                             grid: { color: '#f1f5f9', drawBorder: false },
                             ticks: { 
                                 font: { family: 'Inter' }, color: '#64748b',
-                                callback: function(value) { return 'Rs ' + value.toLocaleString(); }
+                                callback: function(value) { return value.toLocaleString() + ' Units'; }
                             }
                         },
                         x: {
