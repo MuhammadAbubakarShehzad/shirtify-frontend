@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const savedApiBase = localStorage.getItem('shirtifyApiBase');
         const host = window.location.hostname;
         if (host !== 'localhost' && host !== '127.0.0.1') {
-            // Force production Railway URL directly to bypass cached/incorrect localStorage settings
-            return 'https://backend-production-e03d.up.railway.app/api';
+            // Force /api so Vercel's routes proxy matches and forwards to Railway
+            return '/api';
         }
         if (savedApiBase && savedApiBase !== 'null' && savedApiBase !== 'undefined') {
             return savedApiBase;
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return 'http://localhost:5000/api';
         }
 
-        return 'https://backend-production-e03d.up.railway.app/api';
+        return '/api';
     })();
 
     // Simple Tab Switching Logic
