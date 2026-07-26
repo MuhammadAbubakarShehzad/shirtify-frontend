@@ -18,11 +18,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const savedApiBase = localStorage.getItem('shirtifyApiBase');
+        const host = window.location.hostname;
+        if (host !== 'localhost' && host !== '127.0.0.1') {
+            // Force production Railway URL directly to bypass cached/incorrect localStorage settings
+            return 'https://backend-production-e03d.up.railway.app/api';
+        }
         if (savedApiBase && savedApiBase !== 'null' && savedApiBase !== 'undefined') {
             return savedApiBase;
         }
-
-        const host = window.location.hostname;
         if (host === 'localhost' || host === '127.0.0.1') {
             return 'http://localhost:5000/api';
         }
