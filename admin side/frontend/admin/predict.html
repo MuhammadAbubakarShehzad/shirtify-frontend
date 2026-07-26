@@ -52,13 +52,13 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- Header Section -->
-        <div class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
-            <div>
+        <div class="mb-8">
+            <div class="mb-6">
                 <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-2">Demand Forecasting</h1>
                 <p class="text-slate-500 max-w-2xl">Powered by Facebook Prophet. Analyze historical data to predict upcoming sales trends with seasonal impacts (e.g., Eid and Winter spikes).</p>
             </div>
             
-            <div class="mt-4 md:mt-0 flex space-x-3">
+            <div class="flex flex-wrap gap-3 items-center">
                 <select id="periodSelector" class="bg-white border border-slate-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm">
                     <option value="6">Analyze Last 6 Months</option>
                     <option value="12">Analyze Last 12 Months</option>
@@ -67,7 +67,7 @@
                 </select>
                 
                 <!-- Research Mode Toggle -->
-                <div class="flex items-center bg-white border border-slate-300 rounded-lg px-3 shadow-sm">
+                <div class="flex items-center bg-white border border-slate-300 rounded-lg px-3 py-2.5 shadow-sm h-[42px]">
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="researchModeToggle" class="sr-only peer">
                         <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
