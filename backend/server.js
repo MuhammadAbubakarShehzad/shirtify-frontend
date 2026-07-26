@@ -12,7 +12,12 @@ dotenv.config({ path: envPath });
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors({
+  origin: ['https://shirtify-pk.vercel.app', 'https://shirtify-frontend-t5ro.vercel.app', 'http://localhost:5000', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-is-human', 'x-path', 'x-method'],
+  credentials: true
+}));
 // Swagger integration
 const swaggerSetup = require('./config/swagger');
 app.use(morgan('dev'));
