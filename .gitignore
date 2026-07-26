@@ -14,3 +14,5 @@ scratch/
 tryon_result.png
 Thumbs.db
 .DS_Store
+
+.vercel

@@ -23,7 +23,7 @@ router.get('/order-trends', protect, async (req, res) => {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
                     orders: { $sum: 1 },
-                    revenue: { $sum: "$totalAmount" }
+                    revenue: { $sum: "$total" }
                 }
             },
             { $sort: { _id: 1 } },
@@ -50,11 +50,22 @@ router.get('/order-trends', protect, async (req, res) => {
  */
 router.get('/size-popularity', protect, async (req, res) => {
     try {
+        // Order items don't carry a .size field — size lives on the Product document.
+        // We look up the product and group by product.size.
         const sizePopularity = await Order.aggregate([
             { $unwind: '$items' },
             {
+                $lookup: {
+                    from: 'products',
+                    localField: 'items.product',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: { path: '$productInfo', preserveNullAndEmpty: true } },
+            {
                 $group: {
-                    _id: '$items.size',
+                    _id: { $ifNull: ['$productInfo.size', 'N/A'] },
                     count: { $sum: '$items.quantity' }
                 }
             },
@@ -62,7 +73,7 @@ router.get('/size-popularity', protect, async (req, res) => {
             {
                 $project: {
                     _id: 0,
-                    size: "$_id",
+                    size: '$_id',
                     count: 1
                 }
             }
@@ -84,18 +95,29 @@ router.get('/top-designs', protect, async (req, res) => {
             { $unwind: '$items' },
             {
                 $group: {
-                    _id: '$items.productName',
+                    _id: '$items.product',   // ObjectId ref — join below
                     revenue: { $sum: { $multiply: ['$items.quantity', '$items.price'] } },
+                    unitsSold: { $sum: '$items.quantity' },
                     orders: { $sum: 1 }
                 }
             },
             { $sort: { revenue: -1 } },
             { $limit: 5 },
             {
+                $lookup: {
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: { path: '$productInfo', preserveNullAndEmpty: true } },
+            {
                 $project: {
                     _id: 0,
-                    designName: "$_id",
+                    designName: { $ifNull: ['$productInfo.title', 'Unknown Product'] },
                     revenue: 1,
+                    unitsSold: 1,
                     orders: 1
                 }
             }

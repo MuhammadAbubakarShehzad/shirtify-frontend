@@ -39,6 +39,8 @@ async function apiFetch(path, options = {}) {
                 continue;
             }
 
+            // For non-404 errors (400, 401, 500 etc.), use the first responding base
+            resolvedApiBase = base;
             return res;
         } catch (err) {
             lastError = err;
@@ -105,7 +107,9 @@ function renderCheckoutSummary(cart) {
             const price = product.price || 0;
             const qty = item.quantity;
             const fallbackImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="10" fill="%2394a3b8">No Image</text></svg>';
-            const img = product.imageUrl || fallbackImage;
+            // Ensure HTTPS to avoid mixed-content warnings
+            const rawImg = product.imageUrl || '';
+            const img = rawImg ? rawImg.replace(/^http:\/\//i, 'https://') : fallbackImage;
             const lineTotal = price * qty;
             subtotal += lineTotal;
 
@@ -129,7 +133,9 @@ function renderCheckoutSummary(cart) {
             const name = item.name || 'Custom Design';
             const price = item.price || 0;
             const fallbackImage = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="100%" height="100%" fill="%23f1f5f9"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="10" fill="%2394a3b8">No Image</text></svg>';
-            const img = item.image || fallbackImage;
+            // Ensure HTTPS to avoid mixed-content warnings
+            const rawImg = item.image || '';
+            const img = rawImg ? rawImg.replace(/^http:\/\//i, 'https://') : fallbackImage;
             subtotal += price;
 
             return `

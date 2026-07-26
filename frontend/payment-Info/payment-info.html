@@ -11,78 +11,70 @@
 <div id="header-placeholder"></div>
     <main class="checkout-container">
         <div class="steps-header">
-            <div class="step" onclick="window.location.href='../pco/pco.html'" ><span class="step-icon">🚚</span> Shipping</div>
+            <div class="step" onclick="window.location.href='../pco/pco.html'"><span class="step-icon">🚚</span> Shipping</div>
             <div class="step active"><span class="step-icon">💳</span> Payment</div>
         </div>
 
         <div class="checkout-grid">
             <div class="payment-section">
-                <!-- Payment Method Selection -->
-<div class="payment-methods">
-    <label>
-        <input type="radio" name="payment" value="bank" checked onclick="showForm('bank')">
-        Bank Transfer
-    </label>
-
-    <label>
-        <input type="radio" name="payment" value="easypaisa" onclick="showForm('easypaisa')">
-        EasyPaisa
-    </label>
-
-    <label>
-        <input type="radio" name="payment" value="jazzcash" onclick="showForm('jazzcash')">
-        JazzCash
-    </label>
-</div>
-
-<!-- Bank Payment Form -->
-<div id="bankForm" class="payment-form">
-    <h3>Bank Transfer</h3>
-
-    <label>Account Title</label>
-    <input id="bankAccountTitle" type="text" placeholder="Ali Haider">
-
-    <label>Bank Name</label>
-    <input id="bankName" type="text" placeholder="Meezan Bank">
-
-    <label>IBAN / Account Number</label>
-    <input id="bankAccountNumber" type="text" placeholder="PK36SCBL0000001123456702">
-</div>
-
-<!-- EasyPaisa Form -->
-<div id="easypaisaForm" class="payment-form" style="display:none;">
-    <h3>EasyPaisa Payment</h3>
-
-    <label>EasyPaisa Mobile Number</label>
-    <input id="easypaisaMobile" type="text" placeholder="03XXXXXXXXX">
-
-    <label>Account Holder Name</label>
-    <input id="easypaisaAccountName" type="text" placeholder="Ali Haider">
-</div>
-
-<!-- JazzCash Form -->
-<div id="jazzcashForm" class="payment-form" style="display:none;">
-    <h3>JazzCash Payment</h3>
-
-    <label>JazzCash Mobile Number</label>
-    <input id="jazzcashMobile" type="text" placeholder="03XXXXXXXXX">
-
-    <label>CNIC (Last 6 Digits)</label>
-    <input id="jazzcashCnic" type="text" placeholder="123456">
-              </div>
-
                 <div class="payment-card">
                     <h2>Payment Information</h2>
-                        <div class="secure-notice">
-                            <span class="shield">🛡️</span> Your Payment Information is Secured and Encrypted
-                        </div>
 
-                        <div id="payment-feedback" class="payment-feedback" aria-live="polite"></div>
+                    <!-- Payment Method Selection -->
+                    <div class="payment-methods">
+                        <label>
+                            <input type="radio" name="payment" value="bank" checked onclick="showForm('bank')">
+                            Bank Transfer
+                        </label>
+                        <label>
+                            <input type="radio" name="payment" value="easypaisa" onclick="showForm('easypaisa')">
+                            EasyPaisa
+                        </label>
+                        <label>
+                            <input type="radio" name="payment" value="jazzcash" onclick="showForm('jazzcash')">
+                            JazzCash
+                        </label>
+                    </div>
 
-                        <div class="action-buttons">
-                            <button type="button" class="btn-back" onclick="window.location.href='../pco/pco.html'">Back</button>
-                            <button id="payButton" type="button" class="btn-pay">Pay Rs 0.00</button>
-                        </div>
+                    <!-- Bank Payment Form -->
+                    <div id="bankForm" class="payment-form">
+                        <h3>Bank Transfer</h3>
+                        <label>Account Title</label>
+                        <input id="bankAccountTitle" type="text" placeholder="Ali Haider">
+                        <label>Bank Name</label>
+                        <input id="bankName" type="text" placeholder="Meezan Bank">
+                        <label>IBAN / Account Number</label>
+                        <input id="bankAccountNumber" type="text" placeholder="PK36SCBL0000001123456702">
+                    </div>
+
+                    <!-- EasyPaisa Form -->
+                    <div id="easypaisaForm" class="payment-form" style="display:none;">
+                        <h3>EasyPaisa Payment</h3>
+                        <label>EasyPaisa Mobile Number</label>
+                        <input id="easypaisaMobile" type="text" placeholder="03XXXXXXXXX">
+                        <label>Account Holder Name</label>
+                        <input id="easypaisaAccountName" type="text" placeholder="Ali Haider">
+                    </div>
+
+                    <!-- JazzCash Form -->
+                    <div id="jazzcashForm" class="payment-form" style="display:none;">
+                        <h3>JazzCash Payment</h3>
+                        <label>JazzCash Mobile Number</label>
+                        <input id="jazzcashMobile" type="text" placeholder="03XXXXXXXXX">
+                        <label>CNIC (Last 6 Digits)</label>
+                        <input id="jazzcashCnic" type="text" placeholder="123456">
+                    </div>
+
+                    <div class="secure-notice">
+                        <span class="shield">🛡️</span> Your Payment Information is Secured and Encrypted
+                    </div>
+
+                    <div id="payment-feedback" class="payment-feedback" aria-live="polite"></div>
+
+                    <div class="action-buttons">
+                        <button type="button" class="btn-back" onclick="window.location.href='../pco/pco.html'">Back</button>
+                        <button id="payButton" type="button" class="btn-pay">Pay Rs 0.00</button>
+                    </div>
                 </div>
             </div>
 

@@ -124,8 +124,9 @@ async function initiateJazzCash(user, request) {
   const password = process.env.JAZZCASH_PASSWORD;
   const integritySalt = process.env.JAZZCASH_INTEGERITY_SALT || process.env.JAZZCASH_INTEGRITY_SALT;
   const subMerchantId = process.env.JAZZCASH_SUBMERCHANT_ID || '';
-  const isTestMode = String(process.env.NODE_ENV || '').toLowerCase() !== 'production' && 
-                     (merchantId === 'TESTMERCHANT' || process.env.PAYMENT_TEST_MODE === 'true');
+  const isTestMode = process.env.PAYMENT_TEST_MODE === 'true' ||
+                     merchantId === 'TESTMERCHANT' ||
+                     String(process.env.NODE_ENV || '').toLowerCase() !== 'production';
 
   if (!apiUrl || !merchantId || !password || !integritySalt) {
     throw createError('JazzCash is not configured yet. Add JazzCash sandbox credentials in backend/.env first.');
@@ -265,7 +266,8 @@ async function initiateJazzCash(user, request) {
 async function initiateEasypaisa(user, request) {
   const merchantMode = (process.env.EASYPAISA_MODE || '').trim().toLowerCase();
 
-  if (merchantMode !== 'mock' && process.env.NODE_ENV === 'production') {
+  // Block only if NOT in mock/test mode AND running in production
+  if (merchantMode !== 'mock' && process.env.PAYMENT_TEST_MODE !== 'true' && process.env.NODE_ENV === 'production') {
     throw createError('Easypaisa needs merchant onboarding and credentials before live API payments can be enabled in this project.');
   }
 
