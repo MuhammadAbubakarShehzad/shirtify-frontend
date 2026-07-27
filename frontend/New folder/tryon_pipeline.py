@@ -738,41 +738,48 @@ The final image must look like a real product photography shoot — indistinguis
         return None
 
 def idm_vton_tryon(person_path, shirt_path):
-    """Hits the official IDM-VTON huggingface space for perfect photorealism."""
+    """Hits the official IDM-VTON huggingface space or community clones for photorealism."""
     if not GRADIO_CLIENT_AVAILABLE:
         print("[TryOn] gradio_client not available")
         return None
         
-    print("[TryOn] Sending request to IDM-VTON HuggingFace Space...")
-    try:
-        idm_client = Client("yisol/IDM-VTON")
-        dict_val = {
-            "background": handle_file(person_path), 
-            "layers": [], 
-            "composite": None
-        }
-        result = idm_client.predict(
-            dict=dict_val,
-            garm_img=handle_file(shirt_path),
-            garment_des="t-shirt",
-            is_checked=True,
-            is_checked_crop=False,
-            denoise_steps=30,
-            seed=42,
-            api_name="/tryon"
-        )
-        # Result is a tuple: (output_image_path, masked_image_path)
-        output_path = result[0]
-        
-        # Gradio downloads to a temporary folder, let's copy it to our temp dir
-        import shutil
-        out = tempfile.mktemp(suffix="_idmvton.png", dir=TEMP_DIR)
-        shutil.copy2(output_path, out)
-        print(f"[TryOn] IDM-VTON SUCCESS: {out}")
-        return out
-    except Exception as e:
-        print(f"[TryOn] IDM-VTON API failed: {e}")
-        return None
+    spaces = [
+        "yisol/IDM-VTON",
+        "kadirnar/IDM-VTON",
+        "samikshachavan/ai-virtual-tryon"
+    ]
+    
+    for space_name in spaces:
+        print(f"[TryOn] Sending request to IDM-VTON Space: {space_name}...")
+        try:
+            idm_client = Client(space_name)
+            dict_val = {
+                "background": handle_file(person_path), 
+                "layers": [], 
+                "composite": None
+            }
+            result = idm_client.predict(
+                dict=dict_val,
+                garm_img=handle_file(shirt_path),
+                garment_des="t-shirt",
+                is_checked=True,
+                is_checked_crop=False,
+                denoise_steps=30,
+                seed=42,
+                api_name="/tryon"
+            )
+            output_path = result[0]
+            
+            import shutil
+            out = tempfile.mktemp(suffix="_idmvton.png", dir=TEMP_DIR)
+            shutil.copy2(output_path, out)
+            print(f"[TryOn] IDM-VTON SUCCESS: {out} using {space_name}")
+            return out
+        except Exception as e:
+            print(f"[TryOn] IDM-VTON API failed for {space_name}: {e}")
+            
+    print("[TryOn] All IDM-VTON spaces failed. Falling back.")
+    return None
 
 def _safe_file_under(base_dir, rel_path):
     base_dir = os.path.abspath(base_dir)
