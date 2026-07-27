@@ -42,15 +42,22 @@
 
                     <!-- Color Filter -->
                     <div class="mb-8">
-                        <label class="block text-slate-500 font-medium mb-3">Color</label>
-                        <div class="grid grid-cols-4 gap-3">
-                            <button data-color="red" class="w-8 h-8 rounded-full bg-red-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button data-color="yellow" class="w-8 h-8 rounded-full bg-yellow-400 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button data-color="black" class="w-8 h-8 rounded-full bg-black ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button data-color="blue" class="w-8 h-8 rounded-full bg-blue-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button data-color="green" class="w-8 h-8 rounded-full bg-green-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
-                            <button data-color="orange" class="w-8 h-8 rounded-full bg-orange-500 ring-2 ring-transparent hover:ring-slate-300 transition-all"></button>
+                        <div class="flex justify-between items-center mb-3">
+                            <label class="text-slate-500 font-medium">Color</label>
+                            <button id="clear-color-btn" class="text-xs text-sky-600 hover:text-sky-700 font-semibold hidden">Reset</button>
                         </div>
+                        <div class="flex items-center gap-3">
+                            <!-- Styled Color Input Container -->
+                            <div class="relative w-10 h-10 rounded-full border border-slate-200 shadow-sm overflow-hidden flex-shrink-0 cursor-pointer hover:scale-105 transition-transform" id="color-picker-trigger">
+                                <input type="color" id="shop-color-picker" class="absolute -inset-2 w-14 h-14 p-0 m-0 border-0 cursor-pointer bg-transparent" value="#ff0000">
+                            </div>
+                            
+                            <!-- Custom RGB Line (gradient spectrum bar) -->
+                            <div class="relative flex-grow h-4 rounded-full cursor-pointer shadow-inner border border-slate-100" id="rgb-spectrum-bar" style="background: linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%);">
+                                <div id="rgb-slider-handle" class="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border border-slate-300 shadow-md cursor-grab active:cursor-grabbing transition-shadow hover:shadow-lg" style="left: 0%;"></div>
+                            </div>
+                        </div>
+                        <div id="color-preview-text" class="text-xs text-slate-400 mt-2 font-medium">No color selected</div>
                     </div>
 
                     <!-- Price Filter -->

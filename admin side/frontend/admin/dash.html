@@ -1482,9 +1482,14 @@
 
                     <div>
                         <label class="block text-base font-medium text-gray-900 mb-2">Colour</label>
-                        <input type="text" id="productColour" name="colour"
-                            class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                            placeholder="Black">
+                        <div class="flex gap-2">
+                            <input type="text" id="productColour" name="colour"
+                                class="flex-grow px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                                placeholder="Black">
+                            <div class="relative w-12 h-12 rounded-xl border-2 border-gray-200 shadow-sm overflow-hidden flex-shrink-0 cursor-pointer">
+                                <input type="color" id="productColourPicker" class="absolute -inset-2 w-16 h-16 p-0 m-0 border-0 cursor-pointer bg-transparent" value="#ffffff">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="flex items-center">
@@ -2364,7 +2369,33 @@
                 document.getElementById('productImageUrl').value = product.imageUrl || product.image || '';
                 document.getElementById('productStock').value = product.stock !== undefined ? product.stock : '';
                 document.getElementById('productSize').value = Array.isArray(product.sizes) ? product.sizes.join(', ') : (product.size || '');
-                document.getElementById('productColour').value = product.colour || product.baseColor || '';
+                var colourVal = product.colour || product.baseColor || '';
+                document.getElementById('productColour').value = colourVal;
+                var colorPicker = document.getElementById('productColourPicker');
+                if (colorPicker) {
+                    if (colourVal.startsWith('#')) {
+                        colorPicker.value = colourVal;
+                    } else {
+                        var colorNameToHex = {
+                            white: '#ffffff',
+                            offwhite: '#f5f5f5',
+                            black: '#000000',
+                            mehroon: '#800000',
+                            maroon: '#800000',
+                            red: '#ff0000',
+                            blue: '#0000ff',
+                            green: '#008000',
+                            yellow: '#ffff00',
+                            orange: '#ffa500',
+                            grey: '#808080',
+                            gray: '#808080',
+                            pink: '#ffc0cb',
+                            purple: '#800080',
+                            brown: '#a52a2a'
+                        };
+                        colorPicker.value = colorNameToHex[colourVal.toLowerCase()] || '#ffffff';
+                    }
+                }
                 document.getElementById('featureProduct').checked = product.featured || false;
 
                 // Store the product ID for editing
@@ -3639,10 +3670,23 @@
             }
         }
 
-        // Product form setup
         function setupProductForm() {
             var productForm = document.getElementById('productForm');
             if (!productForm) return;
+
+            var productColourPicker = document.getElementById('productColourPicker');
+            var productColourInput = document.getElementById('productColour');
+            if (productColourPicker && productColourInput) {
+                productColourPicker.addEventListener('input', function() {
+                    productColourInput.value = productColourPicker.value;
+                });
+                productColourInput.addEventListener('input', function() {
+                    var val = productColourInput.value.trim();
+                    if (val.startsWith('#')) {
+                        productColourPicker.value = val;
+                    }
+                });
+            }
 
             productForm.addEventListener('submit', async function (e) {
                 e.preventDefault();

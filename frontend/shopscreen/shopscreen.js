@@ -309,20 +309,138 @@ function setupPriceFilter() {
 }
 
 function setupColorFilter() {
-    const colorButtons = document.querySelectorAll('.mb-8 .grid button');
-    colorButtons.forEach(btn => {
-        btn.addEventListener('click', async () => {
-            colorButtons.forEach(b => b.classList.remove('ring-slate-400'));
-            btn.classList.add('ring-slate-400');
-            let color = btn.getAttribute('data-color');
-            if (!color) {
-                const colorClass = btn.className.match(/bg-(\w+)-\d+/);
-                color = colorClass ? colorClass[1] : '';
+    const spectrumBar = document.getElementById('rgb-spectrum-bar');
+    const sliderHandle = document.getElementById('rgb-slider-handle');
+    const colorPicker = document.getElementById('shop-color-picker');
+    const colorPreviewText = document.getElementById('color-preview-text');
+    const clearColorBtn = document.getElementById('clear-color-btn');
+    const colorPickerTrigger = document.getElementById('color-picker-trigger');
+
+    if (!spectrumBar || !sliderHandle || !colorPicker) return;
+
+    function rgbToHex(r, g, b) {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function getColorAtPercent(pct) {
+        const colors = [
+            { r: 255, g: 0, b: 0 },       // Red
+            { r: 255, g: 255, b: 0 },     // Yellow
+            { r: 0, g: 255, b: 0 },       // Green
+            { r: 0, g: 255, b: 255 },     // Cyan
+            { r: 0, g: 0, b: 255 },       // Blue
+            { r: 255, g: 0, b: 255 },     // Magenta
+            { r: 255, g: 0, b: 0 }        // Red
+        ];
+        
+        const index = pct * (colors.length - 1);
+        const i = Math.floor(index);
+        const f = index - i;
+        
+        if (i >= colors.length - 1) {
+            const c = colors[colors.length - 1];
+            return rgbToHex(c.r, c.g, c.b);
+        }
+        
+        const c1 = colors[i];
+        const c2 = colors[i + 1];
+        
+        const r = Math.round(c1.r + f * (c2.r - c1.r));
+        const g = Math.round(c1.g + f * (c2.g - c1.g));
+        const b = Math.round(c1.b + f * (c2.b - c1.b));
+        
+        return rgbToHex(r, g, b);
+    }
+
+    async function updateSelectedColor(hex, pct = null) {
+        selectedColor = hex;
+        colorPicker.value = hex;
+        if (colorPickerTrigger) {
+            colorPickerTrigger.style.backgroundColor = hex;
+        }
+        colorPreviewText.textContent = `Selected Color: ${hex.toUpperCase()}`;
+        colorPreviewText.style.color = hex;
+        if (clearColorBtn) clearColorBtn.classList.remove('hidden');
+        
+        if (pct !== null) {
+            sliderHandle.style.left = `${pct * 100}%`;
+        }
+        
+        await loadProducts(selectedColor, selectedSize, selectedPrice);
+    }
+
+    // Click on spectrum bar
+    spectrumBar.addEventListener('click', async (e) => {
+        if (e.target === sliderHandle) return;
+        const rect = spectrumBar.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        x = Math.max(0, Math.min(x, rect.width));
+        const pct = x / rect.width;
+        const hex = getColorAtPercent(pct);
+        await updateSelectedColor(hex, pct);
+    });
+
+    // Drag handle
+    let isDragging = false;
+    sliderHandle.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const rect = spectrumBar.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        x = Math.max(0, Math.min(x, rect.width));
+        const pct = x / rect.width;
+        const hex = getColorAtPercent(pct);
+        
+        // Update visual state only during drag for smooth performance
+        colorPicker.value = hex;
+        if (colorPickerTrigger) {
+            colorPickerTrigger.style.backgroundColor = hex;
+        }
+        colorPreviewText.textContent = `Selected Color: ${hex.toUpperCase()}`;
+        colorPreviewText.style.color = hex;
+        sliderHandle.style.left = `${pct * 100}%`;
+        selectedColor = hex;
+    });
+    
+    document.addEventListener('mouseup', async () => {
+        if (isDragging) {
+            isDragging = false;
+            if (clearColorBtn) clearColorBtn.classList.remove('hidden');
+            await loadProducts(selectedColor, selectedSize, selectedPrice);
+        }
+    });
+
+    // Color picker input change
+    colorPicker.addEventListener('input', async (e) => {
+        const hex = e.target.value;
+        if (colorPickerTrigger) {
+            colorPickerTrigger.style.backgroundColor = hex;
+        }
+        colorPreviewText.textContent = `Selected Color: ${hex.toUpperCase()}`;
+        colorPreviewText.style.color = hex;
+        selectedColor = hex;
+        if (clearColorBtn) clearColorBtn.classList.remove('hidden');
+        await loadProducts(selectedColor, selectedSize, selectedPrice);
+    });
+
+    // Clear filter
+    if (clearColorBtn) {
+        clearColorBtn.addEventListener('click', async () => {
+            selectedColor = null;
+            colorPreviewText.textContent = 'No color selected';
+            colorPreviewText.style.color = '';
+            clearColorBtn.classList.add('hidden');
+            sliderHandle.style.left = '0%';
+            if (colorPickerTrigger) {
+                colorPickerTrigger.style.backgroundColor = '';
             }
-            selectedColor = color;
             await loadProducts(selectedColor, selectedSize, selectedPrice);
         });
-    });
+    }
 }
 
 function initFooter() {
