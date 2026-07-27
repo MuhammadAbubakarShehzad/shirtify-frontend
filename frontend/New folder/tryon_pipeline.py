@@ -424,11 +424,21 @@ def prepare_garment_rgba(shirt_path, run_id="pre-fix"):
         return out_path, rect
     except Exception as e:
         print(f"[TryOn] segmentation fallback | error={e}")
-        img = cv2.imread(shirt_path, cv2.IMREAD_COLOR)
-        bgra = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+        img = cv2.imread(shirt_path, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            img = np.zeros((100, 100, 3), dtype=np.uint8) + 255
+            
+        if img.ndim == 2:
+            bgra = cv2.cvtColor(img, cv2.COLOR_GRAY2BGRA)
+        elif img.shape[2] == 3:
+            bgra = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+            bgra[:, :, 3] = 255
+        else:
+            bgra = img
+            
         h, w = bgra.shape[:2]
         rect = np.array([[0,0], [w,0], [w,h], [0,h]], dtype=np.float32)
-        out_path = tempfile.mktemp(suffix="_opaque.png", dir=TEMP_DIR)
+        out_path = tempfile.mktemp(suffix="_fallback.png", dir=TEMP_DIR)
         cv2.imwrite(out_path, bgra)
         return out_path, rect
 

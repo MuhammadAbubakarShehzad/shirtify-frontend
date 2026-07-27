@@ -4,7 +4,7 @@ opencv-python-headless
 Pillow
 google-genai
 google-generativeai
-numpy
+numpy<2.0.0
 python-dotenv
 pyopenssl
 mediapipe
